@@ -6,6 +6,14 @@ import * as verificationCodesSchema from "./schema/verification-codes";
 import * as managerSettingsSchema from "./schema/manager-settings";
 import * as auditLogSchema from "./schema/audit-log";
 import * as notificationsSchema from "./schema/notifications";
+import * as carBrandsSchema from "./schema/car-brands";
+import * as carModelsSchema from "./schema/car-models";
+import * as taxiParksSchema from "./schema/taxi-parks";
+import * as parkClassesSchema from "./schema/park-classes";
+import * as parkVehiclesSchema from "./schema/park-vehicles";
+import * as ratingWeightsSchema from "./schema/rating-weights";
+import * as ratingConfigSchema from "./schema/rating-config";
+import * as classRevenueSchema from "./schema/class-revenue";
 
 const schema = {
   ...usersSchema,
@@ -14,6 +22,14 @@ const schema = {
   ...managerSettingsSchema,
   ...auditLogSchema,
   ...notificationsSchema,
+  ...carBrandsSchema,
+  ...carModelsSchema,
+  ...taxiParksSchema,
+  ...parkClassesSchema,
+  ...parkVehiclesSchema,
+  ...ratingWeightsSchema,
+  ...ratingConfigSchema,
+  ...classRevenueSchema,
 };
 
 export function createDb(url: string) {
