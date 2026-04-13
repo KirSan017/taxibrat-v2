@@ -7,6 +7,7 @@ import {
   integer,
   pgEnum,
   timestamp,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", [
@@ -37,7 +38,7 @@ export const users = pgTable("users", {
   status: userStatusEnum("status").notNull().default("PHONE_VERIFIED"),
   friendshipPoints: integer("friendship_points").notNull().default(0),
   referralCode: varchar("referral_code", { length: 20 }).notNull().unique(),
-  referredById: uuid("referred_by_id").references(() => users.id),
+  referredById: uuid("referred_by_id").references((): AnyPgColumn => users.id),
   rejectionReason: text("rejection_reason"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
