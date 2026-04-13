@@ -24,3 +24,16 @@ export const RATING = {
   DEFAULT_PARAMS_COEFF: 0.4,
   WEIGHT_MULTIPLIER: { LOW: 1, MEDIUM: 2, HIGH: 3 } as const,
 } as const;
+
+export const TICKET_TOPIC_CONFIG: Record<
+  string,
+  { section: string; smReviewRequired: boolean; defaultPoints: number }
+> = {
+  PARK_CHECK: { section: "TAXI_CHECK", smReviewRequired: true, defaultPoints: 150 },
+  USER_BASE_CHECK: { section: "CHAT", smReviewRequired: true, defaultPoints: 0 },
+  TAXI_CONNECT: { section: "CHAT", smReviewRequired: true, defaultPoints: 150 },
+  BUYOUT: { section: "BUYOUT", smReviewRequired: false, defaultPoints: 0 },
+  LEGAL: { section: "CHAT", smReviewRequired: false, defaultPoints: 0 },
+  FRIENDSHIP_POINTS: { section: "CHAT", smReviewRequired: false, defaultPoints: 0 },
+  OTHER: { section: "CHAT", smReviewRequired: false, defaultPoints: 0 },
+};

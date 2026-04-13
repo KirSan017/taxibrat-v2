@@ -96,3 +96,29 @@ export enum RatingWeightLevel {
   MEDIUM = "MEDIUM",
   HIGH = "HIGH",
 }
+
+export enum TicketTopic {
+  PARK_CHECK = "PARK_CHECK",
+  USER_BASE_CHECK = "USER_BASE_CHECK",
+  TAXI_CONNECT = "TAXI_CONNECT",
+  BUYOUT = "BUYOUT",
+  LEGAL = "LEGAL",
+  FRIENDSHIP_POINTS = "FRIENDSHIP_POINTS",
+  OTHER = "OTHER",
+}
+
+export enum TicketStatus {
+  NEW = "NEW",
+  IN_PROGRESS = "IN_PROGRESS",
+  PENDING_SM_REVIEW = "PENDING_SM_REVIEW",
+  SM_REJECTED = "SM_REJECTED",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum RelatedEntityType {
+  PARK = "PARK",
+  PARK_CLASS = "PARK_CLASS",
+  VEHICLE = "VEHICLE",
+  USER = "USER",
+}

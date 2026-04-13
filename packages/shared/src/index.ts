@@ -6,3 +6,4 @@ export * from "./dto/notification.dto";
 export * from "./dto/park.dto";
 export * from "./dto/catalog.dto";
 export * from "./dto/brand.dto";
+export * from "./dto/ticket.dto";
