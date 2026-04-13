@@ -14,6 +14,9 @@ import * as parkVehiclesSchema from "./schema/park-vehicles";
 import * as ratingWeightsSchema from "./schema/rating-weights";
 import * as ratingConfigSchema from "./schema/rating-config";
 import * as classRevenueSchema from "./schema/class-revenue";
+import * as ticketsSchema from "./schema/tickets";
+import * as ticketMessagesSchema from "./schema/ticket-messages";
+import * as ticketBufferSchema from "./schema/ticket-buffer";
 
 const schema = {
   ...usersSchema,
@@ -30,6 +33,9 @@ const schema = {
   ...ratingWeightsSchema,
   ...ratingConfigSchema,
   ...classRevenueSchema,
+  ...ticketsSchema,
+  ...ticketMessagesSchema,
+  ...ticketBufferSchema,
 };
 
 export function createDb(url: string) {
