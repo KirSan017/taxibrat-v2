@@ -122,3 +122,16 @@ export enum RelatedEntityType {
   VEHICLE = "VEHICLE",
   USER = "USER",
 }
+
+export enum PointsTransactionType {
+  REGISTRATION = "REGISTRATION",
+  PARK_CHECK = "PARK_CHECK",
+  TAXI_CONNECT = "TAXI_CONNECT",
+  BUYOUT = "BUYOUT",
+  REFERRAL = "REFERRAL",
+  ORDER_NO9 = "ORDER_NO9",
+  ORDER_CANCEL = "ORDER_CANCEL",
+  BASE_CHECK = "BASE_CHECK",
+  MANUAL_ADMIN = "MANUAL_ADMIN",
+  IDEA = "IDEA",
+}

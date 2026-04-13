@@ -7,3 +7,6 @@ export * from "./dto/park.dto";
 export * from "./dto/catalog.dto";
 export * from "./dto/brand.dto";
 export * from "./dto/ticket.dto";
+export * from "./dto/points.dto";
+export * from "./dto/settings.dto";
+export * from "./dto/news.dto";
