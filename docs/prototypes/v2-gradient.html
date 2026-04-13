@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TаксиБрат — Узнайте правду о вашем таксопарке</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        heading: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #18181b; overflow-x: hidden; }
+        html { scroll-behavior: smooth; }
+
+        /* --- Animated gradient mesh --- */
+        .gradient-hero {
+            background: linear-gradient(
+                135deg,
+                #f59e0b 0%,
+                #fbbf24 15%,
+                #fde68a 30%,
+                #fffbeb 45%,
+                #fef3c7 55%,
+                #fbbf24 70%,
+                #f59e0b 85%,
+                #d97706 100%
+            );
+            background-size: 400% 400%;
+            animation: gradient-flow 12s ease infinite;
+        }
+        @keyframes gradient-flow {
+            0%   { background-position: 0% 50%; }
+            25%  { background-position: 100% 25%; }
+            50%  { background-position: 100% 50%; }
+            75%  { background-position: 0% 75%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- Mesh overlay for texture --- */
+        .mesh-overlay {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.35) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255,251,240,0.4) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 80%, rgba(217,119,6,0.2) 0%, transparent 45%);
+            pointer-events: none;
+        }
+
+        /* --- Diagonal split background --- */
+        .diagonal-split {
+            position: relative;
+            background: #fff;
+        }
+        .diagonal-split::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 55%;
+            height: 100%;
+            background: #fffbf0;
+            clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+            z-index: 0;
+        }
+
+        /* --- 3D tilt cards --- */
+        .tilt-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #f3f4f6;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            transform-style: preserve-3d;
+            perspective: 800px;
+            position: relative;
+            z-index: 1;
+        }
+        .tilt-card:hover {
+            box-shadow: 0 30px 60px rgba(245, 158, 11, 0.15), 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        /* --- Search bar --- */
+        .search-bar-gold {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+        }
+        .search-bar-gold:focus-within {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 8px 32px rgba(217, 119, 6, 0.2);
+        }
+
+        /* --- Horizontal scroll steps --- */
+        .steps-scroll {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 16px;
+        }
+        .steps-scroll::-webkit-scrollbar { height: 6px; }
+        .steps-scroll::-webkit-scrollbar-track { background: #f4f4f5; border-radius: 3px; }
+        .steps-scroll::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 3px; }
+        .step-card {
+            min-width: 280px;
+            scroll-snap-align: start;
+            flex-shrink: 0;
+        }
+        @media (min-width: 768px) {
+            .steps-scroll {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                overflow-x: visible;
+                scroll-snap-type: none;
+            }
+            .step-card { min-width: auto; }
+        }
+
+        /* --- Step number --- */
+        .step-num {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; background: #f59e0b; color: #18181b;
+            font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 16px;
+        }
+
+        .star { color: #f59e0b; }
+        .star-empty { color: #d4d4d8; }
+
+        /* --- CTA --- */
+        .cta-btn {
+            background: #18181b; color: #f59e0b;
+            font-family: 'Montserrat', sans-serif; font-weight: 700;
+            padding: 16px 44px; border-radius: 14px; border: none;
+            font-size: 18px; cursor: pointer; display: inline-block;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 40px rgba(24,24,27,0.25);
+        }
+
+        /* --- Reveal --- */
+        .reveal {
+            opacity: 0; transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .reveal-d1 { transition-delay: 0.1s; }
+        .reveal-d2 { transition-delay: 0.2s; }
+        .reveal-d3 { transition-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== HEADER ==================== -->
+    <header class="fixed top-0 left-0 right-0 z-50" style="background: rgba(255,251,235,0.7); backdrop-filter: blur(16px);">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-2 no-underline">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="#18181b"/>
+                    <path d="M8 22h16l-2-8H10l-2 8zm4-10h8v2H12v-2z" fill="#f59e0b"/>
+                </svg>
+                <span class="font-heading text-xl font-bold text-zinc-900">TаксиБрат</span>
+            </a>
+            <nav class="hidden md:flex gap-8">
+                <a href="#parks" class="text-zinc-500 hover:text-zinc-900 transition-colors text-sm font-medium no-underline">Парки</a>
+                <a href="#how" class="text-zinc-500 hover:text-zinc-900 transition-colors text-sm font-medium no-underline">Как это работает</a>
+                <a href="#cta" class="text-zinc-500 hover:text-zinc-900 transition-colors text-sm font-medium no-underline">Проверить</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ==================== HERO ==================== -->
+    <section class="gradient-hero relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div class="mesh-overlay"></div>
+        <div class="relative z-10 text-center px-6 max-w-3xl">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8" style="background: rgba(255,255,255,0.35); backdrop-filter: blur(6px);">
+                <span class="material-symbols-outlined text-zinc-800" style="font-size:18px;">verified</span>
+                <span class="text-sm font-medium text-zinc-800">Независимая проверка таксопарков</span>
+            </div>
+            <h1 class="font-heading text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6" style="text-shadow: 0 2px 20px rgba(217,119,6,0.3);">
+                Узнайте правду о вашем таксопарке
+            </h1>
+            <p class="text-white/80 text-lg md:text-xl mb-10 max-w-xl mx-auto" style="text-shadow: 0 1px 8px rgba(217,119,6,0.2);">
+                Прозрачные рейтинги, честные отзывы и реальные условия работы -- все в одном сервисе
+            </p>
+            <div class="search-bar-gold flex items-center gap-3 px-5 py-4 max-w-lg mx-auto">
+                <span class="material-symbols-outlined text-zinc-600" style="font-size:24px;">search</span>
+                <input type="text" placeholder="Введите название таксопарка..."
+                       class="bg-transparent border-none outline-none text-zinc-800 placeholder-zinc-500 w-full text-base">
+                <button style="background:#18181b; color:#f59e0b; font-family:'Montserrat',sans-serif; font-weight:700; padding:10px 24px; border-radius:10px; border:none; font-size:14px; cursor:pointer; white-space:nowrap;">Найти</button>
+            </div>
+        </div>
+        <!-- Bottom fade -->
+        <div class="absolute bottom-0 left-0 right-0 h-32" style="background: linear-gradient(to bottom, transparent, #fff);"></div>
+    </section>
+
+    <!-- ==================== PARK CARDS ==================== -->
+    <section id="parks" class="diagonal-split py-24 px-6">
+        <div class="max-w-6xl mx-auto relative z-10">
+            <h2 class="font-heading text-3xl md:text-4xl font-bold text-zinc-900 text-center mb-4 reveal">
+                Популярные таксопарки
+            </h2>
+            <p class="text-zinc-500 text-center mb-16 max-w-lg mx-auto reveal reveal-d1">
+                Сравните условия и выберите лучший парк для работы
+            </p>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="tilt-card p-7 reveal reveal-d1" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+                    <div class="flex items-center justify-between mb-5">
+                        <span class="font-heading font-bold text-lg text-zinc-900">Парк #1</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold" style="background: #fef3c7; color: #92400e;">Топ выбор</span>
+                    </div>
+                    <div class="flex items-center gap-1 mb-4">
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star-empty material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="text-sm text-zinc-500 ml-2">4.2</span>
+                    </div>
+                    <div class="space-y-3 text-sm text-zinc-600 mb-6">
+                        <div class="flex justify-between"><span>Комиссия</span><span class="font-semibold text-zinc-900">3%</span></div>
+                        <div class="flex justify-between"><span>Аренда / сутки</span><span class="font-semibold text-zinc-900">2 100 &#8381;</span></div>
+                        <div class="flex justify-between"><span>Выплаты</span><span class="font-semibold text-zinc-900">Ежедневно</span></div>
+                    </div>
+                    <div class="pt-4 border-t border-zinc-100 flex items-center gap-2 text-xs text-zinc-400">
+                        <span class="material-symbols-outlined" style="font-size:16px;">group</span>
+                        <span>324 отзыва</span>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="tilt-card p-7 reveal reveal-d2" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+                    <div class="flex items-center justify-between mb-5">
+                        <span class="font-heading font-bold text-lg text-zinc-900">Парк #2</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold" style="background: #dcfce7; color: #166534;">Новый</span>
+                    </div>
+                    <div class="flex items-center gap-1 mb-4">
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="text-sm text-zinc-500 ml-2">4.8</span>
+                    </div>
+                    <div class="space-y-3 text-sm text-zinc-600 mb-6">
+                        <div class="flex justify-between"><span>Комиссия</span><span class="font-semibold text-zinc-900">2%</span></div>
+                        <div class="flex justify-between"><span>Аренда / сутки</span><span class="font-semibold text-zinc-900">1 800 &#8381;</span></div>
+                        <div class="flex justify-between"><span>Выплаты</span><span class="font-semibold text-zinc-900">Ежедневно</span></div>
+                    </div>
+                    <div class="pt-4 border-t border-zinc-100 flex items-center gap-2 text-xs text-zinc-400">
+                        <span class="material-symbols-outlined" style="font-size:16px;">group</span>
+                        <span>187 отзывов</span>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="tilt-card p-7 reveal reveal-d3" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+                    <div class="flex items-center justify-between mb-5">
+                        <span class="font-heading font-bold text-lg text-zinc-900">Парк #3</span>
+                    </div>
+                    <div class="flex items-center gap-1 mb-4">
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star-empty material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star-empty material-symbols-outlined" style="font-size:20px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="text-sm text-zinc-500 ml-2">3.1</span>
+                    </div>
+                    <div class="space-y-3 text-sm text-zinc-600 mb-6">
+                        <div class="flex justify-between"><span>Комиссия</span><span class="font-semibold text-zinc-900">5%</span></div>
+                        <div class="flex justify-between"><span>Аренда / сутки</span><span class="font-semibold text-zinc-900">2 500 &#8381;</span></div>
+                        <div class="flex justify-between"><span>Выплаты</span><span class="font-semibold text-zinc-900">Раз в неделю</span></div>
+                    </div>
+                    <div class="pt-4 border-t border-zinc-100 flex items-center gap-2 text-xs text-zinc-400">
+                        <span class="material-symbols-outlined" style="font-size:16px;">group</span>
+                        <span>512 отзывов</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== STATS ==================== -->
+    <section class="py-20 px-6" style="background: #18181b;">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center reveal reveal-d1">
+                    <div class="font-heading text-3xl md:text-5xl font-extrabold mb-2" style="color:#f59e0b;" data-counter="1247">0</div>
+                    <div class="text-sm text-zinc-400">Таксопарков в базе</div>
+                </div>
+                <div class="text-center reveal reveal-d2">
+                    <div class="font-heading text-3xl md:text-5xl font-extrabold text-white mb-2" data-counter="18640">0</div>
+                    <div class="text-sm text-zinc-400">Отзывов водителей</div>
+                </div>
+                <div class="text-center reveal reveal-d3">
+                    <div class="font-heading text-3xl md:text-5xl font-extrabold mb-2" style="color:#f59e0b;" data-counter="89">0</div>
+                    <div class="text-sm text-zinc-400">Городов России</div>
+                </div>
+                <div class="text-center reveal reveal-d1">
+                    <div class="font-heading text-3xl md:text-5xl font-extrabold text-white mb-2" data-counter="4">0</div>
+                    <div class="text-sm text-zinc-400">Средний рейтинг</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== TESTIMONIALS ==================== -->
+    <section class="py-24 px-6" style="background: #fff;">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="font-heading text-3xl md:text-4xl font-bold text-zinc-900 text-center mb-4 reveal">
+                Что говорят водители
+            </h2>
+            <p class="text-zinc-500 text-center mb-16 max-w-lg mx-auto reveal reveal-d1">
+                Истории тех, кто уже нашел свой идеальный парк
+            </p>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="tilt-card p-6 reveal reveal-d1" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+                    <div class="flex items-center gap-1 mb-4">
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                    </div>
+                    <p class="text-zinc-600 text-sm mb-5 leading-relaxed">
+                        "Благодаря ТаксиБрат я вовремя узнал про задержки выплат в моем парке. Перешел в другой -- теперь получаю деньги каждый день."
+                    </p>
+                    <div class="flex items-center gap-3 pt-4 border-t border-zinc-100">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff;">
+                            <span class="font-heading font-bold text-xs">АК</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-zinc-900">Алексей К.</div>
+                            <div class="text-xs text-zinc-400">Москва, стаж 3 года</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tilt-card p-6 reveal reveal-d2" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+                    <div class="flex items-center gap-1 mb-4">
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star-empty material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                    </div>
+                    <p class="text-zinc-600 text-sm mb-5 leading-relaxed">
+                        "Сравнил три парка в Питере. Разница в комиссии огромная -- экономлю больше 15 тысяч в месяц. Жалею что не нашел раньше."
+                    </p>
+                    <div class="flex items-center gap-3 pt-4 border-t border-zinc-100">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff;">
+                            <span class="font-heading font-bold text-xs">ДМ</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-zinc-900">Дмитрий М.</div>
+                            <div class="text-xs text-zinc-400">Санкт-Петербург, стаж 5 лет</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tilt-card p-6 reveal reveal-d3" onmousemove="tilt(event, this)" onmouseleave="resetTilt(this)">
+                    <div class="flex items-center gap-1 mb-4">
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                        <span class="star material-symbols-outlined" style="font-size:18px; font-variation-settings:'FILL' 1;">star</span>
+                    </div>
+                    <p class="text-zinc-600 text-sm mb-5 leading-relaxed">
+                        "Новичкам -- обязательно проверяйте. Чуть не подписал договор с парком без лицензии. ТаксиБрат уберег от серьезной ошибки."
+                    </p>
+                    <div class="flex items-center gap-3 pt-4 border-t border-zinc-100">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff;">
+                            <span class="font-heading font-bold text-xs">ИВ</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-zinc-900">Игорь В.</div>
+                            <div class="text-xs text-zinc-400">Казань, стаж 1 год</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== HOW IT WORKS ==================== -->
+    <section id="how" class="py-24 px-6" style="background: #fffbf0;">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="font-heading text-3xl md:text-4xl font-bold text-zinc-900 text-center mb-4 reveal">
+                Как это работает
+            </h2>
+            <p class="text-zinc-500 text-center mb-16 max-w-md mx-auto reveal reveal-d1">
+                Шесть простых шагов до осознанного выбора
+            </p>
+
+            <div class="steps-scroll">
+                <div class="step-card bg-white rounded-2xl p-6 shadow-sm reveal reveal-d1">
+                    <div class="step-num mb-4">1</div>
+                    <h3 class="font-heading font-bold text-base text-zinc-900 mb-2">Введите название парка</h3>
+                    <p class="text-zinc-500 text-sm">Начните вводить название -- мы найдем парк в нашей базе</p>
+                </div>
+                <div class="step-card bg-white rounded-2xl p-6 shadow-sm reveal reveal-d2">
+                    <div class="step-num mb-4">2</div>
+                    <h3 class="font-heading font-bold text-base text-zinc-900 mb-2">Изучите рейтинг</h3>
+                    <p class="text-zinc-500 text-sm">Общий балл на основе отзывов реальных водителей</p>
+                </div>
+                <div class="step-card bg-white rounded-2xl p-6 shadow-sm reveal reveal-d3">
+                    <div class="step-num mb-4">3</div>
+                    <h3 class="font-heading font-bold text-base text-zinc-900 mb-2">Сравните условия</h3>
+                    <p class="text-zinc-500 text-sm">Комиссия, аренда, выплаты -- все в одной карточке</p>
+                </div>
+                <div class="step-card bg-white rounded-2xl p-6 shadow-sm reveal reveal-d1">
+                    <div class="step-num mb-4">4</div>
+                    <h3 class="font-heading font-bold text-base text-zinc-900 mb-2">Прочитайте отзывы</h3>
+                    <p class="text-zinc-500 text-sm">Истории водителей: плюсы, минусы, подводные камни</p>
+                </div>
+                <div class="step-card bg-white rounded-2xl p-6 shadow-sm reveal reveal-d2">
+                    <div class="step-num mb-4">5</div>
+                    <h3 class="font-heading font-bold text-base text-zinc-900 mb-2">Проверьте документы</h3>
+                    <p class="text-zinc-500 text-sm">Лицензии, разрешения, юридический статус парка</p>
+                </div>
+                <div class="step-card bg-white rounded-2xl p-6 shadow-sm reveal reveal-d3">
+                    <div class="step-num mb-4">6</div>
+                    <h3 class="font-heading font-bold text-base text-zinc-900 mb-2">Примите решение</h3>
+                    <p class="text-zinc-500 text-sm">Вся информация перед глазами -- выбирайте осознанно</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CTA ==================== -->
+    <section id="cta" class="gradient-hero relative py-24 px-6 text-center overflow-hidden">
+        <div class="mesh-overlay"></div>
+        <div class="relative z-10">
+            <h2 class="font-heading text-3xl md:text-4xl font-bold text-white mb-6 reveal" style="text-shadow: 0 2px 16px rgba(217,119,6,0.3);">
+                Готовы узнать правду?
+            </h2>
+            <p class="text-white/70 mb-10 max-w-md mx-auto reveal reveal-d1">
+                Не рискуйте. Проверьте таксопарк перед тем, как начать работу.
+            </p>
+            <a href="#" class="cta-btn reveal reveal-d2">Проверить свой парк</a>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="py-12 px-6" style="background: #18181b;">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-2">
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="#18181b" stroke="#f59e0b" stroke-width="2"/>
+                    <path d="M8 22h16l-2-8H10l-2 8zm4-10h8v2H12v-2z" fill="#f59e0b"/>
+                </svg>
+                <span class="font-heading text-sm font-bold text-zinc-400">TаксиБрат</span>
+            </div>
+            <div class="flex gap-8 text-sm text-zinc-500">
+                <a href="#" class="hover:text-zinc-300 transition-colors no-underline">О проекте</a>
+                <a href="#" class="hover:text-zinc-300 transition-colors no-underline">Контакты</a>
+                <a href="#" class="hover:text-zinc-300 transition-colors no-underline">Политика конфиденциальности</a>
+            </div>
+            <span class="text-xs text-zinc-600">2026 TаксиБрат. Все права защищены.</span>
+        </div>
+    </footer>
+
+    <!-- ==================== JS ==================== -->
+    <script>
+        /* Scroll reveal */
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        /* Counter animation */
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const target = parseInt(el.dataset.counter);
+                    const duration = 2000;
+                    const start = performance.now();
+                    const animate = (now) => {
+                        const elapsed = now - start;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const eased = 1 - Math.pow(1 - progress, 3);
+                        el.textContent = Math.round(target * eased).toLocaleString('ru-RU');
+                        if (progress < 1) requestAnimationFrame(animate);
+                    };
+                    requestAnimationFrame(animate);
+                    counterObserver.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+        document.querySelectorAll('[data-counter]').forEach(el => counterObserver.observe(el));
+
+        /* 3D tilt on cards */
+        function tilt(e, el) {
+            const rect = el.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -6;
+            const rotateY = ((x - centerX) / centerX) * 6;
+            el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+        }
+        function resetTilt(el) {
+            el.style.transform = 'perspective(800px) rotateX(0) rotateY(0) scale(1)';
+        }
+    </script>
+</body>
+</html>

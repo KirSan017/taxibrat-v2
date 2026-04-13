@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ТаксиБрат — Vintage Garage</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Overpass+Mono:wght@300;400;600;700&family=Stint+Ultra+Expanded&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   VINTAGE GARAGE — Retro Automotive 1960s/70s
+   ═══════════════════════════════════════════════════ */
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cream: #f4edd8;
+  --cream-dark: #e8dcbc;
+  --rust: #b44a2d;
+  --rust-light: #d05a3a;
+  --rust-dark: #8a3620;
+  --olive: #5a6340;
+  --olive-light: #6a7450;
+  --brown: #3d2b1f;
+  --brown-light: #5a4030;
+  --tan: #c9b896;
+  --tan-dark: #a89870;
+  --dark: #2a1f14;
+  --warm: #e8d9b8;
+  --warm-light: #f0e8d0;
+  --ink: #332211;
+  --ink-light: #554433;
+  --faded: #8a7a60;
+  --gold: #b8952a;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Libre Baskerville', serif;
+  font-weight: 400;
+  line-height: 1.8;
+  overflow-x: hidden;
+  /* Subtle paper texture via SVG noise */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+}
+
+::selection { background: var(--rust); color: var(--cream); }
+a { color: var(--rust); text-decoration: none; font-weight: 700; }
+a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════
+   DECORATIVE ELEMENTS
+   ═══════════════════════════════════════════════════ */
+
+/* Ornamental rule */
+.ornament {
+  text-align: center;
+  padding: 1.5rem 0;
+  color: var(--tan-dark);
+  font-size: .8rem;
+  letter-spacing: .3em;
+}
+
+/* Diamond separator */
+.sep {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .8rem;
+  padding: 2rem 0;
+  color: var(--tan);
+}
+
+.sep::before,
+.sep::after {
+  content: '';
+  flex: 1;
+  max-width: 140px;
+  height: 0;
+  border-top: 1px solid var(--tan);
+}
+
+.sep .diamond {
+  width: 8px;
+  height: 8px;
+  background: var(--rust);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* Double diamond */
+.sep-double {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  padding: 2rem 0;
+}
+
+.sep-double .d {
+  width: 6px;
+  height: 6px;
+  background: var(--rust);
+  transform: rotate(45deg);
+}
+
+.sep-double .line {
+  width: 60px;
+  height: 0;
+  border-top: 1px solid var(--tan);
+}
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════ */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--brown);
+  border-bottom: 3px double var(--tan);
+}
+
+nav .inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .75rem 2rem;
+}
+
+nav .logo {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: 1.15rem;
+  color: var(--cream);
+  letter-spacing: .1em;
+}
+
+nav ul { list-style: none; display: flex; gap: 1.5rem; }
+
+nav li a {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--tan);
+  transition: color .2s;
+}
+
+nav li a:hover { color: var(--cream); text-decoration: none; }
+
+nav .m-toggle {
+  display: none;
+  font-family: 'Overpass Mono', monospace;
+  font-size: .6rem;
+  font-weight: 700;
+  color: var(--tan);
+  letter-spacing: .1em;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════════ */
+.hero {
+  text-align: center;
+  padding: 5.5rem 2rem 4.5rem;
+  position: relative;
+  background: var(--brown);
+  color: var(--cream);
+  border-bottom: 4px double var(--tan);
+}
+
+/* Radial warm glow */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(180,74,45,.08), transparent 65%);
+  pointer-events: none;
+}
+
+.hero h1 {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: clamp(2.2rem, 7vw, 5rem);
+  line-height: 1;
+  position: relative;
+  letter-spacing: .06em;
+  color: var(--cream);
+}
+
+.hero .sub {
+  font-family: 'Libre Baskerville', serif;
+  font-style: italic;
+  font-size: clamp(.9rem, 2.2vw, 1.2rem);
+  color: var(--tan);
+  margin-top: 1.3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Vintage badge */
+.vintage-badge {
+  display: inline-block;
+  margin-top: 2.5rem;
+  padding: .5rem 2.2rem;
+  border: 2px solid var(--tan);
+  border-radius: 50px;
+  font-family: 'Overpass Mono', monospace;
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--tan);
+  transform: rotate(-2deg);
+  position: relative;
+}
+
+.vintage-badge::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 1px solid var(--tan);
+  border-radius: 50px;
+  opacity: .25;
+}
+
+.vintage-badge::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border: 1px dashed var(--tan);
+  border-radius: 50px;
+  opacity: .12;
+}
+
+/* Hero stat boxes */
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  text-align: center;
+}
+
+.hero-stat .hsv {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: 1.8rem;
+  color: var(--cream);
+  display: block;
+}
+
+.hero-stat .hsl {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .5rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--tan-dark);
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTIONS
+   ═══════════════════════════════════════════════════ */
+.section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 4.5rem 2rem;
+  opacity: 0;
+  transform: translateY(22px);
+  transition: all .6s ease;
+}
+
+.section.visible { opacity: 1; transform: none; }
+
+.section-head {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.section-head .num {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .35em;
+  text-transform: uppercase;
+  color: var(--faded);
+  display: block;
+  margin-bottom: .6rem;
+}
+
+.section-head h2 {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: clamp(1.3rem, 3.5vw, 1.9rem);
+  color: var(--brown);
+  letter-spacing: .04em;
+}
+
+/* Section intro text */
+.section-intro {
+  font-size: .88rem;
+  font-style: italic;
+  color: var(--ink-light);
+  max-width: 650px;
+  margin: 0 auto 2rem;
+  text-align: center;
+  line-height: 1.9;
+}
+
+/* ═══════════════════════════════════════════════════
+   AGED CARDS (Architecture)
+   ═══════════════════════════════════════════════════ */
+.aged-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.aged-card {
+  background: var(--warm);
+  border: 1px solid var(--tan);
+  padding: 1.8rem;
+  position: relative;
+  box-shadow: 2px 3px 10px rgba(50,30,15,.1);
+  transition: transform .3s, box-shadow .3s;
+}
+
+.aged-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 2px 8px 20px rgba(50,30,15,.18);
+}
+
+/* Top accent stripe */
+.aged-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--rust);
+}
+
+/* Corner stitch mark */
+.aged-card::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  border-bottom: 1px solid var(--tan-dark);
+  border-right: 1px solid var(--tan-dark);
+  opacity: .5;
+}
+
+.aged-card h3 {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--rust);
+  margin-bottom: .5rem;
+}
+
+.aged-card .card-desc {
+  font-size: .78rem;
+  font-style: italic;
+  color: var(--faded);
+  margin-bottom: .5rem;
+}
+
+.aged-card ul { list-style: none; padding: 0; }
+
+.aged-card ul li {
+  padding: .25rem 0 .25rem 1.4rem;
+  font-size: .88rem;
+  position: relative;
+}
+
+.aged-card ul li::before {
+  content: '\25C6';
+  position: absolute;
+  left: 0;
+  color: var(--olive);
+  font-size: .45rem;
+  top: .55rem;
+}
+
+/* Summary metrics */
+.aged-metrics {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.aged-metric {
+  flex: 1;
+  min-width: 120px;
+  background: var(--warm);
+  border: 1px solid var(--tan);
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 2px 2px 6px rgba(50,30,15,.08);
+}
+
+.aged-metric .am-val {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: 1.4rem;
+  color: var(--rust);
+  display: block;
+}
+
+.aged-metric .am-label {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .48rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--faded);
+}
+
+/* ═══════════════════════════════════════════════════
+   JOURNEY STEPS
+   ═══════════════════════════════════════════════════ */
+.journey-intro {
+  font-size: .85rem;
+  font-style: italic;
+  color: var(--ink-light);
+  margin-bottom: 2rem;
+  padding: 1rem 1.5rem;
+  background: var(--warm);
+  border-left: 3px solid var(--rust);
+}
+
+.vintage-steps { counter-reset: vs; }
+
+.v-step {
+  counter-increment: vs;
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.8rem 0;
+  border-bottom: 1px solid var(--tan);
+  transition: background .2s;
+}
+
+.v-step:hover { background: rgba(200,180,140,.15); }
+.v-step:last-child { border-bottom: none; }
+
+.v-step-num {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--rust);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: 1.3rem;
+  color: var(--rust);
+  position: relative;
+  transition: background .3s, color .3s;
+}
+
+.v-step:hover .v-step-num {
+  background: var(--rust);
+  color: var(--cream);
+}
+
+.v-step-body { flex: 1; }
+
+.v-step-body h3 {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--brown);
+  margin-bottom: .3rem;
+}
+
+.v-step-body p {
+  font-size: .88rem;
+  color: var(--ink);
+  line-height: 1.8;
+}
+
+.v-step-body .step-detail {
+  font-size: .78rem;
+  font-style: italic;
+  color: var(--faded);
+  margin-top: .3rem;
+}
+
+.v-tag {
+  display: inline-block;
+  margin-top: .5rem;
+  font-family: 'Overpass Mono', monospace;
+  font-size: .55rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: .2rem .7rem;
+  border-radius: 2px;
+}
+
+.v-tag.open { background: var(--olive); color: var(--cream); }
+.v-tag.locked { background: var(--rust); color: var(--cream); }
+
+/* ═══════════════════════════════════════════════════
+   PARK PATHS
+   ═══════════════════════════════════════════════════ */
+.park-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+}
+
+.park-box {
+  background: var(--warm);
+  border: 1px solid var(--tan);
+  padding: 2.2rem;
+  box-shadow: 2px 3px 10px rgba(50,30,15,.1);
+  transition: box-shadow .3s;
+}
+
+.park-box:hover {
+  box-shadow: 4px 6px 18px rgba(50,30,15,.16);
+}
+
+.park-box h3 {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: 1.05rem;
+  color: var(--brown);
+  margin-bottom: 1rem;
+}
+
+.park-box.v2 h3 { color: var(--rust); }
+
+.park-box p { font-size: .88rem; line-height: 1.9; }
+
+.park-box .box-note {
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px dashed var(--tan);
+  font-size: .78rem;
+  font-style: italic;
+  color: var(--faded);
+}
+
+.arr {
+  font-family: 'Overpass Mono', monospace;
+  font-weight: 700;
+  color: var(--rust);
+  margin: 0 .25rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   MONEY
+   ═══════════════════════════════════════════════════ */
+.money-list { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.money-item {
+  display: grid;
+  grid-template-columns: 65px 1fr;
+  gap: 1.5rem;
+  background: var(--warm);
+  border: 1px solid var(--tan);
+  padding: 1.8rem;
+  box-shadow: 2px 3px 8px rgba(50,30,15,.08);
+  transition: transform .3s;
+}
+
+.money-item:hover { transform: translateX(6px); }
+
+.money-item .mi-num {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: 2.2rem;
+  color: var(--rust);
+  opacity: .4;
+  text-align: center;
+}
+
+.money-item h3 {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--brown);
+  margin-bottom: .25rem;
+}
+
+.money-item .mi-model {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .68rem;
+  color: var(--olive);
+  margin-bottom: .4rem;
+  letter-spacing: .08em;
+}
+
+.money-item p { font-size: .85rem; }
+
+.money-item .mi-note {
+  margin-top: .5rem;
+  font-size: .72rem;
+  font-style: italic;
+  color: var(--faded);
+}
+
+/* ═══════════════════════════════════════════════════
+   TABLE
+   ═══════════════════════════════════════════════════ */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+}
+
+thead {
+  background: var(--brown);
+  color: var(--cream);
+  font-family: 'Overpass Mono', monospace;
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+th { padding: .75rem .9rem; text-align: left; }
+
+td { padding: .55rem .9rem; border-bottom: 1px solid var(--tan); }
+
+tbody tr:nth-child(odd) { background: rgba(201,184,150,.2); }
+tbody tr:hover { background: rgba(180,74,45,.06); }
+
+.stg {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .52rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: .16rem .55rem;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.stg.mvp { background: var(--olive); color: var(--cream); }
+.stg.v2 { background: var(--rust); color: var(--cream); }
+.stg.v3 { background: var(--brown); color: var(--cream); }
+
+.table-note {
+  font-size: .72rem;
+  font-style: italic;
+  color: var(--faded);
+  margin-top: .75rem;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════
+   ECONOMICS
+   ═══════════════════════════════════════════════════ */
+.econ-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.econ-card {
+  background: var(--warm);
+  border: 1px solid var(--tan);
+  padding: 2.5rem 2rem;
+  box-shadow: 2px 3px 10px rgba(50,30,15,.1);
+  text-align: center;
+}
+
+.econ-card .ec-label {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: .8rem;
+}
+
+.econ-card .ec-big {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: clamp(1.6rem, 4.5vw, 3rem);
+  color: var(--brown);
+  margin-bottom: .5rem;
+}
+
+.econ-card .ec-desc {
+  font-size: .85rem;
+  color: var(--ink-light);
+  margin-bottom: 1rem;
+}
+
+.econ-card .ec-formula {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .75rem;
+  background: var(--brown);
+  color: var(--cream);
+  padding: .85rem 1.2rem;
+  text-align: left;
+  line-height: 1.8;
+}
+
+/* Metrics row */
+.econ-metrics-strip {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.econ-m-item {
+  flex: 1;
+  min-width: 120px;
+  background: var(--warm);
+  border: 1px solid var(--tan);
+  padding: 1rem;
+  text-align: center;
+}
+
+.econ-m-item .emv {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: 1.3rem;
+  color: var(--rust);
+  display: block;
+}
+
+.econ-m-item .eml {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .48rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--faded);
+}
+
+/* ═══════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════ */
+footer {
+  background: var(--brown);
+  color: var(--tan);
+  text-align: center;
+  padding: 3rem;
+  border-top: 3px double var(--tan);
+}
+
+footer .f-logo {
+  font-family: 'Stint Ultra Expanded', serif;
+  font-size: 1.1rem;
+  color: var(--cream);
+  letter-spacing: .08em;
+}
+
+footer .f-line {
+  width: 40px;
+  height: 0;
+  border-top: 2px solid var(--rust);
+  margin: 1rem auto;
+}
+
+footer .f-text {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .6rem;
+  letter-spacing: .18em;
+  color: var(--tan-dark);
+}
+
+footer .f-copy {
+  font-family: 'Overpass Mono', monospace;
+  font-size: .5rem;
+  color: #5a4a38;
+  letter-spacing: .12em;
+  margin-top: .5rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  nav ul { display: none; }
+  nav .m-toggle { display: block; }
+  .aged-grid, .park-duo, .econ-duo { grid-template-columns: 1fr; }
+  .v-step { flex-direction: column; align-items: flex-start; gap: .75rem; }
+  .money-item { grid-template-columns: 1fr; }
+  .money-item .mi-num { text-align: left; }
+  .hero-stats { gap: 1.5rem; }
+  .aged-metrics, .econ-metrics-strip { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .section { padding: 3rem 1.2rem; }
+  .hero { padding: 4rem 1.5rem 3.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <div class="logo">ТаксиБрат</div>
+    <span class="m-toggle">&#9776; MENU</span>
+    <ul>
+      <li><a href="#arch">Архитектура</a></li>
+      <li><a href="#driver">Водитель</a></li>
+      <li><a href="#park">Парк</a></li>
+      <li><a href="#money">Монетизация</a></li>
+      <li><a href="#scenarios">Сценарии</a></li>
+      <li><a href="#econ">Экономика</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <h1>ТаксиБрат</h1>
+  <p class="sub">Аудитор таксопарков &#8212; объективные рейтинги от тайных покупателей</p>
+  <div class="vintage-badge">Product Guide &#9670; Est. 2026</div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <span class="hsv">27</span>
+      <span class="hsl">Параметров</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hsv">0&#8212;5</span>
+      <span class="hsl">Рейтинг</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hsv">13</span>
+      <span class="hsl">Сценариев</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hsv">0 &#8381;</span>
+      <span class="hsl">Инфра</span>
+    </div>
+  </div>
+</section>
+
+<div class="sep"><span class="diamond"></span></div>
+
+<!-- ═══════════ ARCHITECTURE ═══════════ -->
+<section class="section" id="arch">
+  <div class="section-head">
+    <span class="num">Раздел первый</span>
+    <h2>Архитектура системы</h2>
+  </div>
+  <p class="section-intro">Серверлесс-стек на бесплатных тирах. Единая кодовая база для мобильного интерфейса водителя и десктопной панели менеджера.</p>
+  <div class="aged-grid">
+    <div class="aged-card">
+      <h3>Frontend + Backend</h3>
+      <div class="card-desc">Единый монолит</div>
+      <ul>
+        <li>Next.js 15 монолит</li>
+        <li>Mobile-first + desktop admin</li>
+        <li>Vercel hosting (free)</li>
+      </ul>
+    </div>
+    <div class="aged-card">
+      <h3>База данных</h3>
+      <div class="card-desc">Типобезопасный ORM</div>
+      <ul>
+        <li>Prisma 7 ORM</li>
+        <li>PostgreSQL (Supabase free)</li>
+        <li>Автоматические миграции</li>
+      </ul>
+    </div>
+    <div class="aged-card">
+      <h3>Авторизация</h3>
+      <div class="card-desc">Telegram-нативная</div>
+      <ul>
+        <li>NextAuth</li>
+        <li>Telegram Login Widget</li>
+        <li>JWT-сессии</li>
+      </ul>
+    </div>
+    <div class="aged-card">
+      <h3>Rating Engine</h3>
+      <div class="card-desc">Ядро продукта</div>
+      <ul>
+        <li>27 параметров &#215; веса</li>
+        <li>Итоговый рейтинг 0 &#8212; 5</li>
+        <li>Прозрачная формула</li>
+      </ul>
+    </div>
+  </div>
+  <div class="aged-metrics">
+    <div class="aged-metric">
+      <span class="am-val">0 &#8381;</span>
+      <span class="am-label">Затраты</span>
+    </div>
+    <div class="aged-metric">
+      <span class="am-val">27</span>
+      <span class="am-label">Параметров</span>
+    </div>
+    <div class="aged-metric">
+      <span class="am-val">0&#8212;5</span>
+      <span class="am-label">Рейтинг</span>
+    </div>
+    <div class="aged-metric">
+      <span class="am-val">1</span>
+      <span class="am-label">Монолит</span>
+    </div>
+  </div>
+</section>
+
+<div class="sep-double">
+  <span class="line"></span>
+  <span class="d"></span>
+  <span class="d"></span>
+  <span class="d"></span>
+  <span class="line"></span>
+</div>
+
+<!-- ═══════════ DRIVER JOURNEY ═══════════ -->
+<section class="section" id="driver">
+  <div class="section-head">
+    <span class="num">Раздел второй</span>
+    <h2>Путь водителя</h2>
+  </div>
+  <div class="journey-intro">
+    Воронка из 6 шагов &#8212; от бесплатного привлечения до монетизируемого контакта. Первые 3 шага без авторизации для максимального охвата.
+  </div>
+  <div class="vintage-steps">
+    <div class="v-step">
+      <div class="v-step-num">1</div>
+      <div class="v-step-body">
+        <h3>Hook (лендинг)</h3>
+        <p>Строка поиска «Введите название парка», топ-3 скрытых парка.</p>
+        <div class="step-detail">Конверсия: посетитель &#8594; заинтересованный</div>
+        <span class="v-tag open">Без авторизации</span>
+      </div>
+    </div>
+    <div class="v-step">
+      <div class="v-step-num">2</div>
+      <div class="v-step-body">
+        <h3>«Горькая правда»</h3>
+        <p>Текущий рейтинг парка (например 3.1/5), список слабых параметров.</p>
+        <div class="step-detail">Эмоциональный триггер через неудовлетворённость</div>
+        <span class="v-tag open">Без авторизации</span>
+      </div>
+    </div>
+    <div class="v-step">
+      <div class="v-step-num">3</div>
+      <div class="v-step-body">
+        <h3>Каталог</h3>
+        <p>Фильтрованный список, названия скрыты («Парк #12»), рейтинги видны.</p>
+        <div class="step-detail">Есть лучшие парки &#8212; но нужен доступ</div>
+        <span class="v-tag open">Без авторизации</span>
+      </div>
+    </div>
+    <div class="v-step">
+      <div class="v-step-num">4</div>
+      <div class="v-step-body">
+        <h3>Регистрация + верификация</h3>
+        <p>Telegram-логин, загрузка фото ВУ + селфи. Ключевой барьер.</p>
+        <div class="step-detail">Фильтрация: только реальные водители</div>
+        <span class="v-tag locked">Барьер</span>
+      </div>
+    </div>
+    <div class="v-step">
+      <div class="v-step-num">5</div>
+      <div class="v-step-body">
+        <h3>Одобрение</h3>
+        <p>Менеджер проверяет данные, бот отправляет контакты парка через Telegram.</p>
+        <div class="step-detail">Контакт = лид. Момент монетизации</div>
+        <span class="v-tag locked">Авторизация</span>
+      </div>
+    </div>
+    <div class="v-step">
+      <div class="v-step-num">6</div>
+      <div class="v-step-body">
+        <h3>Чат с куратором</h3>
+        <p>Прямой Telegram-чат с менеджером.</p>
+        <div class="step-detail">Повышение конверсии лида</div>
+        <span class="v-tag locked">Авторизация</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"><span class="diamond"></span></div>
+
+<!-- ═══════════ PARK JOURNEY ═══════════ -->
+<section class="section" id="park">
+  <div class="section-head">
+    <span class="num">Раздел третий</span>
+    <h2>Путь парка</h2>
+  </div>
+  <p class="section-intro">Два пути попадания в каталог: органический по инициативе платформы и платный по инициативе парка.</p>
+  <div class="park-duo">
+    <div class="park-box">
+      <h3>Органический (MVP)</h3>
+      <p>Тайный покупатель <span class="arr">&#9656;</span> аудит <span class="arr">&#9656;</span> менеджер заполняет 40+ полей <span class="arr">&#9656;</span> рейтинг <span class="arr">&#9656;</span> каталог</p>
+      <div class="box-note">Парк не знает о присутствии. Аудит инициирован платформой.</div>
+    </div>
+    <div class="park-box v2">
+      <h3>Платный (v2)</h3>
+      <p>Регистрация <span class="arr">&#9656;</span> профиль <span class="arr">&#9656;</span> верификация <span class="arr">&#9656;</span> тариф <span class="arr">&#9656;</span> лиды</p>
+      <div class="box-note">Парк активно заинтересован. Платит за размещение и лиды.</div>
+    </div>
+  </div>
+</section>
+
+<div class="sep-double">
+  <span class="line"></span>
+  <span class="d"></span>
+  <span class="d"></span>
+  <span class="d"></span>
+  <span class="line"></span>
+</div>
+
+<!-- ═══════════ MONETIZATION ═══════════ -->
+<section class="section" id="money">
+  <div class="section-head">
+    <span class="num">Раздел четвёртый</span>
+    <h2>Монетизация</h2>
+  </div>
+  <p class="section-intro">Четыре канала дохода &#8212; от MVP с нулевыми затратами до масштабируемого маркетплейса.</p>
+  <div class="money-list">
+    <div class="money-item">
+      <div class="mi-num">I</div>
+      <div>
+        <h3>Скрытый лид (MVP)</h3>
+        <div class="mi-model">CPA 500 &#8212; 2 000 &#8381;/лид</div>
+        <p>Название парка скрыто до верификации водителя.</p>
+        <div class="mi-note">Основа монетизации с первого дня</div>
+      </div>
+    </div>
+    <div class="money-item">
+      <div class="mi-num">II</div>
+      <div>
+        <h3>Подписка парка (v2)</h3>
+        <div class="mi-model">SaaS 5 000 &#8212; 15 000 &#8381;/мес</div>
+        <p>Приоритетное размещение, аналитика, бейдж качества.</p>
+        <div class="mi-note">Рекуррентный доход, предсказуемый MRR</div>
+      </div>
+    </div>
+    <div class="money-item">
+      <div class="mi-num">III</div>
+      <div>
+        <h3>Реферальная программа (v2)</h3>
+        <div class="mi-model">Revenue share 10 &#8212; 15%</div>
+        <p>Процент от первого месяца работы водителя.</p>
+        <div class="mi-note">Мотивирует качественный мэтчинг</div>
+      </div>
+    </div>
+    <div class="money-item">
+      <div class="mi-num">IV</div>
+      <div>
+        <h3>Маркетплейс услуг (v3)</h3>
+        <div class="mi-model">Commission + Listing</div>
+        <p>Страхование, кредиты, ТО &#8212; комиссия с каждой сделки.</p>
+        <div class="mi-note">Экосистемный эффект, масштабирование</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"><span class="diamond"></span></div>
+
+<!-- ═══════════ 13 SCENARIOS ═══════════ -->
+<section class="section" id="scenarios">
+  <div class="section-head">
+    <span class="num">Раздел пятый</span>
+    <h2>Все 13 сценариев</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Сценарий</th><th>Кто платит</th><th>Модель</th><th>Прогноз</th><th>Стадия</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Скрытый лид</td><td>Парк</td><td>CPA</td><td>500 &#8212; 2 000 &#8381;/лид</td><td><span class="stg mvp">MVP</span></td></tr>
+        <tr><td>Приоритетное размещение</td><td>Парк</td><td>Подписка</td><td>5 000 &#8212; 15 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Аналитика по водителям</td><td>Парк</td><td>SaaS</td><td>3 000 &#8212; 10 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Бейдж «Проверенный парк»</td><td>Парк</td><td>Подписка</td><td>2 000 &#8212; 5 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Реферальная программа</td><td>Парк</td><td>Rev. share</td><td>10 &#8212; 15%</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Продвижение в каталоге</td><td>Парк</td><td>CPC / фикс</td><td>3 000 &#8212; 8 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Страхование водителей</td><td>Страховая</td><td>Комиссия</td><td>500 &#8212; 1 500 &#8381;/полис</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Кредит/лизинг на авто</td><td>Банк</td><td>Комиссия</td><td>2 000 &#8212; 10 000 &#8381;/сделка</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>ТО и ремонт</td><td>Сервис</td><td>Listing</td><td>500 &#8212; 3 000 &#8381;/заказ</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Обучение водителей</td><td>Образование</td><td>Комиссия</td><td>1 000 &#8212; 5 000 &#8381;/курс</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Аренда авто</td><td>Парк/водитель</td><td>Комиссия</td><td>2 000 &#8212; 5 000 &#8381;/сделка</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Рекламные интеграции</td><td>Рекламодатель</td><td>CPM</td><td>10 000 &#8212; 50 000 &#8381;/мес</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>White-label рейтинг</td><td>Агрегатор</td><td>B2B SaaS</td><td>50 000 &#8212; 200 000 &#8381;/мес</td><td><span class="stg v3">v3</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">&#9670; 13 сценариев &#183; 3 стадии &#183; 6 моделей выручки</p>
+</section>
+
+<div class="sep-double">
+  <span class="line"></span>
+  <span class="d"></span>
+  <span class="d"></span>
+  <span class="d"></span>
+  <span class="line"></span>
+</div>
+
+<!-- ═══════════ ECONOMICS ═══════════ -->
+<section class="section" id="econ">
+  <div class="section-head">
+    <span class="num">Раздел шестой</span>
+    <h2>Unit-экономика</h2>
+  </div>
+  <p class="section-intro">Нулевые затраты позволяют выйти на прибыль с первого лида. Рост через диверсификацию доходов.</p>
+  <div class="econ-duo">
+    <div class="econ-card">
+      <div class="ec-label">MVP</div>
+      <div class="ec-big">100 000 &#8381;/мес</div>
+      <p class="ec-desc">Только скрытые лиды, нулевые затраты на инфраструктуру.</p>
+      <div class="ec-formula">100 лидов/мес &#215; 1 000 &#8381; = 100 000 &#8381;<br>Инфраструктура: 0 &#8381;<br>Маржа: ~95%</div>
+    </div>
+    <div class="econ-card">
+      <div class="ec-label">v2 (20 парков)</div>
+      <div class="ec-big">175 000 &#8381;/мес</div>
+      <p class="ec-desc">Подписки + рефералы + приоритет.</p>
+      <div class="ec-formula">Подписки + рефералы + приоритет = ~175 000 &#8381;/мес<br>Предсказуемый MRR</div>
+    </div>
+  </div>
+  <div class="econ-metrics-strip">
+    <div class="econ-m-item">
+      <span class="emv">100</span>
+      <span class="eml">Лидов / мес</span>
+    </div>
+    <div class="econ-m-item">
+      <span class="emv">1 000 &#8381;</span>
+      <span class="eml">Ср. CPA</span>
+    </div>
+    <div class="econ-m-item">
+      <span class="emv">~95%</span>
+      <span class="eml">Маржа</span>
+    </div>
+    <div class="econ-m-item">
+      <span class="emv">20</span>
+      <span class="eml">Парков v2</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">ТаксиБрат</div>
+  <div class="f-line"></div>
+  <p class="f-text">&#9670; Product Guide &#183; 2026 &#9670;</p>
+  <p class="f-copy">Аудитор таксопарков &#183; Тайные покупатели &#183; Объективные рейтинги</p>
+</footer>
+
+<script>
+const sections = document.querySelectorAll('.section');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+sections.forEach(s => obs.observe(s));
+
+const links = document.querySelectorAll('nav a[href^="#"]');
+const sObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      links.forEach(l => l.style.color = l.getAttribute('href') === '#'+id ? 'var(--cream)' : '');
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.section[id]').forEach(s => sObs.observe(s));
+</script>
+</body>
+</html>

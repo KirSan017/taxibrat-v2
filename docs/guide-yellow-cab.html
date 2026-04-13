@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ТаксиБрат — Yellow Cab Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Courier+Prime:wght@400;700&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   NYC YELLOW CAB — Bold American Taxi Editorial
+   ═══════════════════════════════════════════════════ */
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --yellow: #ffc107;
+  --yellow-light: #ffd54f;
+  --yellow-dark: #ff8f00;
+  --black: #111111;
+  --black-soft: #222222;
+  --white: #f5f0e8;
+  --white-pure: #ffffff;
+  --red: #d32f2f;
+  --red-dark: #b71c1c;
+  --ink: #1a1a1a;
+  --ink-light: #444444;
+  --paper: #f5f0e8;
+  --paper-dark: #e8ddc8;
+  --grey: #999999;
+  --checker: 24px;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Courier Prime', monospace;
+  font-weight: 400;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--yellow); color: var(--black); }
+a { color: var(--red); text-decoration: none; font-weight: 700; }
+a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════
+   CHECKER PATTERN BAR
+   ═══════════════════════════════════════════════════ */
+.checker-bar {
+  height: var(--checker);
+  background: repeating-conic-gradient(
+    var(--black) 0% 25%,
+    var(--yellow) 0% 50%
+  ) 0 0 / var(--checker) var(--checker);
+  position: relative;
+}
+
+/* Optional thin checker */
+.checker-bar.thin {
+  height: 16px;
+  background-size: 16px 16px;
+}
+
+/* Double checker with gap */
+.checker-double {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.checker-double .checker-bar { height: 12px; background-size: 12px 12px; }
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════ */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--black);
+  border-bottom: 4px solid var(--yellow);
+}
+
+nav .inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .75rem 2rem;
+}
+
+nav .logo {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 1.7rem;
+  color: var(--yellow);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  position: relative;
+}
+
+nav .logo span { color: var(--white-pure); }
+
+/* Underline accent */
+nav .logo::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--red);
+}
+
+nav ul { list-style: none; display: flex; gap: 1.5rem; }
+
+nav li a {
+  font-family: 'Oswald', sans-serif;
+  font-size: .78rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--grey);
+  text-decoration: none;
+  transition: color .2s;
+  position: relative;
+}
+
+nav li a:hover { color: var(--yellow); }
+
+nav li a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--yellow);
+  transition: width .25s;
+}
+
+nav li a:hover::after { width: 100%; }
+
+/* Mobile */
+nav .menu-toggle {
+  display: none;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  color: var(--yellow);
+  font-size: .8rem;
+  letter-spacing: .1em;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════════ */
+.hero {
+  background: var(--black);
+  color: var(--white-pure);
+  padding: 6rem 2rem 5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Diagonal stripes background */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent, transparent 40px,
+    rgba(255,193,7,.03) 40px, rgba(255,193,7,.03) 80px
+  );
+  pointer-events: none;
+}
+
+/* Bottom yellow accent */
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--yellow);
+}
+
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(3.5rem, 11vw, 8rem);
+  line-height: .88;
+  color: var(--yellow);
+  text-transform: uppercase;
+  position: relative;
+  letter-spacing: -.02em;
+  margin-bottom: 1.5rem;
+}
+
+/* Decorative lines around title */
+.hero .title-decor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero .title-decor .line {
+  width: 80px;
+  height: 3px;
+  background: var(--yellow);
+}
+
+.hero .title-decor .diamond {
+  width: 10px;
+  height: 10px;
+  background: var(--red);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+.hero .sub {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(1rem, 2.8vw, 1.5rem);
+  font-weight: 400;
+  color: #bbbbbb;
+  margin-top: 1rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.hero .tagline {
+  margin-top: 1.5rem;
+  font-size: .82rem;
+  color: #666;
+  font-family: 'Courier Prime', monospace;
+  letter-spacing: .05em;
+}
+
+/* Stamp decoration */
+.stamp {
+  display: inline-block;
+  border: 3px solid var(--red);
+  color: var(--red);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  padding: .4rem 1.5rem;
+  transform: rotate(-3deg);
+  font-size: .82rem;
+  margin-top: 2rem;
+  position: relative;
+}
+
+.stamp::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 1px solid var(--red);
+  border-radius: 2px;
+  opacity: .35;
+}
+
+.stamp::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border: 1px dashed var(--red);
+  border-radius: 3px;
+  opacity: .15;
+}
+
+/* Hero stats bar */
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  text-align: center;
+}
+
+.hero-stat .hs-val {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 2rem;
+  color: var(--yellow);
+  display: block;
+}
+
+.hero-stat .hs-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: .6rem;
+  font-weight: 500;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTION LAYOUT
+   ═══════════════════════════════════════════════════ */
+.section {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 4.5rem 2rem;
+  opacity: 0;
+  transform: translateY(25px);
+  transition: all .65s ease;
+}
+
+.section.visible { opacity: 1; transform: none; }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 4px solid var(--black);
+  padding-bottom: 1.2rem;
+  position: relative;
+}
+
+/* Red accent dot */
+.section-head::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--red);
+  border-radius: 50%;
+}
+
+.section-num {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 3.5rem;
+  color: var(--yellow);
+  line-height: 1;
+  -webkit-text-stroke: 2px var(--black);
+}
+
+.section-head h2 {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 1.7rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.section-intro {
+  font-size: .88rem;
+  color: var(--ink-light);
+  margin-bottom: 2rem;
+  max-width: 700px;
+  line-height: 1.8;
+  border-left: 3px solid var(--yellow);
+  padding-left: 1.2rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   BOLD CARDS (Architecture)
+   ═══════════════════════════════════════════════════ */
+.bold-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  border: 3px solid var(--black);
+}
+
+.bold-card {
+  padding: 1.8rem;
+  border: 1px solid var(--black);
+  transition: background .25s;
+  position: relative;
+}
+
+.bold-card:hover { background: var(--yellow); }
+
+/* Hover state adjustments */
+.bold-card:hover h3 { color: var(--black); }
+.bold-card:hover h3 .icon { background: var(--red); color: var(--white-pure); }
+.bold-card:hover p,
+.bold-card:hover li { color: var(--black); }
+
+.bold-card h3 {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  margin-bottom: .6rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  transition: color .25s;
+}
+
+.bold-card h3 .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--black);
+  color: var(--yellow);
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: .7rem;
+  flex-shrink: 0;
+  transition: background .25s, color .25s;
+}
+
+.bold-card .card-desc {
+  font-size: .78rem;
+  color: var(--ink-light);
+  font-style: italic;
+  margin-bottom: .5rem;
+}
+
+.bold-card p, .bold-card li { font-size: .85rem; transition: color .25s; }
+
+.bold-card ul { list-style: none; padding: 0; }
+
+.bold-card ul li {
+  padding: .2rem 0 .2rem 1.2rem;
+  position: relative;
+}
+
+.bold-card ul li::before {
+  content: '\25AA';
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+  color: var(--red);
+}
+
+/* Summary row under grid */
+.arch-summary-row {
+  display: flex;
+  border: 3px solid var(--black);
+  border-top: none;
+}
+
+.arch-sum-item {
+  flex: 1;
+  padding: 1rem;
+  text-align: center;
+  border-right: 1px solid var(--black);
+  background: var(--paper-dark);
+}
+
+.arch-sum-item:last-child { border-right: none; }
+
+.arch-sum-item .asv {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: var(--black);
+  display: block;
+}
+
+.arch-sum-item .asl {
+  font-family: 'Oswald', sans-serif;
+  font-size: .55rem;
+  font-weight: 500;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+/* ═══════════════════════════════════════════════════
+   JOURNEY BLOCKS
+   ═══════════════════════════════════════════════════ */
+.journey-preface {
+  font-size: .85rem;
+  color: var(--ink-light);
+  margin-bottom: 2rem;
+  background: var(--paper-dark);
+  padding: 1.2rem;
+  border-left: 4px solid var(--red);
+}
+
+.journey { counter-reset: jstep; }
+
+.j-step {
+  counter-increment: jstep;
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.8rem 0;
+  border-bottom: 2px dashed #ccc;
+  position: relative;
+  transition: background .2s;
+}
+
+.j-step:hover { background: rgba(255,193,7,.04); }
+.j-step:last-child { border-bottom: none; }
+
+.j-num {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  background: var(--black);
+  color: var(--yellow);
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.j-num.barrier { background: var(--red); color: var(--white-pure); }
+
+/* Corner cut decoration on j-num */
+.j-num::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-bottom-color: var(--paper);
+  border-right-color: var(--paper);
+}
+
+.j-body { flex: 1; }
+
+.j-body h3 {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.1rem;
+  margin-bottom: .3rem;
+  letter-spacing: .03em;
+}
+
+.j-body p {
+  font-size: .85rem;
+  color: var(--ink-light);
+  line-height: 1.7;
+}
+
+.j-body .j-detail {
+  font-size: .78rem;
+  color: var(--grey);
+  margin-top: .3rem;
+  font-style: italic;
+}
+
+.j-tag {
+  display: inline-block;
+  margin-top: .6rem;
+  font-family: 'Oswald', sans-serif;
+  font-size: .65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  padding: .2rem .7rem;
+}
+
+.j-tag.open {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #2e7d32;
+}
+
+.j-tag.locked {
+  background: #fce4ec;
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+/* ═══════════════════════════════════════════════════
+   PARK SECTION
+   ═══════════════════════════════════════════════════ */
+.park-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+
+.park-box {
+  border: 3px solid var(--black);
+  padding: 2rem;
+  position: relative;
+  transition: box-shadow .3s;
+}
+
+.park-box:hover {
+  box-shadow: 6px 6px 0 var(--yellow);
+}
+
+.park-box::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -14px;
+  left: 20px;
+  background: var(--paper);
+  padding: 0 .6rem;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+.park-box.mvp { border-color: var(--black); }
+.park-box.mvp::before { color: var(--black); }
+
+.park-box.paid { border-color: var(--red); }
+.park-box.paid::before { color: var(--red); }
+
+.park-box p { font-size: .88rem; line-height: 1.8; }
+
+.park-box .box-note {
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px dashed var(--grey);
+  font-size: .78rem;
+  color: var(--grey);
+  font-style: italic;
+}
+
+.park-arrow {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  color: var(--yellow);
+  background: var(--black);
+  padding: .05rem .5rem;
+  margin: 0 .25rem;
+  font-size: .82rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   MONEY BLOCKS
+   ═══════════════════════════════════════════════════ */
+.money-stack { display: flex; flex-direction: column; gap: 0; }
+
+.money-row {
+  display: grid;
+  grid-template-columns: 65px 1fr 210px 140px;
+  align-items: center;
+  border: 2px solid var(--black);
+  border-top: none;
+  padding: 1.2rem 1.5rem;
+  font-size: .85rem;
+  transition: background .2s;
+}
+
+.money-row:first-child { border-top: 2px solid var(--black); }
+.money-row:nth-child(odd) { background: rgba(255,193,7,.06); }
+.money-row:hover { background: rgba(255,193,7,.15); }
+
+.money-row .mn {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: var(--yellow);
+  -webkit-text-stroke: 1px var(--black);
+}
+
+.money-row h3 {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: .92rem;
+  text-transform: uppercase;
+}
+
+.money-row p {
+  font-size: .78rem;
+  color: var(--ink-light);
+  margin-top: .2rem;
+}
+
+.money-row .model-tag {
+  font-family: 'Courier Prime', monospace;
+  font-size: .72rem;
+  background: var(--black);
+  color: var(--yellow);
+  padding: .25rem .7rem;
+  display: inline-block;
+}
+
+.money-row .rev {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: .85rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   TABLE
+   ═══════════════════════════════════════════════════ */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .8rem;
+}
+
+thead {
+  background: var(--black);
+  color: var(--yellow);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+th { padding: .85rem 1rem; text-align: left; }
+
+td {
+  padding: .65rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+tbody tr:hover { background: rgba(255,193,7,.1); }
+tbody tr:nth-child(even) { background: rgba(0,0,0,.02); }
+tbody tr:nth-child(even):hover { background: rgba(255,193,7,.1); }
+
+.badge {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: .62rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  padding: .18rem .55rem;
+  display: inline-block;
+}
+
+.badge.mvp { background: var(--yellow); color: var(--black); }
+.badge.v2 { background: var(--black); color: var(--yellow); }
+.badge.v3 { background: var(--red); color: var(--white-pure); }
+
+.table-note {
+  font-size: .72rem;
+  color: var(--grey);
+  margin-top: .75rem;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════
+   ECONOMICS
+   ═══════════════════════════════════════════════════ */
+.econ-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 3px solid var(--black);
+}
+
+.econ-box {
+  padding: 2.5rem;
+  position: relative;
+}
+
+.econ-box:first-child {
+  border-right: 3px solid var(--black);
+}
+
+.econ-box .tag {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .2em;
+  color: var(--red);
+  margin-bottom: .75rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.econ-box .tag::before {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 3px;
+  background: var(--red);
+}
+
+.econ-box .big {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  line-height: 1;
+  margin-bottom: .5rem;
+}
+
+.econ-box .econ-desc {
+  font-size: .85rem;
+  color: var(--ink-light);
+  margin-bottom: 1rem;
+}
+
+.econ-box .formula {
+  font-family: 'Courier Prime', monospace;
+  font-size: .8rem;
+  background: var(--black);
+  color: var(--yellow);
+  padding: .85rem 1.2rem;
+  margin-top: 1rem;
+  line-height: 1.8;
+}
+
+/* Bottom metrics strip */
+.econ-metrics {
+  display: flex;
+  border: 3px solid var(--black);
+  border-top: none;
+}
+
+.econ-metric {
+  flex: 1;
+  padding: 1rem;
+  text-align: center;
+  border-right: 1px solid var(--black);
+  background: var(--yellow);
+}
+
+.econ-metric:last-child { border-right: none; }
+
+.econ-metric .emv {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 1.3rem;
+  color: var(--black);
+  display: block;
+}
+
+.econ-metric .eml {
+  font-family: 'Oswald', sans-serif;
+  font-size: .5rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--black-soft);
+}
+
+/* ═══════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════ */
+footer {
+  background: var(--black);
+  color: #666;
+  padding: 3rem 2rem;
+  text-align: center;
+  font-family: 'Courier Prime', monospace;
+  font-size: .75rem;
+}
+
+footer .logo {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--yellow);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+footer .foot-line {
+  width: 80px;
+  height: 3px;
+  background: var(--red);
+  margin: 1rem auto;
+}
+
+footer .foot-copy {
+  font-size: .65rem;
+  color: #444;
+  margin-top: .5rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  nav ul { display: none; }
+  nav .menu-toggle { display: block; }
+  .bold-grid { grid-template-columns: 1fr; }
+  .park-cols, .econ-row { grid-template-columns: 1fr; }
+  .econ-box:first-child { border-right: none; border-bottom: 3px solid var(--black); }
+  .money-row { grid-template-columns: 50px 1fr; gap: .5rem; }
+  .money-row .model-tag, .money-row .rev { grid-column: 2; }
+  .j-num { width: 50px; height: 50px; font-size: 1.4rem; }
+  .hero h1 { font-size: 3rem; }
+  .hero-stats { gap: 1.5rem; }
+  .arch-summary-row { flex-direction: column; }
+  .arch-sum-item { border-right: none; border-bottom: 1px solid var(--black); }
+  .econ-metrics { flex-direction: column; }
+  .econ-metric { border-right: none; border-bottom: 1px solid var(--black); }
+}
+
+@media (max-width: 480px) {
+  .section { padding: 3rem 1.2rem; }
+  .hero { padding: 4rem 1.5rem 3rem; }
+  .section-num { font-size: 2.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="checker-bar"></div>
+
+<nav>
+  <div class="inner">
+    <div class="logo">Такси<span>Брат</span></div>
+    <span class="menu-toggle">&#9776; MENU</span>
+    <ul>
+      <li><a href="#arch">Архитектура</a></li>
+      <li><a href="#driver">Водитель</a></li>
+      <li><a href="#park">Парк</a></li>
+      <li><a href="#money">Деньги</a></li>
+      <li><a href="#scenarios">Сценарии</a></li>
+      <li><a href="#econ">Экономика</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="checker-double">
+  <div class="checker-bar"></div>
+  <div class="checker-bar"></div>
+</div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <div class="title-decor">
+    <span class="line"></span>
+    <span class="diamond"></span>
+    <span class="line"></span>
+  </div>
+  <h1>ТаксиБрат</h1>
+  <p class="sub">Аудитор таксопарков &#9642; объективные рейтинги от тайных покупателей</p>
+  <p class="tagline">&#9644;&#9644;&#9644; product guide &#9644;&#9644;&#9644;</p>
+  <div class="stamp">Product Guide 2026</div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <span class="hs-val">27</span>
+      <span class="hs-label">Параметров</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hs-val">0-5</span>
+      <span class="hs-label">Рейтинг</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hs-val">13</span>
+      <span class="hs-label">Сценариев</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hs-val">0 &#8381;</span>
+      <span class="hs-label">Инфраструктура</span>
+    </div>
+  </div>
+</section>
+
+<div class="checker-bar"></div>
+
+<!-- ═══════════ ARCHITECTURE ═══════════ -->
+<section class="section" id="arch">
+  <div class="section-head">
+    <div class="section-num">01</div>
+    <h2>Архитектура системы</h2>
+  </div>
+  <p class="section-intro">Серверлесс-стек на бесплатных тирах. Одна кодовая база обслуживает мобильный интерфейс водителя и десктопную панель менеджера.</p>
+  <div class="bold-grid">
+    <div class="bold-card">
+      <h3><span class="icon">F</span> Frontend + Backend</h3>
+      <div class="card-desc">Единый монолит</div>
+      <ul>
+        <li>Next.js 15 монолит</li>
+        <li>Mobile-first + desktop admin</li>
+        <li>Vercel hosting (free)</li>
+      </ul>
+    </div>
+    <div class="bold-card">
+      <h3><span class="icon">D</span> База данных</h3>
+      <div class="card-desc">Типобезопасный ORM</div>
+      <ul>
+        <li>Prisma 7 ORM</li>
+        <li>PostgreSQL</li>
+        <li>Supabase free tier</li>
+      </ul>
+    </div>
+    <div class="bold-card">
+      <h3><span class="icon">A</span> Авторизация</h3>
+      <div class="card-desc">Telegram-нативная</div>
+      <ul>
+        <li>NextAuth</li>
+        <li>Telegram Login Widget</li>
+        <li>JWT-сессии</li>
+      </ul>
+    </div>
+    <div class="bold-card">
+      <h3><span class="icon">R</span> Rating Engine</h3>
+      <div class="card-desc">Ядро продукта</div>
+      <ul>
+        <li>27 параметров</li>
+        <li>Настраиваемые веса</li>
+        <li>Итоговый рейтинг 0 &#8212; 5</li>
+      </ul>
+    </div>
+  </div>
+  <div class="arch-summary-row">
+    <div class="arch-sum-item">
+      <span class="asv">0 &#8381;</span>
+      <span class="asl">Затраты</span>
+    </div>
+    <div class="arch-sum-item">
+      <span class="asv">27</span>
+      <span class="asl">Параметров</span>
+    </div>
+    <div class="arch-sum-item">
+      <span class="asv">1</span>
+      <span class="asl">Кодовая база</span>
+    </div>
+    <div class="arch-sum-item">
+      <span class="asv">Free</span>
+      <span class="asl">Hosting</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ DRIVER JOURNEY ═══════════ -->
+<section class="section" id="driver">
+  <div class="section-head">
+    <div class="section-num">02</div>
+    <h2>Путь водителя</h2>
+  </div>
+  <div class="journey-preface">
+    Воронка из 6 шагов: от бесплатного привлечения до монетизируемого контакта. Первые 3 шага без авторизации для максимального охвата.
+  </div>
+  <div class="journey">
+    <div class="j-step">
+      <div class="j-num">1</div>
+      <div class="j-body">
+        <h3>Hook (лендинг)</h3>
+        <p>Строка поиска «Введите название парка», топ-3 скрытых парка. Никаких барьеров &#8212; чистое привлечение.</p>
+        <div class="j-detail">Конверсия: посетитель &#8594; заинтересованный пользователь</div>
+        <span class="j-tag open">Без авторизации</span>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">2</div>
+      <div class="j-body">
+        <h3>«Горькая правда»</h3>
+        <p>Текущий рейтинг парка (например 3.1/5), список слабых параметров. Шок-контент, мотивация к действию.</p>
+        <div class="j-detail">Эмоциональный триггер через неудовлетворённость</div>
+        <span class="j-tag open">Без авторизации</span>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num">3</div>
+      <div class="j-body">
+        <h3>Каталог</h3>
+        <p>Фильтрованный список, названия скрыты («Парк #12»), рейтинги видны. Интрига нарастает.</p>
+        <div class="j-detail">Есть лучшие парки &#8212; но нужен доступ</div>
+        <span class="j-tag open">Без авторизации</span>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num barrier">4</div>
+      <div class="j-body">
+        <h3>Регистрация + верификация</h3>
+        <p>Telegram-логин, загрузка фото водительского удостоверения + селфи. Ключевой барьер.</p>
+        <div class="j-detail">Фильтрация нецелевых &#8212; только реальные водители</div>
+        <span class="j-tag locked">Барьер</span>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num barrier">5</div>
+      <div class="j-body">
+        <h3>Одобрение</h3>
+        <p>Менеджер проверяет данные, бот отправляет контакты парка через Telegram.</p>
+        <div class="j-detail">Момент монетизации: контакт = лид</div>
+        <span class="j-tag locked">Авторизация</span>
+      </div>
+    </div>
+    <div class="j-step">
+      <div class="j-num barrier">6</div>
+      <div class="j-body">
+        <h3>Чат с куратором</h3>
+        <p>Прямой Telegram-чат с менеджером для сопровождения.</p>
+        <div class="j-detail">Повышение конверсии лида в трудоустройство</div>
+        <span class="j-tag locked">Авторизация</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="checker-bar thin"></div>
+
+<!-- ═══════════ PARK JOURNEY ═══════════ -->
+<section class="section" id="park">
+  <div class="section-head">
+    <div class="section-num">03</div>
+    <h2>Путь парка</h2>
+  </div>
+  <p class="section-intro">Два пути попадания парка в каталог: органический (инициатива платформы) и платный (инициатива парка).</p>
+  <div class="park-cols">
+    <div class="park-box mvp" data-label="Органический (MVP)">
+      <p>
+        Тайный покупатель проводит аудит
+        <span class="park-arrow">&#9654;</span>
+        менеджер заполняет 40+ полей
+        <span class="park-arrow">&#9654;</span>
+        рассчитывается рейтинг
+        <span class="park-arrow">&#9654;</span>
+        парк в каталоге
+      </p>
+      <div class="box-note">Парк не знает о присутствии. Аудит инициирован платформой.</div>
+    </div>
+    <div class="park-box paid" data-label="Платный (v2)">
+      <p>
+        Парк регистрируется
+        <span class="park-arrow">&#9654;</span>
+        заполняет профиль
+        <span class="park-arrow">&#9654;</span>
+        аудитор проверяет
+        <span class="park-arrow">&#9654;</span>
+        выбирает тариф
+        <span class="park-arrow">&#9654;</span>
+        получает лиды
+      </p>
+      <div class="box-note">Парк активно заинтересован. Платит за размещение и лиды.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ MONETIZATION ═══════════ -->
+<section class="section" id="money">
+  <div class="section-head">
+    <div class="section-num">04</div>
+    <h2>Монетизация</h2>
+  </div>
+  <p class="section-intro">Четыре канала дохода &#8212; от MVP до масштабируемого маркетплейса.</p>
+  <div class="money-stack">
+    <div class="money-row">
+      <div class="mn">01</div>
+      <div><h3>Скрытый лид (MVP)</h3><p>Название парка скрыто до верификации водителя. Основа монетизации.</p></div>
+      <div><span class="model-tag">CPA 500 &#8212; 2 000 &#8381;/лид</span></div>
+      <div class="rev">&#9642; MVP</div>
+    </div>
+    <div class="money-row">
+      <div class="mn">02</div>
+      <div><h3>Подписка парка (v2)</h3><p>Приоритет, аналитика, бейдж качества. Рекуррент.</p></div>
+      <div><span class="model-tag">SaaS 5 000 &#8212; 15 000 &#8381;/мес</span></div>
+      <div class="rev">&#9642; v2</div>
+    </div>
+    <div class="money-row">
+      <div class="mn">03</div>
+      <div><h3>Реферальная программа (v2)</h3><p>Процент от первого месяца работы водителя.</p></div>
+      <div><span class="model-tag">Revenue share 10 &#8212; 15%</span></div>
+      <div class="rev">&#9642; v2</div>
+    </div>
+    <div class="money-row">
+      <div class="mn">04</div>
+      <div><h3>Маркетплейс услуг (v3)</h3><p>Страхование, кредиты, ТО. Экосистема.</p></div>
+      <div><span class="model-tag">Commission + Listing</span></div>
+      <div class="rev">&#9642; v3</div>
+    </div>
+  </div>
+</section>
+
+<div class="checker-bar thin"></div>
+
+<!-- ═══════════ 13 SCENARIOS ═══════════ -->
+<section class="section" id="scenarios">
+  <div class="section-head">
+    <div class="section-num">05</div>
+    <h2>Все 13 сценариев</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Сценарий</th><th>Кто платит</th><th>Модель</th><th>Прогноз</th><th>Стадия</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Скрытый лид (водитель ищет парк)</td><td>Парк</td><td>CPA</td><td>500 &#8212; 2 000 &#8381;/лид</td><td><span class="badge mvp">MVP</span></td></tr>
+        <tr><td>Приоритетное размещение парка</td><td>Парк</td><td>Подписка</td><td>5 000 &#8212; 15 000 &#8381;/мес</td><td><span class="badge v2">v2</span></td></tr>
+        <tr><td>Аналитика по водителям</td><td>Парк</td><td>SaaS</td><td>3 000 &#8212; 10 000 &#8381;/мес</td><td><span class="badge v2">v2</span></td></tr>
+        <tr><td>Бейдж «Проверенный парк»</td><td>Парк</td><td>Подписка</td><td>2 000 &#8212; 5 000 &#8381;/мес</td><td><span class="badge v2">v2</span></td></tr>
+        <tr><td>Реферальная программа</td><td>Парк</td><td>Rev. share</td><td>10 &#8212; 15% от мес.</td><td><span class="badge v2">v2</span></td></tr>
+        <tr><td>Продвижение в каталоге</td><td>Парк</td><td>CPC / фикс</td><td>3 000 &#8212; 8 000 &#8381;/мес</td><td><span class="badge v2">v2</span></td></tr>
+        <tr><td>Страхование водителей</td><td>Страховая</td><td>Комиссия</td><td>500 &#8212; 1 500 &#8381;/полис</td><td><span class="badge v3">v3</span></td></tr>
+        <tr><td>Кредит/лизинг на авто</td><td>Банк/лизинг</td><td>Комиссия</td><td>2 000 &#8212; 10 000 &#8381;/сделка</td><td><span class="badge v3">v3</span></td></tr>
+        <tr><td>ТО и ремонт</td><td>Сервис</td><td>Listing</td><td>500 &#8212; 3 000 &#8381;/заказ</td><td><span class="badge v3">v3</span></td></tr>
+        <tr><td>Обучение водителей</td><td>Образование</td><td>Комиссия</td><td>1 000 &#8212; 5 000 &#8381;/курс</td><td><span class="badge v3">v3</span></td></tr>
+        <tr><td>Аренда авто</td><td>Парк/водитель</td><td>Комиссия</td><td>2 000 &#8212; 5 000 &#8381;/сделка</td><td><span class="badge v2">v2</span></td></tr>
+        <tr><td>Рекламные интеграции</td><td>Рекламодатель</td><td>CPM / фикс</td><td>10 000 &#8212; 50 000 &#8381;/мес</td><td><span class="badge v3">v3</span></td></tr>
+        <tr><td>White-label рейтинг</td><td>Агрегатор</td><td>B2B SaaS</td><td>50 000 &#8212; 200 000 &#8381;/мес</td><td><span class="badge v3">v3</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">&#9642; 13 сценариев &#183; 3 стадии &#183; 6 моделей выручки</p>
+</section>
+
+<!-- ═══════════ UNIT ECONOMICS ═══════════ -->
+<section class="section" id="econ">
+  <div class="section-head">
+    <div class="section-num">06</div>
+    <h2>Unit-экономика</h2>
+  </div>
+  <p class="section-intro">Нулевые затраты позволяют выйти на прибыль с первого лида.</p>
+  <div class="econ-row">
+    <div class="econ-box">
+      <div class="tag">MVP</div>
+      <div class="big">100 000 &#8381;/мес</div>
+      <p class="econ-desc">Только скрытые лиды, нулевые затраты на инфраструктуру.</p>
+      <div class="formula">100 лидов/мес &#215; 1 000 &#8381; = 100 000 &#8381;<br>Инфраструктура: 0 &#8381; (Vercel + Supabase free)</div>
+    </div>
+    <div class="econ-box">
+      <div class="tag">v2 (20 парков)</div>
+      <div class="big">175 000 &#8381;/мес</div>
+      <p class="econ-desc">Подписки + рефералы + приоритетное размещение.</p>
+      <div class="formula">Подписки + рефералы + приоритет = ~175 000 &#8381;/мес</div>
+    </div>
+  </div>
+  <div class="econ-metrics">
+    <div class="econ-metric">
+      <span class="emv">100</span>
+      <span class="eml">Лидов / мес</span>
+    </div>
+    <div class="econ-metric">
+      <span class="emv">1 000 &#8381;</span>
+      <span class="eml">Ср. CPA</span>
+    </div>
+    <div class="econ-metric">
+      <span class="emv">~95%</span>
+      <span class="eml">Маржа</span>
+    </div>
+    <div class="econ-metric">
+      <span class="emv">20</span>
+      <span class="eml">Парков v2</span>
+    </div>
+  </div>
+</section>
+
+<div class="checker-bar"></div>
+
+<footer>
+  <div class="logo">ТаксиБрат</div>
+  <div class="foot-line"></div>
+  <p>Product Guide &#9642; 2026</p>
+  <p class="foot-copy">Аудитор таксопарков &#183; Тайные покупатели &#183; Объективные рейтинги</p>
+</footer>
+
+<div class="checker-bar"></div>
+
+<script>
+/* Scroll reveal */
+const sections = document.querySelectorAll('.section');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+sections.forEach(s => obs.observe(s));
+
+/* Nav active highlighting */
+const links = document.querySelectorAll('nav a[href^="#"]');
+const sObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      links.forEach(l => l.style.color = l.getAttribute('href') === '#'+id ? 'var(--yellow)' : '');
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.section[id]').forEach(s => sObs.observe(s));
+</script>
+</body>
+</html>

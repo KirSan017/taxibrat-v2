@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ТаксиБрат — Night Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   NIGHT DASHBOARD — Car Dashboard at Night / HUD
+   ═══════════════════════════════════════════════════ */
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #080808;
+  --black-soft: #0f0f0f;
+  --panel: #0f0f0f;
+  --panel-hover: #141414;
+  --border: #1a1a1a;
+  --border-bright: #2a2a2a;
+  --green: #00c853;
+  --green-soft: #00c85388;
+  --green-dim: #0a3d1a;
+  --amber: #ff9100;
+  --amber-soft: #ff910088;
+  --amber-dim: #3d2600;
+  --red: #ff1744;
+  --red-soft: #ff174488;
+  --text: #8a9098;
+  --text-bright: #b0b8c0;
+  --white: #e0e0e0;
+  --glow-g: 0 0 6px #00c85344, 0 0 20px #00c85322;
+  --glow-g-strong: 0 0 8px #00c85366, 0 0 25px #00c85344, 0 0 50px #00c85322;
+  --glow-a: 0 0 6px #ff910044, 0 0 20px #ff910022;
+  --glow-a-strong: 0 0 8px #ff910066, 0 0 25px #ff910044;
+  --glow-r: 0 0 6px #ff174444, 0 0 20px #ff174422;
+}
+
+html { scroll-behavior: smooth; font-size: 15px; }
+
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--green); color: var(--black); }
+a { color: var(--green); text-decoration: none; }
+a:hover { color: var(--amber); }
+
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════ */
+@keyframes gauge-fill {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(var(--gauge-deg, 180deg)); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .6; }
+}
+
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: var(--glow-g); }
+  50% { box-shadow: var(--glow-g-strong); }
+}
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════ */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8,8,8,.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+nav .inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .65rem 2rem;
+}
+
+nav .logo {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--green);
+  letter-spacing: .12em;
+  text-shadow: var(--glow-g);
+  position: relative;
+}
+
+/* Status dot */
+nav .logo::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: var(--glow-g);
+  margin-right: .6rem;
+  vertical-align: middle;
+  animation: pulse 2s infinite;
+}
+
+nav ul { list-style: none; display: flex; gap: 1.5rem; }
+
+nav li a {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 500;
+  font-size: .7rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text);
+  transition: color .2s;
+}
+
+nav li a:hover { color: var(--green); }
+
+nav .m-toggle {
+  display: none;
+  font-family: 'Orbitron', sans-serif;
+  font-size: .55rem;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: .15em;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════════ */
+.hero {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle radial glow */
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,200,83,.04), transparent 70%);
+  top: -200px;
+  pointer-events: none;
+}
+
+/* Speedometer ring */
+.speedo {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  margin-bottom: 2.5rem;
+  position: relative;
+  background: conic-gradient(
+    var(--green) 0deg 90deg,
+    var(--amber) 90deg 200deg,
+    var(--red) 200deg 270deg,
+    var(--border) 270deg 360deg
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px rgba(0,200,83,.08);
+}
+
+.speedo::before {
+  content: '';
+  width: 185px;
+  height: 185px;
+  border-radius: 50%;
+  background: var(--black);
+  position: absolute;
+}
+
+/* Inner ring */
+.speedo::after {
+  content: '';
+  width: 195px;
+  height: 195px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  position: absolute;
+}
+
+.speedo .val {
+  position: relative;
+  z-index: 1;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 2.8rem;
+  color: var(--green);
+  text-shadow: var(--glow-g-strong);
+}
+
+.speedo .unit {
+  position: absolute;
+  bottom: 32%;
+  z-index: 1;
+  font-family: 'Barlow', sans-serif;
+  font-size: .6rem;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+/* Tick marks around speedo */
+.speedo .tick-marks {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1px dashed var(--border-bright);
+}
+
+.hero h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2rem, 5.5vw, 3.8rem);
+  color: var(--white);
+  letter-spacing: .1em;
+}
+
+.hero .sub {
+  font-size: 1rem;
+  color: var(--text);
+  margin-top: .8rem;
+  font-weight: 400;
+  letter-spacing: .04em;
+}
+
+.hero .tag {
+  margin-top: 2rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: .52rem;
+  font-weight: 500;
+  letter-spacing: .35em;
+  color: var(--amber);
+  text-shadow: var(--glow-a);
+}
+
+/* Status indicators row */
+.hero-status {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hero-status .hs-item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: .5rem;
+  font-weight: 500;
+  letter-spacing: .1em;
+  color: var(--text);
+}
+
+.hero-status .hs-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: var(--glow-g);
+}
+
+.hero-status .hs-dot.warn {
+  background: var(--amber);
+  box-shadow: var(--glow-a);
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTIONS
+   ═══════════════════════════════════════════════════ */
+.section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 4.5rem 2rem;
+  opacity: 0;
+  transform: translateY(28px);
+  transition: all .65s ease;
+}
+
+.section.visible { opacity: 1; transform: none; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: .8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-header .indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: var(--glow-g);
+  flex-shrink: 0;
+  animation: glow-breathe 3s infinite;
+}
+
+.section-header h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  font-size: clamp(1rem, 2.8vw, 1.45rem);
+  color: var(--white);
+  letter-spacing: .06em;
+}
+
+.section-header .code {
+  font-family: 'Barlow', sans-serif;
+  font-size: .58rem;
+  font-weight: 500;
+  letter-spacing: .18em;
+  color: var(--text);
+  margin-left: auto;
+  padding: .15rem .6rem;
+  border: 1px solid var(--border);
+}
+
+.section-desc {
+  font-size: .85rem;
+  color: var(--text);
+  max-width: 700px;
+  margin-bottom: 2rem;
+  line-height: 1.8;
+}
+
+/* ═══════════════════════════════════════════════════
+   HUD CARDS (Architecture)
+   ═══════════════════════════════════════════════════ */
+.hud-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.hud-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 1.8rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .3s, background .3s;
+}
+
+.hud-card:hover {
+  border-color: var(--green);
+  background: var(--panel-hover);
+}
+
+/* Top accent line */
+.hud-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--green), transparent);
+}
+
+/* Corner mark */
+.hud-card::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-top: 1px solid var(--green-soft);
+  border-right: 1px solid var(--green-soft);
+  opacity: .3;
+}
+
+.hud-card:hover::after { opacity: .7; }
+
+.hud-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .7rem;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: .12em;
+  margin-bottom: .8rem;
+}
+
+.hud-card .hud-desc {
+  font-size: .72rem;
+  color: var(--text);
+  font-style: italic;
+  margin-bottom: .5rem;
+  opacity: .7;
+}
+
+.hud-card ul { list-style: none; padding: 0; }
+
+.hud-card ul li {
+  padding: .25rem 0 .25rem 1.2rem;
+  font-size: .84rem;
+  position: relative;
+}
+
+.hud-card ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: .6rem;
+  width: 5px;
+  height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: var(--glow-g);
+}
+
+/* ═══════════════════════════════════════════════════
+   GAUGE ROW (circular indicators)
+   ═══════════════════════════════════════════════════ */
+.gauge-row {
+  display: flex;
+  gap: 2.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2.5rem 0;
+}
+
+.gauge {
+  width: 105px;
+  height: 105px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: var(--black);
+}
+
+/* Outer ring */
+.gauge::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px dashed var(--border);
+}
+
+.gauge .g-val {
+  position: relative;
+  z-index: 1;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--white);
+}
+
+.gauge .g-label {
+  position: absolute;
+  bottom: -1.8rem;
+  font-size: .48rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.gauge.g1 { background: conic-gradient(var(--green) 0deg 216deg, var(--border) 216deg); }
+.gauge.g2 { background: conic-gradient(var(--amber) 0deg 252deg, var(--border) 252deg); }
+.gauge.g3 { background: conic-gradient(var(--green) 0deg 288deg, var(--border) 288deg); }
+.gauge.g4 { background: conic-gradient(var(--green) 0deg 342deg, var(--border) 342deg); }
+
+/* ═══════════════════════════════════════════════════
+   HUD STEPS (Journey)
+   ═══════════════════════════════════════════════════ */
+.hud-intro {
+  font-size: .82rem;
+  color: var(--text);
+  margin-bottom: 2rem;
+  padding-left: 1.2rem;
+  border-left: 2px solid var(--amber);
+}
+
+.hud-steps { counter-reset: hs; }
+
+.hs {
+  counter-increment: hs;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 1.8rem 1.8rem 1.8rem 5.5rem;
+  margin-bottom: .8rem;
+  position: relative;
+  transition: border-color .3s, background .3s;
+}
+
+.hs:hover {
+  border-color: var(--amber);
+  background: var(--panel-hover);
+}
+
+/* Step number */
+.hs::before {
+  content: counter(hs, decimal-leading-zero);
+  position: absolute;
+  left: 1.3rem;
+  top: 1.5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--amber);
+  text-shadow: var(--glow-a);
+}
+
+/* Separator line */
+.hs::after {
+  content: '';
+  position: absolute;
+  left: 4.3rem;
+  top: .6rem;
+  bottom: .6rem;
+  width: 1px;
+  background: var(--border);
+}
+
+.hs h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: .06em;
+  margin-bottom: .35rem;
+}
+
+.hs p { font-size: .84rem; line-height: 1.75; }
+
+.hs .hs-detail {
+  font-size: .72rem;
+  color: var(--text);
+  margin-top: .3rem;
+  opacity: .7;
+  font-style: italic;
+}
+
+.hs-tag {
+  display: inline-block;
+  margin-top: .5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: .48rem;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: .15rem .65rem;
+  border-radius: 1px;
+}
+
+.hs-tag.open { border: 1px solid var(--green); color: var(--green); }
+.hs-tag.locked { border: 1px solid var(--red); color: var(--red); }
+
+/* ═══════════════════════════════════════════════════
+   PARK
+   ═══════════════════════════════════════════════════ */
+.park-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.park-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  position: relative;
+  transition: border-color .3s;
+}
+
+.park-card:hover { border-color: var(--green); }
+
+.park-card::before {
+  content: attr(data-label);
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  transform: translateY(-50%);
+  background: var(--black);
+  padding: 0 .6rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: .48rem;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.park-card.mvp::before { color: var(--green); }
+.park-card.v2::before { color: var(--amber); }
+.park-card.v2 { border-color: var(--amber-dim); }
+.park-card.v2:hover { border-color: var(--amber); }
+
+.park-card p { font-size: .84rem; line-height: 1.85; }
+
+.park-card .park-note {
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+  font-size: .72rem;
+  color: var(--text);
+  opacity: .7;
+  font-style: italic;
+}
+
+.park-card .arr {
+  color: var(--amber);
+  font-family: 'Orbitron', sans-serif;
+  font-size: .72rem;
+  margin: 0 .35rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   MONEY
+   ═══════════════════════════════════════════════════ */
+.money-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.money-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 1.8rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .3s, transform .25s;
+}
+
+.money-card:hover {
+  border-color: var(--amber);
+  transform: translateY(-3px);
+}
+
+/* Large background number */
+.money-card .m-num {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 3.5rem;
+  color: var(--border);
+  position: absolute;
+  top: -.5rem;
+  right: .5rem;
+  opacity: .5;
+}
+
+.money-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: .06em;
+  margin-bottom: .35rem;
+}
+
+.money-card .m-model {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .52rem;
+  color: var(--amber);
+  letter-spacing: .1em;
+  margin-bottom: .6rem;
+}
+
+.money-card p { font-size: .82rem; }
+
+.money-card .m-note {
+  margin-top: .6rem;
+  font-size: .68rem;
+  color: var(--text);
+  opacity: .6;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════
+   TABLE
+   ═══════════════════════════════════════════════════ */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  margin: 1.5rem 0;
+  background: var(--panel);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .76rem;
+}
+
+thead {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .52rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+th {
+  padding: .75rem .85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--green);
+  background: rgba(0,200,83,.03);
+}
+
+td {
+  padding: .55rem .85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:hover { background: rgba(0,200,83,.03); }
+tbody tr:nth-child(even) { background: rgba(0,0,0,.15); }
+tbody tr:nth-child(even):hover { background: rgba(0,200,83,.03); }
+
+.stg {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .42rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: .15rem .55rem;
+  display: inline-block;
+}
+
+.stg.mvp { border: 1px solid var(--green); color: var(--green); }
+.stg.v2 { border: 1px solid var(--amber); color: var(--amber); }
+.stg.v3 { border: 1px solid var(--red); color: var(--red); }
+
+.table-note {
+  padding: .65rem .85rem;
+  font-size: .55rem;
+  color: var(--text);
+  opacity: .5;
+  letter-spacing: .1em;
+}
+
+/* ═══════════════════════════════════════════════════
+   ECONOMICS
+   ═══════════════════════════════════════════════════ */
+.econ-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.econ-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  position: relative;
+}
+
+.econ-card .ec-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .5rem;
+  font-weight: 600;
+  letter-spacing: .25em;
+  color: var(--amber);
+  margin-bottom: 1.2rem;
+}
+
+/* Mini gauge for economics */
+.econ-gauge {
+  width: 130px;
+  height: 130px;
+  margin: 0 auto 1.2rem;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.econ-gauge::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: var(--panel);
+}
+
+.econ-gauge::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px dashed var(--border);
+}
+
+.econ-gauge.mvp {
+  background: conic-gradient(var(--green) 0deg 200deg, var(--border) 200deg);
+}
+
+.econ-gauge.v2 {
+  background: conic-gradient(var(--amber) 0deg 280deg, var(--border) 280deg);
+}
+
+.econ-gauge .eg-val {
+  position: relative;
+  z-index: 1;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: .9rem;
+  color: var(--white);
+}
+
+.econ-card .ec-amount {
+  font-size: .88rem;
+  color: var(--white);
+  margin-bottom: .5rem;
+}
+
+.econ-card .ec-desc {
+  font-size: .78rem;
+  color: var(--text);
+  margin-bottom: .75rem;
+}
+
+.econ-card .formula {
+  font-size: .72rem;
+  color: var(--text);
+  border-left: 2px solid var(--green);
+  padding: .6rem 1.2rem;
+  text-align: left;
+  background: rgba(0,200,83,.02);
+  line-height: 1.85;
+}
+
+/* Metrics strip */
+.econ-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .75rem;
+  margin-top: 2rem;
+}
+
+.econ-strip-item {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  text-align: center;
+}
+
+.econ-strip-item .esv {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--green);
+  text-shadow: var(--glow-g);
+  display: block;
+}
+
+.econ-strip-item .esl {
+  font-size: .45rem;
+  font-weight: 500;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-top: .2rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   SEPARATOR
+   ═══════════════════════════════════════════════════ */
+.h-sep {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.h-sep-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+/* ═══════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════ */
+footer {
+  text-align: center;
+  padding: 3.5rem 2rem;
+  border-top: 1px solid var(--border);
+}
+
+footer .f-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--green);
+  text-shadow: var(--glow-g);
+  letter-spacing: .15em;
+}
+
+footer .f-line {
+  width: 40px;
+  height: 2px;
+  background: var(--amber);
+  margin: 1rem auto;
+}
+
+footer .f-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .48rem;
+  font-weight: 500;
+  color: #333;
+  letter-spacing: .22em;
+}
+
+footer .f-copy {
+  font-size: .42rem;
+  color: #222;
+  letter-spacing: .15em;
+  margin-top: .5rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  nav ul { display: none; }
+  nav .m-toggle { display: block; }
+  .park-duo, .money-grid, .econ-pair { grid-template-columns: 1fr; }
+  .hud-grid { grid-template-columns: 1fr; }
+  .speedo { width: 160px; height: 160px; }
+  .speedo::before { width: 130px; height: 130px; }
+  .speedo::after { width: 140px; height: 140px; }
+  .hs { padding-left: 4.5rem; }
+  .gauge-row { gap: 2rem; }
+  .econ-strip { grid-template-columns: 1fr 1fr; }
+  .hero-status { gap: 1rem; }
+}
+
+@media (max-width: 480px) {
+  .section { padding: 3rem 1.2rem; }
+  .econ-strip { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <div class="logo">ТаксиБрат</div>
+    <span class="m-toggle">&#9776; NAV</span>
+    <ul>
+      <li><a href="#arch">Архитектура</a></li>
+      <li><a href="#driver">Водитель</a></li>
+      <li><a href="#park">Парк</a></li>
+      <li><a href="#money">Монетизация</a></li>
+      <li><a href="#scenarios">Сценарии</a></li>
+      <li><a href="#econ">Экономика</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <div class="speedo">
+    <span class="tick-marks"></span>
+    <span class="val">5.0</span>
+    <span class="unit">Max Rating</span>
+  </div>
+  <h1>ТаксиБрат</h1>
+  <p class="sub">Аудитор таксопарков &#8212; объективные рейтинги от тайных покупателей</p>
+  <p class="tag">&#9644; Night Dashboard &#9644; Product Guide 2026 &#9644;</p>
+  <div class="hero-status">
+    <div class="hs-item"><span class="hs-dot"></span> SYSTEM ONLINE</div>
+    <div class="hs-item"><span class="hs-dot warn"></span> 27 PARAMS</div>
+    <div class="hs-item"><span class="hs-dot"></span> RATING ENGINE</div>
+    <div class="hs-item"><span class="hs-dot"></span> FREE INFRA</div>
+  </div>
+</section>
+
+<div class="h-sep"><div class="h-sep-line"></div></div>
+
+<!-- ═══════════ ARCHITECTURE ═══════════ -->
+<section class="section" id="arch">
+  <div class="section-header">
+    <span class="indicator"></span>
+    <h2>Архитектура</h2>
+    <span class="code">SYS-01</span>
+  </div>
+  <p class="section-desc">Серверлесс-стек на бесплатных тирах. Единая кодовая база для мобильного интерфейса и десктопной админки.</p>
+  <div class="hud-grid">
+    <div class="hud-card">
+      <h3>Frontend + Backend</h3>
+      <div class="hud-desc">Единый монолит</div>
+      <ul>
+        <li>Next.js 15 монолит</li>
+        <li>Mobile-first + desktop admin</li>
+        <li>Vercel hosting (free)</li>
+      </ul>
+    </div>
+    <div class="hud-card">
+      <h3>База данных</h3>
+      <div class="hud-desc">Типобезопасный ORM</div>
+      <ul>
+        <li>Prisma 7 ORM</li>
+        <li>PostgreSQL (Supabase free)</li>
+      </ul>
+    </div>
+    <div class="hud-card">
+      <h3>Авторизация</h3>
+      <div class="hud-desc">Telegram-нативная</div>
+      <ul>
+        <li>NextAuth</li>
+        <li>Telegram Login Widget</li>
+      </ul>
+    </div>
+    <div class="hud-card">
+      <h3>Rating Engine</h3>
+      <div class="hud-desc">Ядро продукта</div>
+      <ul>
+        <li>27 параметров &#215; веса</li>
+        <li>Итог: рейтинг 0 &#8212; 5</li>
+      </ul>
+    </div>
+  </div>
+  <div class="gauge-row">
+    <div class="gauge g1"><span class="g-val">27</span><span class="g-label">Параметров</span></div>
+    <div class="gauge g2"><span class="g-val">0-5</span><span class="g-label">Рейтинг</span></div>
+    <div class="gauge g3"><span class="g-val">0 &#8381;</span><span class="g-label">Инфра</span></div>
+    <div class="gauge g4"><span class="g-val">95%</span><span class="g-label">Маржа</span></div>
+  </div>
+</section>
+
+<div class="h-sep"><div class="h-sep-line"></div></div>
+
+<!-- ═══════════ DRIVER JOURNEY ═══════════ -->
+<section class="section" id="driver">
+  <div class="section-header">
+    <span class="indicator"></span>
+    <h2>Путь водителя</h2>
+    <span class="code">DRV-02</span>
+  </div>
+  <p class="hud-intro">Воронка из 6 шагов. Первые 3 без авторизации для максимального охвата. Барьер на 4-м шаге фильтрует нецелевых.</p>
+  <div class="hud-steps">
+    <div class="hs">
+      <h3>Hook (лендинг)</h3>
+      <p>Строка поиска «Введите название парка», топ-3 скрытых парка.</p>
+      <div class="hs-detail">Конверсия: посетитель &#8594; заинтересованный</div>
+      <span class="hs-tag open">Без авторизации</span>
+    </div>
+    <div class="hs">
+      <h3>«Горькая правда»</h3>
+      <p>Текущий рейтинг парка (например 3.1/5), список слабых параметров.</p>
+      <div class="hs-detail">Эмоциональный триггер &#8212; неудовлетворённость</div>
+      <span class="hs-tag open">Без авторизации</span>
+    </div>
+    <div class="hs">
+      <h3>Каталог</h3>
+      <p>Фильтрованный список, названия скрыты («Парк #12»), рейтинги видны.</p>
+      <div class="hs-detail">Есть лучшие парки, но нужен доступ</div>
+      <span class="hs-tag open">Без авторизации</span>
+    </div>
+    <div class="hs">
+      <h3>Регистрация + верификация</h3>
+      <p>Telegram-логин, загрузка фото ВУ + селфи. Ключевой барьер.</p>
+      <div class="hs-detail">Фильтрация: только реальные водители</div>
+      <span class="hs-tag locked">Барьер</span>
+    </div>
+    <div class="hs">
+      <h3>Одобрение</h3>
+      <p>Менеджер проверяет данные, бот отправляет контакты парка через Telegram.</p>
+      <div class="hs-detail">Контакт = лид. Момент монетизации</div>
+      <span class="hs-tag locked">Авторизация</span>
+    </div>
+    <div class="hs">
+      <h3>Чат с куратором</h3>
+      <p>Прямой Telegram-чат с менеджером.</p>
+      <div class="hs-detail">Повышение конверсии лида</div>
+      <span class="hs-tag locked">Авторизация</span>
+    </div>
+  </div>
+</section>
+
+<div class="h-sep"><div class="h-sep-line"></div></div>
+
+<!-- ═══════════ PARK ═══════════ -->
+<section class="section" id="park">
+  <div class="section-header">
+    <span class="indicator"></span>
+    <h2>Путь парка</h2>
+    <span class="code">PRK-03</span>
+  </div>
+  <p class="section-desc">Два пути попадания в каталог: органический и платный.</p>
+  <div class="park-duo">
+    <div class="park-card mvp" data-label="Органический (MVP)">
+      <p>Тайный покупатель <span class="arr">&#9656;</span> аудит <span class="arr">&#9656;</span> менеджер 40+ полей <span class="arr">&#9656;</span> рейтинг <span class="arr">&#9656;</span> каталог</p>
+      <div class="park-note">Парк не знает о присутствии. Аудит инициирован платформой.</div>
+    </div>
+    <div class="park-card v2" data-label="Платный (v2)">
+      <p>Регистрация <span class="arr">&#9656;</span> профиль <span class="arr">&#9656;</span> верификация <span class="arr">&#9656;</span> тариф <span class="arr">&#9656;</span> лиды</p>
+      <div class="park-note">Парк активно заинтересован. Платит за размещение.</div>
+    </div>
+  </div>
+</section>
+
+<div class="h-sep"><div class="h-sep-line"></div></div>
+
+<!-- ═══════════ MONETIZATION ═══════════ -->
+<section class="section" id="money">
+  <div class="section-header">
+    <span class="indicator"></span>
+    <h2>Монетизация</h2>
+    <span class="code">REV-04</span>
+  </div>
+  <p class="section-desc">Четыре канала дохода от MVP до масштабируемого маркетплейса.</p>
+  <div class="money-grid">
+    <div class="money-card">
+      <span class="m-num">01</span>
+      <h3>Скрытый лид (MVP)</h3>
+      <div class="m-model">CPA 500 &#8212; 2 000 &#8381;/лид</div>
+      <p>Название парка скрыто до верификации.</p>
+      <div class="m-note">Основа монетизации с первого дня</div>
+    </div>
+    <div class="money-card">
+      <span class="m-num">02</span>
+      <h3>Подписка парка (v2)</h3>
+      <div class="m-model">SaaS 5 000 &#8212; 15 000 &#8381;/мес</div>
+      <p>Приоритет, аналитика, бейдж.</p>
+      <div class="m-note">Рекуррентный MRR</div>
+    </div>
+    <div class="money-card">
+      <span class="m-num">03</span>
+      <h3>Реферальная программа (v2)</h3>
+      <div class="m-model">Revenue share 10 &#8212; 15%</div>
+      <p>Процент от первого месяца водителя.</p>
+      <div class="m-note">Мотивация качественного мэтчинга</div>
+    </div>
+    <div class="money-card">
+      <span class="m-num">04</span>
+      <h3>Маркетплейс услуг (v3)</h3>
+      <div class="m-model">Commission + Listing</div>
+      <p>Страхование, кредиты, ТО.</p>
+      <div class="m-note">Экосистемный эффект</div>
+    </div>
+  </div>
+</section>
+
+<div class="h-sep"><div class="h-sep-line"></div></div>
+
+<!-- ═══════════ 13 SCENARIOS ═══════════ -->
+<section class="section" id="scenarios">
+  <div class="section-header">
+    <span class="indicator"></span>
+    <h2>13 сценариев</h2>
+    <span class="code">SCN-05</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Сценарий</th><th>Кто платит</th><th>Модель</th><th>Прогноз</th><th>Стадия</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Скрытый лид</td><td>Парк</td><td>CPA</td><td>500 &#8212; 2 000 &#8381;/лид</td><td><span class="stg mvp">MVP</span></td></tr>
+        <tr><td>Приоритетное размещение</td><td>Парк</td><td>Подписка</td><td>5 000 &#8212; 15 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Аналитика по водителям</td><td>Парк</td><td>SaaS</td><td>3 000 &#8212; 10 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Бейдж «Проверенный парк»</td><td>Парк</td><td>Подписка</td><td>2 000 &#8212; 5 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Реферальная программа</td><td>Парк</td><td>Rev. share</td><td>10 &#8212; 15%</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Продвижение в каталоге</td><td>Парк</td><td>CPC / фикс</td><td>3 000 &#8212; 8 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Страхование водителей</td><td>Страховая</td><td>Комиссия</td><td>500 &#8212; 1 500 &#8381;/полис</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Кредит/лизинг</td><td>Банк</td><td>Комиссия</td><td>2 000 &#8212; 10 000 &#8381;/сделка</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>ТО и ремонт</td><td>Сервис</td><td>Listing</td><td>500 &#8212; 3 000 &#8381;/заказ</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Обучение водителей</td><td>Образование</td><td>Комиссия</td><td>1 000 &#8212; 5 000 &#8381;/курс</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Аренда авто</td><td>Парк/водитель</td><td>Комиссия</td><td>2 000 &#8212; 5 000 &#8381;/сделка</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Рекламные интеграции</td><td>Рекламодатель</td><td>CPM</td><td>10 000 &#8212; 50 000 &#8381;/мес</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>White-label рейтинг</td><td>Агрегатор</td><td>B2B SaaS</td><td>50 000 &#8212; 200 000 &#8381;/мес</td><td><span class="stg v3">v3</span></td></tr>
+      </tbody>
+    </table>
+    <div class="table-note">&#9632; 13 сценариев &#183; 3 стадии &#183; 6 моделей</div>
+  </div>
+</section>
+
+<div class="h-sep"><div class="h-sep-line"></div></div>
+
+<!-- ═══════════ ECONOMICS ═══════════ -->
+<section class="section" id="econ">
+  <div class="section-header">
+    <span class="indicator"></span>
+    <h2>Unit-экономика</h2>
+    <span class="code">ECN-06</span>
+  </div>
+  <p class="section-desc">Нулевые затраты на инфраструктуру. Прибыль с первого лида.</p>
+  <div class="econ-pair">
+    <div class="econ-card">
+      <div class="ec-label">MVP</div>
+      <div class="econ-gauge mvp">
+        <span class="eg-val">100K</span>
+      </div>
+      <p class="ec-amount">100 000 &#8381;/мес</p>
+      <p class="ec-desc">Только скрытые лиды, нулевые затраты.</p>
+      <div class="formula">100 лидов/мес &#215; 1 000 &#8381; = 100 000 &#8381;<br>Инфраструктура: 0 &#8381;<br>Маржа: ~95%</div>
+    </div>
+    <div class="econ-card">
+      <div class="ec-label">v2 (20 парков)</div>
+      <div class="econ-gauge v2">
+        <span class="eg-val">175K</span>
+      </div>
+      <p class="ec-amount">175 000 &#8381;/мес</p>
+      <p class="ec-desc">Подписки + рефералы + приоритет.</p>
+      <div class="formula">Подписки + рефералы + приоритет = ~175 000 &#8381;/мес<br>Предсказуемый MRR</div>
+    </div>
+  </div>
+  <div class="econ-strip">
+    <div class="econ-strip-item">
+      <span class="esv">100</span>
+      <span class="esl">Лидов / мес</span>
+    </div>
+    <div class="econ-strip-item">
+      <span class="esv">1K &#8381;</span>
+      <span class="esl">Ср. CPA</span>
+    </div>
+    <div class="econ-strip-item">
+      <span class="esv">95%</span>
+      <span class="esl">Маржа</span>
+    </div>
+    <div class="econ-strip-item">
+      <span class="esv">20</span>
+      <span class="esl">Парков v2</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">ТаксиБрат</div>
+  <div class="f-line"></div>
+  <p class="f-text">&#9644; Night Dashboard &#183; Product Guide &#183; 2026 &#9644;</p>
+  <p class="f-copy">Аудитор таксопарков &#183; Объективные рейтинги от тайных покупателей</p>
+</footer>
+
+<script>
+const sections = document.querySelectorAll('.section');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+sections.forEach(s => obs.observe(s));
+
+const links = document.querySelectorAll('nav a[href^="#"]');
+const sObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      links.forEach(l => l.style.color = l.getAttribute('href') === '#'+id ? 'var(--green)' : '');
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.section[id]').forEach(s => sObs.observe(s));
+</script>
+</body>
+</html>

@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ТаксиБрат — Neon City Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   TOKYO DRIFT — Neon Cyberpunk Taxi Aesthetic
+   ═══════════════════════════════════════════════════ */
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+:root {
+  --cyan: #00f0ff;
+  --cyan-soft: #00f0ff88;
+  --magenta: #ff00e5;
+  --magenta-soft: #ff00e588;
+  --yellow: #ffe600;
+  --yellow-soft: #ffe60088;
+  --dark: #0a0a12;
+  --darker: #060610;
+  --panel: #0d0d1a;
+  --panel-hover: #10102a;
+  --border: #1a1a3a;
+  --border-bright: #2a2a5a;
+  --text: #c8c8e0;
+  --text-dim: #6a6a8a;
+  --white: #eeeef8;
+  --glow-cyan: 0 0 10px #00f0ff44, 0 0 30px #00f0ff22;
+  --glow-cyan-strong: 0 0 10px #00f0ff66, 0 0 30px #00f0ff44, 0 0 60px #00f0ff22;
+  --glow-magenta: 0 0 10px #ff00e544, 0 0 30px #ff00e522;
+  --glow-magenta-strong: 0 0 10px #ff00e566, 0 0 30px #ff00e544, 0 0 60px #ff00e522;
+  --glow-yellow: 0 0 10px #ffe60044, 0 0 30px #ffe60022;
+  --glow-yellow-strong: 0 0 10px #ffe60066, 0 0 30px #ffe60044, 0 0 60px #ffe60022;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--dark);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent, transparent 2px,
+      rgba(0,240,255,.012) 2px, rgba(0,240,255,.012) 4px
+    );
+}
+
+/* Scanline overlay — full-screen CRT effect */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent, transparent 1px,
+    rgba(0,0,0,.05) 1px, rgba(0,0,0,.05) 2px
+  );
+  mix-blend-mode: multiply;
+}
+
+::selection { background: var(--magenta); color: #fff; }
+a { color: var(--cyan); text-decoration: none; transition: color .2s; }
+a:hover { color: var(--magenta); }
+
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════ */
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: .6; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: var(--glow-cyan); }
+  50% { box-shadow: var(--glow-cyan-strong); }
+}
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes horizontal-scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes text-reveal {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes border-pulse {
+  0%, 100% { border-color: var(--border); }
+  50% { border-color: var(--border-bright); }
+}
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════ */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10, 10, 18, .92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+}
+
+nav .inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  gap: 1rem;
+}
+
+nav .logo {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.3rem;
+  color: var(--cyan);
+  text-shadow: var(--glow-cyan);
+  letter-spacing: .15em;
+  white-space: nowrap;
+  animation: neon-flicker 4s infinite;
+  position: relative;
+}
+
+nav .logo span {
+  color: var(--magenta);
+  text-shadow: var(--glow-magenta);
+}
+
+/* Decorative line under logo */
+nav .logo::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  box-shadow: var(--glow-cyan);
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+nav li {
+  position: relative;
+}
+
+nav li a {
+  font-family: 'Exo 2', sans-serif;
+  font-size: .78rem;
+  font-weight: 400;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  transition: color .25s, text-shadow .25s;
+  padding: .25rem 0;
+}
+
+nav li a:hover {
+  color: var(--cyan);
+  text-shadow: var(--glow-cyan);
+}
+
+/* Active indicator dot */
+nav li a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 100%;
+  height: 1px;
+  background: var(--cyan);
+  box-shadow: var(--glow-cyan);
+  transition: transform .3s;
+}
+
+nav li a:hover::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* Mobile menu toggle area */
+nav .menu-indicator {
+  display: none;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .7rem;
+  color: var(--cyan);
+  letter-spacing: .15em;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO SECTION
+   ═══════════════════════════════════════════════════ */
+.hero {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient glow — cyan top */
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(0,240,255,.08), transparent 65%);
+  top: -250px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Ambient glow — magenta bottom-right */
+.hero::after {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255,0,229,.06), transparent 65%);
+  bottom: -150px;
+  right: 5%;
+  pointer-events: none;
+}
+
+/* Horizontal scan line that moves */
+.hero .scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  animation: horizontal-scan 6s linear infinite;
+  opacity: .3;
+}
+
+/* Grid floor effect */
+.hero .grid-floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background:
+    linear-gradient(180deg, transparent, rgba(0,240,255,.03)),
+    repeating-linear-gradient(90deg, rgba(0,240,255,.05) 0px, transparent 1px, transparent 80px),
+    repeating-linear-gradient(0deg, rgba(0,240,255,.03) 0px, transparent 1px, transparent 40px);
+  transform: perspective(500px) rotateX(45deg);
+  transform-origin: bottom center;
+  pointer-events: none;
+}
+
+.hero h1 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+  color: var(--cyan);
+  text-shadow:
+    0 0 20px #00f0ff66,
+    0 0 60px #00f0ff33,
+    0 0 100px #00f0ff18,
+    0 0 150px #00f0ff08;
+  letter-spacing: .12em;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 2;
+  animation: neon-flicker 5s infinite;
+}
+
+/* Decorative brackets around title */
+.hero h1::before {
+  content: '[';
+  color: var(--magenta);
+  text-shadow: var(--glow-magenta);
+  margin-right: .25em;
+  opacity: .6;
+}
+
+.hero h1::after {
+  content: ']';
+  color: var(--magenta);
+  text-shadow: var(--glow-magenta);
+  margin-left: .25em;
+  opacity: .6;
+}
+
+.hero .subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--magenta);
+  text-shadow: var(--glow-magenta);
+  letter-spacing: .06em;
+  max-width: 700px;
+  position: relative;
+  z-index: 2;
+  font-weight: 400;
+}
+
+.hero .tagline {
+  margin-top: 2rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .8rem;
+  color: var(--text-dim);
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+}
+
+/* Decorative status bar under hero */
+.hero .status-bar {
+  margin-top: 3rem;
+  display: flex;
+  gap: 2rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .65rem;
+  color: var(--text-dim);
+  letter-spacing: .1em;
+  position: relative;
+  z-index: 2;
+}
+
+.hero .status-bar .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: var(--glow-cyan);
+  margin-right: .5rem;
+  vertical-align: middle;
+}
+
+.hero .status-bar .dot.warn {
+  background: var(--yellow);
+  box-shadow: var(--glow-yellow);
+}
+
+/* ═══════════════════════════════════════════════════
+   NEON LINE DIVIDERS
+   ═══════════════════════════════════════════════════ */
+.neon-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), var(--magenta), var(--yellow), transparent);
+  margin: 0 auto;
+  border-radius: 2px;
+  box-shadow: var(--glow-cyan);
+  position: relative;
+}
+
+.neon-line.wide { width: min(80%, 800px); }
+.neon-line.narrow { width: min(40%, 400px); }
+
+/* Dot at center of line */
+.neon-line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--yellow);
+  border-radius: 50%;
+  box-shadow: var(--glow-yellow-strong);
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTIONS (general)
+   ═══════════════════════════════════════════════════ */
+.section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+  opacity: 0;
+  transform: translateY(35px);
+  transition: opacity .8s ease, transform .8s ease;
+}
+
+.section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .35em;
+  text-transform: uppercase;
+  color: var(--magenta);
+  margin-bottom: .6rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.section-label::before {
+  content: '';
+  display: block;
+  width: 35px;
+  height: 1px;
+  background: var(--magenta);
+  box-shadow: var(--glow-magenta);
+}
+
+.section-label::after {
+  content: '';
+  display: block;
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--magenta-soft), transparent 60%);
+}
+
+h2 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(1.5rem, 4vw, 2.3rem);
+  color: var(--white);
+  margin-bottom: 2.5rem;
+  letter-spacing: .06em;
+  text-shadow: 0 0 10px rgba(255,255,255,.1);
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+/* Underline decoration for h2 */
+h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 2px;
+  background: var(--cyan);
+  box-shadow: var(--glow-cyan);
+  border-radius: 2px;
+}
+
+/* Section description text */
+.section-desc {
+  font-size: .9rem;
+  color: var(--text-dim);
+  max-width: 700px;
+  margin-bottom: 2rem;
+  line-height: 1.8;
+}
+
+/* ═══════════════════════════════════════════════════
+   PANELS (Architecture cards)
+   ═══════════════════════════════════════════════════ */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .35s, box-shadow .35s, background .35s;
+}
+
+.panel:hover {
+  border-color: var(--cyan);
+  background: var(--panel-hover);
+  box-shadow: inset 0 0 40px rgba(0,240,255,.03), var(--glow-cyan);
+}
+
+/* Left accent bar */
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--cyan), var(--magenta));
+  box-shadow: 0 0 8px var(--cyan);
+  transition: width .3s;
+}
+
+.panel:hover::before {
+  width: 4px;
+}
+
+/* Corner decoration — top-right */
+.panel::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid var(--cyan-soft);
+  border-right: 1px solid var(--cyan-soft);
+  opacity: .4;
+  transition: opacity .3s;
+}
+
+.panel:hover::after {
+  opacity: .8;
+}
+
+.panel h3 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1rem;
+  color: var(--cyan);
+  margin-bottom: .8rem;
+  letter-spacing: .06em;
+}
+
+.panel .panel-desc {
+  font-size: .82rem;
+  color: var(--text-dim);
+  margin-bottom: .75rem;
+  font-style: italic;
+}
+
+.panel ul {
+  list-style: none;
+  padding-left: 1.2rem;
+}
+
+.panel ul li {
+  position: relative;
+  padding: .3rem 0;
+  padding-left: 1.4rem;
+  font-size: .9rem;
+  transition: color .2s;
+}
+
+.panel ul li::before {
+  content: '\25B8';
+  position: absolute;
+  left: 0;
+  color: var(--magenta);
+  font-size: .8rem;
+}
+
+.panel ul li:hover {
+  color: var(--white);
+}
+
+/* ═══════════════════════════════════════════════════
+   GRID LAYOUTS
+   ═══════════════════════════════════════════════════ */
+.arch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Architecture summary bar */
+.arch-summary {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.arch-stat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem 1.5rem;
+  flex: 1;
+  min-width: 150px;
+  text-align: center;
+  transition: border-color .3s;
+}
+
+.arch-stat:hover {
+  border-color: var(--yellow);
+}
+
+.arch-stat .stat-value {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.8rem;
+  color: var(--yellow);
+  text-shadow: var(--glow-yellow);
+  display: block;
+  margin-bottom: .3rem;
+}
+
+.arch-stat .stat-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .6rem;
+  color: var(--text-dim);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════
+   DRIVER JOURNEY STEPS
+   ═══════════════════════════════════════════════════ */
+.journey-intro {
+  font-size: .88rem;
+  color: var(--text-dim);
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--magenta);
+}
+
+.steps {
+  counter-reset: step;
+  position: relative;
+}
+
+/* Vertical connecting line */
+.steps::before {
+  content: '';
+  position: absolute;
+  left: 2rem;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, var(--yellow), var(--magenta), var(--cyan));
+  opacity: .15;
+}
+
+.step {
+  counter-increment: step;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2rem 2rem 2rem 5.5rem;
+  margin-bottom: 1.2rem;
+  position: relative;
+  transition: border-color .35s, box-shadow .35s, background .35s;
+  animation: border-pulse 4s infinite;
+}
+
+.step:hover {
+  border-color: var(--yellow);
+  background: var(--panel-hover);
+  box-shadow: var(--glow-yellow);
+  animation: none;
+}
+
+/* Step number */
+.step::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: 1.5rem;
+  top: 1.8rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.6rem;
+  color: var(--yellow);
+  text-shadow: var(--glow-yellow);
+}
+
+/* Vertical separator inside step */
+.step::after {
+  content: '';
+  position: absolute;
+  left: 4.2rem;
+  top: .5rem;
+  bottom: .5rem;
+  width: 1px;
+  background: linear-gradient(180deg, var(--yellow), transparent 80%);
+  opacity: .3;
+}
+
+.step .title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.05rem;
+  color: var(--white);
+  margin-bottom: .4rem;
+  letter-spacing: .03em;
+}
+
+.step .step-detail {
+  font-size: .82rem;
+  color: var(--text-dim);
+  margin-top: .3rem;
+  font-style: italic;
+}
+
+.step p {
+  font-size: .9rem;
+  line-height: 1.7;
+}
+
+.step .auth {
+  display: inline-block;
+  margin-top: .6rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .12em;
+  padding: .2rem .7rem;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.auth.no {
+  border: 1px solid #33aa55;
+  color: #33aa55;
+  box-shadow: 0 0 6px #33aa5533;
+}
+
+.auth.yes {
+  border: 1px solid var(--magenta);
+  color: var(--magenta);
+  box-shadow: 0 0 6px #ff00e533;
+}
+
+/* ═══════════════════════════════════════════════════
+   PARK JOURNEY
+   ═══════════════════════════════════════════════════ */
+.park-track {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.track-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .3s, box-shadow .3s;
+}
+
+.track-card:hover {
+  border-color: var(--cyan);
+}
+
+/* Top glow line */
+.track-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  border-radius: 2px;
+  transition: left .3s, right .3s;
+}
+
+.track-card:hover::before {
+  left: 5%;
+  right: 5%;
+}
+
+.track-card.mvp::before {
+  background: var(--cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.track-card.v2::before {
+  background: var(--magenta);
+  box-shadow: var(--glow-magenta);
+}
+
+/* Corner marker */
+.track-card::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 15px;
+  height: 15px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+  opacity: .3;
+}
+
+.track-card.mvp::after { border-color: var(--cyan); }
+.track-card.v2::after { border-color: var(--magenta); }
+
+.track-card h3 {
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--cyan);
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+  letter-spacing: .06em;
+}
+
+.track-card.v2 h3 { color: var(--magenta); }
+
+.track-card p {
+  font-size: .9rem;
+  line-height: 1.9;
+}
+
+.track-card .arrow {
+  color: var(--yellow);
+  font-family: 'Share Tech Mono', monospace;
+  margin: 0 .4rem;
+  text-shadow: var(--glow-yellow);
+}
+
+.track-card .track-note {
+  margin-top: 1rem;
+  font-size: .78rem;
+  color: var(--text-dim);
+  font-style: italic;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════════════
+   MONETIZATION
+   ═══════════════════════════════════════════════════ */
+.money-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.money-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .35s, transform .35s, box-shadow .35s;
+}
+
+.money-card:hover {
+  border-color: var(--yellow);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.3), var(--glow-yellow);
+}
+
+/* Large background number */
+.money-card .num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 3rem;
+  color: var(--yellow);
+  text-shadow: var(--glow-yellow);
+  opacity: .12;
+  position: absolute;
+  top: .3rem;
+  right: .8rem;
+  line-height: 1;
+}
+
+/* Decorative diagonal stripe */
+.money-card .stripe {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+}
+
+.money-card .stripe::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 15px solid transparent;
+  border-top-color: var(--border);
+  border-right-color: var(--border);
+}
+
+.money-card h3 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .95rem;
+  color: var(--white);
+  margin-bottom: .5rem;
+  position: relative;
+}
+
+.money-card .model {
+  font-size: .75rem;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--magenta);
+  margin-bottom: .6rem;
+  letter-spacing: .06em;
+}
+
+.money-card p {
+  font-size: .85rem;
+  line-height: 1.7;
+}
+
+.money-card .revenue {
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--cyan);
+  font-size: .85rem;
+  margin-top: .75rem;
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════════
+   SCENARIOS TABLE
+   ═══════════════════════════════════════════════════ */
+.table-intro {
+  font-size: .85rem;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 2rem 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .84rem;
+  font-family: 'Exo 2', sans-serif;
+}
+
+thead {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+thead th {
+  padding: .9rem 1rem;
+  text-align: left;
+  color: var(--cyan);
+  border-bottom: 2px solid var(--cyan);
+  background: rgba(0,240,255,.04);
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .2s;
+}
+
+tbody tr:hover {
+  background: rgba(0,240,255,.04);
+}
+
+/* Alternating row subtle effect */
+tbody tr:nth-child(even) {
+  background: rgba(0,0,0,.15);
+}
+
+tbody tr:nth-child(even):hover {
+  background: rgba(0,240,255,.04);
+}
+
+td {
+  padding: .7rem 1rem;
+  vertical-align: top;
+}
+
+td:first-child {
+  color: var(--white);
+  font-weight: 400;
+}
+
+.stage {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .68rem;
+  letter-spacing: .1em;
+  padding: .15rem .55rem;
+  border-radius: 2px;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.stage.mvp {
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 4px rgba(0,240,255,.2);
+}
+
+.stage.v2 {
+  border: 1px solid var(--magenta);
+  color: var(--magenta);
+  box-shadow: 0 0 4px rgba(255,0,229,.2);
+}
+
+.stage.v3 {
+  border: 1px solid var(--yellow);
+  color: var(--yellow);
+  box-shadow: 0 0 4px rgba(255,230,0,.2);
+}
+
+/* Table row count annotation */
+.table-footer {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .65rem;
+  color: var(--text-dim);
+  padding: .75rem 1rem;
+  border-top: 1px solid var(--border);
+  letter-spacing: .1em;
+}
+
+/* ═══════════════════════════════════════════════════
+   UNIT ECONOMICS
+   ═══════════════════════════════════════════════════ */
+.econ-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.econ-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .3s;
+}
+
+.econ-card:hover {
+  border-color: var(--cyan);
+}
+
+/* Glow orb decoration */
+.econ-card .glow-orb {
+  position: absolute;
+  bottom: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.econ-card:first-child .glow-orb {
+  background: radial-gradient(circle, rgba(0,240,255,.06), transparent 70%);
+}
+
+.econ-card:last-child .glow-orb {
+  background: radial-gradient(circle, rgba(255,0,229,.06), transparent 70%);
+}
+
+.econ-card .label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .7rem;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: var(--magenta);
+  margin-bottom: 1rem;
+}
+
+.econ-card .big-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  color: var(--yellow);
+  text-shadow: var(--glow-yellow-strong);
+  margin-bottom: .5rem;
+  line-height: 1.1;
+}
+
+.econ-card .econ-subtitle {
+  font-size: .85rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+
+.econ-card .formula {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .78rem;
+  color: var(--text);
+  background: rgba(0,240,255,.04);
+  padding: .8rem 1.2rem;
+  border-radius: 2px;
+  border-left: 2px solid var(--cyan);
+  margin-top: 1.2rem;
+  line-height: 1.8;
+}
+
+/* Comparison arrow between cards */
+.econ-arrow {
+  display: none;
+  /* only visible at desktop */
+}
+
+/* ═══════════════════════════════════════════════════
+   KEY METRICS BAR
+   ═══════════════════════════════════════════════════ */
+.metrics-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.metric {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.2rem;
+  text-align: center;
+  transition: border-color .3s;
+}
+
+.metric:hover {
+  border-color: var(--cyan);
+}
+
+.metric .m-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.4rem;
+  color: var(--cyan);
+  text-shadow: var(--glow-cyan);
+  display: block;
+}
+
+.metric .m-label {
+  font-size: .6rem;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: .3rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════ */
+footer {
+  text-align: center;
+  padding: 4rem 2rem;
+  margin-top: 3rem;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+footer .footer-logo {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.1rem;
+  color: var(--cyan);
+  text-shadow: var(--glow-cyan);
+  letter-spacing: .15em;
+  margin-bottom: .75rem;
+  animation: neon-flicker 6s infinite;
+}
+
+footer .footer-logo span {
+  color: var(--magenta);
+  text-shadow: var(--glow-magenta);
+}
+
+footer .footer-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .7rem;
+  color: var(--text-dim);
+  letter-spacing: .12em;
+}
+
+footer .footer-line {
+  width: min(60%, 400px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 1.5rem auto;
+}
+
+footer .footer-copy {
+  font-size: .6rem;
+  color: #333;
+  letter-spacing: .15em;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  nav ul { display: none; }
+  nav .menu-indicator { display: block; }
+  .park-track, .econ-cards { grid-template-columns: 1fr; }
+  .step { padding-left: 4.5rem; }
+  .hero { min-height: 60vh; padding: 3rem 1.5rem; }
+  .section { padding: 3.5rem 1.5rem; }
+  .arch-summary { flex-direction: column; }
+  .hero .status-bar { flex-direction: column; gap: .5rem; }
+  .metrics-bar { grid-template-columns: 1fr 1fr; }
+  .hero .grid-floor { height: 100px; }
+}
+
+@media (max-width: 480px) {
+  .money-grid { grid-template-columns: 1fr; }
+  .arch-grid { grid-template-columns: 1fr; }
+  .metrics-bar { grid-template-columns: 1fr; }
+  h2 { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <div class="logo">TAKCH<span>BRAT</span></div>
+    <span class="menu-indicator">&#9776; MENU</span>
+    <ul>
+      <li><a href="#arch">Архитектура</a></li>
+      <li><a href="#driver">Путь водителя</a></li>
+      <li><a href="#park">Путь парка</a></li>
+      <li><a href="#money">Монетизация</a></li>
+      <li><a href="#scenarios">Сценарии</a></li>
+      <li><a href="#economics">Экономика</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <div class="scan-line"></div>
+  <div class="grid-floor"></div>
+  <h1>ТаксиБрат</h1>
+  <p class="subtitle">Аудитор таксопарков. Объективные рейтинги от тайных покупателей.</p>
+  <p class="tagline">&#9644; product guide &#9644;</p>
+  <div class="status-bar">
+    <span><span class="dot"></span> SYSTEM ONLINE</span>
+    <span><span class="dot warn"></span> 27 PARAMS LOADED</span>
+    <span><span class="dot"></span> RATING ENGINE ACTIVE</span>
+  </div>
+</section>
+<div class="neon-line wide"></div>
+
+<!-- ═══════════ ARCHITECTURE ═══════════ -->
+<section class="section" id="arch">
+  <div class="section-label">Раздел 01</div>
+  <h2>Архитектура</h2>
+  <p class="section-desc">Полностью серверлесс-стек на бесплатных тирах. Монолитная Next.js архитектура обеспечивает единую кодовую базу для мобильного интерфейса водителя и десктопной админки менеджера.</p>
+  <div class="arch-grid">
+    <div class="panel">
+      <h3>&#9632; Frontend + Backend</h3>
+      <p class="panel-desc">Единый монолит на современном фреймворке</p>
+      <ul>
+        <li>Next.js 15 монолит (mobile-first + desktop admin)</li>
+        <li>App Router с серверными компонентами</li>
+        <li>Vercel hosting (free tier)</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>&#9632; База данных</h3>
+      <p class="panel-desc">Типобезопасный доступ к данным</p>
+      <ul>
+        <li>Prisma 7 ORM</li>
+        <li>PostgreSQL (Supabase free)</li>
+        <li>Автогенерация типов и миграции</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>&#9632; Авторизация</h3>
+      <p class="panel-desc">Нативная интеграция с Telegram</p>
+      <ul>
+        <li>NextAuth с провайдерами</li>
+        <li>Telegram Login Widget</li>
+        <li>JWT-сессии, безсерверная верификация</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>&#9632; Rating Engine</h3>
+      <p class="panel-desc">Ядро продукта &#8212; алгоритм оценки</p>
+      <ul>
+        <li>27 параметров с настраиваемыми весами</li>
+        <li>Итоговый рейтинг 0 &#8212; 5</li>
+        <li>Прозрачная формула, воспроизводимость</li>
+      </ul>
+    </div>
+  </div>
+  <div class="arch-summary">
+    <div class="arch-stat">
+      <span class="stat-value">0 &#8381;</span>
+      <span class="stat-label">Инфраструктура</span>
+    </div>
+    <div class="arch-stat">
+      <span class="stat-value">27</span>
+      <span class="stat-label">Параметров</span>
+    </div>
+    <div class="arch-stat">
+      <span class="stat-value">1</span>
+      <span class="stat-label">Кодовая база</span>
+    </div>
+    <div class="arch-stat">
+      <span class="stat-value">0&#8212;5</span>
+      <span class="stat-label">Рейтинг</span>
+    </div>
+  </div>
+</section>
+<div class="neon-line narrow"></div>
+
+<!-- ═══════════ DRIVER JOURNEY ═══════════ -->
+<section class="section" id="driver">
+  <div class="section-label">Раздел 02</div>
+  <h2>Путь водителя</h2>
+  <div class="journey-intro">
+    Воронка из 6 шагов &#8212; от бесплатного привлечения до монетизируемого контакта. Первые 3 шага без авторизации максимизируют охват. Барьер на 4-м шаге фильтрует нецелевых.
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="title">Hook (лендинг)</div>
+      <p>Строка поиска «Введите название парка», топ-3 скрытых парка. Привлечение внимания без барьеров входа.</p>
+      <div class="step-detail">Конверсия посетителя в заинтересованного пользователя</div>
+      <span class="auth no">Без авторизации</span>
+    </div>
+    <div class="step">
+      <div class="title">«Горькая правда»</div>
+      <p>Текущий рейтинг парка (например 3.1/5), список слабых параметров. Мотивация к действию через боль.</p>
+      <div class="step-detail">Эмоциональный триггер &#8212; неудовлетворённость текущим парком</div>
+      <span class="auth no">Без авторизации</span>
+    </div>
+    <div class="step">
+      <div class="title">Каталог</div>
+      <p>Фильтрованный список, названия скрыты («Парк #12»), рейтинги видны. Интрига и выбор альтернатив.</p>
+      <div class="step-detail">Демонстрация ценности &#8212; есть парки лучше, но нужен доступ</div>
+      <span class="auth no">Без авторизации</span>
+    </div>
+    <div class="step">
+      <div class="title">Регистрация + верификация</div>
+      <p>Telegram-логин, загрузка фото водительского удостоверения + селфи. Ключевой барьер &#8212; фильтрация нецелевых.</p>
+      <div class="step-detail">Барьер качества: только реальные водители проходят дальше</div>
+      <span class="auth yes">Барьер</span>
+    </div>
+    <div class="step">
+      <div class="title">Одобрение</div>
+      <p>Менеджер проверяет данные, бот отправляет контакты парка через Telegram. Момент монетизации.</p>
+      <div class="step-detail">Контакт парка = лид. Парк платит за верифицированного водителя</div>
+      <span class="auth yes">Авторизация</span>
+    </div>
+    <div class="step">
+      <div class="title">Чат с куратором</div>
+      <p>Прямой Telegram-чат с менеджером для сопровождения и поддержки перехода в новый парк.</p>
+      <div class="step-detail">Повышение конверсии лида в трудоустройство через сопровождение</div>
+      <span class="auth yes">Авторизация</span>
+    </div>
+  </div>
+</section>
+<div class="neon-line wide"></div>
+
+<!-- ═══════════ PARK JOURNEY ═══════════ -->
+<section class="section" id="park">
+  <div class="section-label">Раздел 03</div>
+  <h2>Путь парка</h2>
+  <p class="section-desc">Два пути попадания парка в каталог: бесплатный органический (инициатива платформы) и платный (инициатива парка).</p>
+  <div class="park-track">
+    <div class="track-card mvp">
+      <h3>Органический (MVP)</h3>
+      <p>
+        Тайный покупатель проводит аудит парка
+        <span class="arrow">&#9654;</span>
+        менеджер заполняет 40+ полей
+        <span class="arrow">&#9654;</span>
+        рассчитывается рейтинг
+        <span class="arrow">&#9654;</span>
+        парк появляется в каталоге
+      </p>
+      <div class="track-note">Парк не знает о присутствии в каталоге. Аудит инициирован платформой.</div>
+    </div>
+    <div class="track-card v2">
+      <h3>Платный (v2)</h3>
+      <p>
+        Парк регистрируется
+        <span class="arrow">&#9654;</span>
+        заполняет профиль
+        <span class="arrow">&#9654;</span>
+        аудитор проверяет
+        <span class="arrow">&#9654;</span>
+        выбирает тариф
+        <span class="arrow">&#9654;</span>
+        получает лиды
+      </p>
+      <div class="track-note">Парк активно заинтересован в привлечении водителей. Платит за размещение и лиды.</div>
+    </div>
+  </div>
+</section>
+<div class="neon-line narrow"></div>
+
+<!-- ═══════════ MONETIZATION ═══════════ -->
+<section class="section" id="money">
+  <div class="section-label">Раздел 04</div>
+  <h2>Монетизация</h2>
+  <p class="section-desc">Четыре канала дохода &#8212; от MVP с нулевыми затратами до масштабируемого маркетплейса.</p>
+  <div class="money-grid">
+    <div class="money-card">
+      <span class="num">01</span>
+      <h3>Скрытый лид (MVP)</h3>
+      <div class="model">CPA 500 &#8212; 2 000 &#8381;/лид</div>
+      <p>Название парка скрыто до верификации. Парк платит за раскрытие контакта водителя. Основа монетизации с первого дня.</p>
+      <span class="revenue">&#9632; Старт: 100 лидов/мес</span>
+    </div>
+    <div class="money-card">
+      <span class="num">02</span>
+      <h3>Подписка парка (v2)</h3>
+      <div class="model">SaaS 5 000 &#8212; 15 000 &#8381;/мес</div>
+      <p>Приоритетное размещение, аналитика по рынку, бейдж качества. Рекуррентный доход.</p>
+      <span class="revenue">&#9632; Рекуррент: предсказуемый MRR</span>
+    </div>
+    <div class="money-card">
+      <span class="num">03</span>
+      <h3>Реферальная программа (v2)</h3>
+      <div class="model">Revenue share 10 &#8212; 15%</div>
+      <p>Процент от первого месяца работы водителя в парке. Мотивирует качественный мэтчинг.</p>
+      <span class="revenue">&#9632; Выручка привязана к успеху</span>
+    </div>
+    <div class="money-card">
+      <span class="num">04</span>
+      <h3>Маркетплейс услуг (v3)</h3>
+      <div class="model">Commission + Listing</div>
+      <p>Страхование, кредиты, обслуживание &#8212; комиссия с каждой сделки. Экосистема вокруг водителя.</p>
+      <span class="revenue">&#9632; Масштаб: экосистемный эффект</span>
+    </div>
+  </div>
+</section>
+<div class="neon-line wide"></div>
+
+<!-- ═══════════ 13 SCENARIOS TABLE ═══════════ -->
+<section class="section" id="scenarios">
+  <div class="section-label">Раздел 05</div>
+  <h2>13 сценариев</h2>
+  <p class="table-intro">Полная карта монетизации по стадиям развития &#8212; от запуска до зрелой платформы.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Сценарий</th>
+          <th>Кто платит</th>
+          <th>Модель</th>
+          <th>Прогноз выручки</th>
+          <th>Стадия</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Скрытый лид (водитель ищет парк)</td><td>Парк</td><td>CPA</td><td>500 &#8212; 2 000 &#8381;/лид</td><td><span class="stage mvp">MVP</span></td></tr>
+        <tr><td>Приоритетное размещение парка</td><td>Парк</td><td>Подписка</td><td>5 000 &#8212; 15 000 &#8381;/мес</td><td><span class="stage v2">v2</span></td></tr>
+        <tr><td>Аналитика по водителям для парка</td><td>Парк</td><td>SaaS</td><td>3 000 &#8212; 10 000 &#8381;/мес</td><td><span class="stage v2">v2</span></td></tr>
+        <tr><td>Бейдж «Проверенный парк»</td><td>Парк</td><td>Подписка</td><td>2 000 &#8212; 5 000 &#8381;/мес</td><td><span class="stage v2">v2</span></td></tr>
+        <tr><td>Реферальная программа</td><td>Парк</td><td>Revenue share</td><td>10 &#8212; 15% от мес.</td><td><span class="stage v2">v2</span></td></tr>
+        <tr><td>Продвижение в каталоге (топ)</td><td>Парк</td><td>CPC / фикс</td><td>3 000 &#8212; 8 000 &#8381;/мес</td><td><span class="stage v2">v2</span></td></tr>
+        <tr><td>Страхование водителей</td><td>Страховая</td><td>Комиссия</td><td>500 &#8212; 1 500 &#8381;/полис</td><td><span class="stage v3">v3</span></td></tr>
+        <tr><td>Кредит/лизинг на авто</td><td>Банк/лизинг</td><td>Комиссия</td><td>2 000 &#8212; 10 000 &#8381;/сделка</td><td><span class="stage v3">v3</span></td></tr>
+        <tr><td>ТО и ремонт (маркетплейс)</td><td>Сервис</td><td>Listing + комиссия</td><td>500 &#8212; 3 000 &#8381;/заказ</td><td><span class="stage v3">v3</span></td></tr>
+        <tr><td>Обучение / курсы для водителей</td><td>Обучающая компания</td><td>Комиссия</td><td>1 000 &#8212; 5 000 &#8381;/курс</td><td><span class="stage v3">v3</span></td></tr>
+        <tr><td>Аренда авто (связь с парками)</td><td>Парк/водитель</td><td>Комиссия</td><td>2 000 &#8212; 5 000 &#8381;/сделка</td><td><span class="stage v2">v2</span></td></tr>
+        <tr><td>Рекламные интеграции</td><td>Рекламодатель</td><td>CPM / фикс</td><td>10 000 &#8212; 50 000 &#8381;/мес</td><td><span class="stage v3">v3</span></td></tr>
+        <tr><td>White-label рейтинг для агрегаторов</td><td>Агрегатор</td><td>B2B SaaS</td><td>50 000 &#8212; 200 000 &#8381;/мес</td><td><span class="stage v3">v3</span></td></tr>
+      </tbody>
+    </table>
+    <div class="table-footer">&#9632; 13 scenarios &#183; 3 stages &#183; 6 revenue models</div>
+  </div>
+</section>
+<div class="neon-line narrow"></div>
+
+<!-- ═══════════ UNIT ECONOMICS ═══════════ -->
+<section class="section" id="economics">
+  <div class="section-label">Раздел 06</div>
+  <h2>Unit-экономика</h2>
+  <p class="section-desc">Нулевые затраты на инфраструктуру позволяют выйти на прибыль с первого лида. Рост через добавление платных каналов.</p>
+  <div class="econ-cards">
+    <div class="econ-card">
+      <div class="glow-orb"></div>
+      <div class="label">MVP</div>
+      <div class="big-num">100 000 &#8381;</div>
+      <p class="econ-subtitle">в месяц &#8212; только лиды</p>
+      <div class="formula">
+        100 лидов/мес &#215; 1 000 &#8381; = 100 000 &#8381;/мес<br>
+        Инфраструктура: 0 &#8381; (Vercel + Supabase free)<br>
+        Маржинальность: ~95% (только время менеджера)
+      </div>
+    </div>
+    <div class="econ-card">
+      <div class="glow-orb"></div>
+      <div class="label">v2 (20 парков)</div>
+      <div class="big-num">175 000 &#8381;</div>
+      <p class="econ-subtitle">в месяц &#8212; диверсифицированный доход</p>
+      <div class="formula">
+        Подписки + рефералы + приоритет = ~175 000 &#8381;/мес<br>
+        MRR от подписок обеспечивает предсказуемость
+      </div>
+    </div>
+  </div>
+  <div class="metrics-bar">
+    <div class="metric">
+      <span class="m-val">100</span>
+      <span class="m-label">Лидов / мес (MVP)</span>
+    </div>
+    <div class="metric">
+      <span class="m-val">1 000 &#8381;</span>
+      <span class="m-label">Ср. CPA</span>
+    </div>
+    <div class="metric">
+      <span class="m-val">20</span>
+      <span class="m-label">Парков (v2)</span>
+    </div>
+    <div class="metric">
+      <span class="m-val">95%</span>
+      <span class="m-label">Маржа</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="footer-logo">TAKCH<span>BRAT</span></div>
+  <div class="footer-line"></div>
+  <p class="footer-text">&#9644; Product Guide &#183; 2026 &#9644;</p>
+  <p class="footer-copy">Аудитор таксопарков &#183; Объективные рейтинги от тайных покупателей</p>
+</footer>
+
+<script>
+/* ═══════════ SCROLL REVEAL ═══════════ */
+const sections = document.querySelectorAll('.section');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, {
+  threshold: 0.08,
+  rootMargin: '0px 0px -50px 0px'
+});
+sections.forEach(s => observer.observe(s));
+
+/* ═══════════ NAV ACTIVE LINK ═══════════ */
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.getAttribute('id');
+      navLinks.forEach(link => {
+        link.style.color = link.getAttribute('href') === '#' + id
+          ? 'var(--cyan)' : '';
+      });
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.section[id]').forEach(s => sectionObserver.observe(s));
+
+/* ═══════════ SMOOTH NAV SCROLL ═══════════ */
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = document.querySelector(link.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+</body>
+</html>

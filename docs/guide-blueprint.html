@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ТаксиБрат — Blueprint</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Bitter:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   ENGINEERING BLUEPRINT — Technical Drawing Aesthetic
+   ═══════════════════════════════════════════════════ */
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a2744;
+  --bg-light: #1e2d50;
+  --bg-dark: #141f38;
+  --grid: #223456;
+  --grid-fine: rgba(74,124,184,.06);
+  --line: #4a7cb8;
+  --line-bright: #6a9cd8;
+  --line-dim: #2a4a7a;
+  --text: #b8cce4;
+  --text-bright: #d4e4f8;
+  --white: #e8f0fa;
+  --accent: #6ecff6;
+  --accent-dim: #4a9fc6;
+  --warn: #f0a050;
+  --warn-dim: #c08040;
+  --dim: #5a7a9a;
+  --error: #e06060;
+}
+
+html { scroll-behavior: smooth; font-size: 15px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 300;
+  line-height: 1.75;
+  overflow-x: hidden;
+  /* Blueprint grid */
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(var(--grid-fine) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px);
+  background-size:
+    100px 100px, 100px 100px,
+    20px 20px, 20px 20px;
+}
+
+::selection { background: var(--accent); color: var(--bg); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════ */
+@keyframes draw-in {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dash-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -20; }
+}
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════ */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(26,39,68,.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line-dim);
+}
+
+nav .inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .65rem 2rem;
+}
+
+nav .logo {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--accent);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  position: relative;
+}
+
+/* Crosshair mark next to logo */
+nav .logo::before {
+  content: '+';
+  margin-right: .5rem;
+  color: var(--line);
+  font-weight: 300;
+}
+
+nav ul { list-style: none; display: flex; gap: 1.5rem; }
+
+nav li a {
+  font-size: .68rem;
+  font-weight: 400;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  transition: color .2s;
+}
+
+nav li a:hover { color: var(--accent); text-decoration: none; }
+
+nav .mobile-menu {
+  display: none;
+  font-size: .65rem;
+  color: var(--accent);
+  letter-spacing: .15em;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════════ */
+.hero {
+  padding: 7rem 2rem 5rem;
+  text-align: center;
+  position: relative;
+}
+
+/* Large crosshair center */
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  background: var(--line-dim);
+  opacity: .3;
+}
+
+.hero::before {
+  width: 1px;
+  height: 120px;
+  top: 2rem;
+  left: 50%;
+}
+
+.hero::after {
+  width: 120px;
+  height: 1px;
+  top: calc(2rem + 60px);
+  left: calc(50% - 60px);
+}
+
+.hero h1 {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  color: var(--white);
+  letter-spacing: .1em;
+  position: relative;
+  display: inline-block;
+}
+
+/* Dimension marks — horizontal lines extending from title */
+.hero h1::before,
+.hero h1::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 80px;
+  height: 0;
+  border-top: 1px dashed var(--line);
+}
+
+.hero h1::before { right: calc(100% + 25px); }
+.hero h1::after { left: calc(100% + 25px); }
+
+/* Dimension end marks */
+.hero .dim-marks {
+  position: relative;
+  display: inline-block;
+}
+
+.hero .sub {
+  font-size: .92rem;
+  color: var(--dim);
+  margin-top: 1.2rem;
+  letter-spacing: .12em;
+  font-weight: 400;
+}
+
+.hero .revision {
+  margin-top: 1.8rem;
+  font-size: .6rem;
+  color: var(--line-dim);
+  letter-spacing: .25em;
+  text-transform: uppercase;
+}
+
+/* Title block / info panel */
+.title-block {
+  margin: 3rem auto 0;
+  max-width: 500px;
+  border: 1px solid var(--line-dim);
+  padding: 1.5rem 2rem;
+  position: relative;
+}
+
+.title-block::before {
+  content: 'TITLE BLOCK';
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  background: var(--bg);
+  padding: 0 .5rem;
+  font-size: .5rem;
+  letter-spacing: .2em;
+  color: var(--line);
+}
+
+.title-block-row {
+  display: flex;
+  justify-content: space-between;
+  padding: .3rem 0;
+  border-bottom: 1px dashed var(--line-dim);
+  font-size: .7rem;
+}
+
+.title-block-row:last-child { border-bottom: none; }
+
+.title-block-row .tb-label {
+  color: var(--dim);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-size: .55rem;
+}
+
+.title-block-row .tb-value {
+  color: var(--accent);
+}
+
+/* Crosshair decoration element */
+.crosshair {
+  width: 40px;
+  height: 40px;
+  margin: 2.5rem auto 0;
+  position: relative;
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--line-dim);
+}
+
+.crosshair::before { width: 1px; height: 100%; left: 50%; top: 0; }
+.crosshair::after { width: 100%; height: 1px; top: 50%; left: 0; }
+
+/* ═══════════════════════════════════════════════════
+   SECTIONS
+   ═══════════════════════════════════════════════════ */
+.section {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 4.5rem 2rem;
+  opacity: 0;
+  transform: translateY(25px);
+  transition: all .65s ease;
+}
+
+.section.visible { opacity: 1; transform: none; }
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: .8rem;
+  border-bottom: 1px solid var(--line-dim);
+  position: relative;
+}
+
+/* Right-aligned drawing number */
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 0;
+  border-top: 1px dashed var(--line-dim);
+  margin-left: 1rem;
+}
+
+.section-title .ref {
+  font-size: .55rem;
+  color: var(--line);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: .2rem .6rem;
+  border: 1px solid var(--line-dim);
+}
+
+.section-title h2 {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: var(--white);
+  letter-spacing: .06em;
+}
+
+.section-desc {
+  font-size: .82rem;
+  color: var(--dim);
+  margin-bottom: 2rem;
+  max-width: 700px;
+  line-height: 1.85;
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--line-dim);
+}
+
+/* Annotation with leader line */
+.annotation {
+  position: relative;
+  padding-left: 2.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.annotation::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: .5rem;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.annotation::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: .9rem;
+  width: calc(2.2rem - 10px);
+  height: 0;
+  border-top: 1px dashed var(--line-dim);
+}
+
+/* ═══════════════════════════════════════════════════
+   BLUEPRINT CARDS
+   ═══════════════════════════════════════════════════ */
+.bp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.bp-card {
+  border: 1px dashed var(--line-dim);
+  padding: 1.8rem;
+  position: relative;
+  transition: border-color .3s, background .3s;
+}
+
+.bp-card:hover {
+  border-color: var(--accent);
+  background: rgba(110,207,246,.02);
+}
+
+/* Reference label */
+.bp-card::before {
+  content: attr(data-ref);
+  position: absolute;
+  top: -.55rem;
+  left: 1rem;
+  background: var(--bg);
+  padding: 0 .5rem;
+  font-size: .5rem;
+  color: var(--line);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+/* Corner marks */
+.bp-card::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid var(--line-dim);
+  border-right: 1px solid var(--line-dim);
+  opacity: .4;
+}
+
+.bp-card h3 {
+  font-weight: 600;
+  font-size: .88rem;
+  color: var(--accent);
+  margin-bottom: .6rem;
+  letter-spacing: .06em;
+}
+
+.bp-card .bp-desc {
+  font-size: .72rem;
+  color: var(--dim);
+  font-style: italic;
+  margin-bottom: .5rem;
+}
+
+.bp-card ul { list-style: none; padding: 0; }
+
+.bp-card ul li {
+  padding: .25rem 0 .25rem 1.5rem;
+  font-size: .82rem;
+  position: relative;
+}
+
+.bp-card ul li::before {
+  content: '\2500\2500';
+  position: absolute;
+  left: 0;
+  color: var(--line-dim);
+  font-size: .55rem;
+  top: .35rem;
+}
+
+/* Summary metrics row */
+.bp-metrics {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.bp-metric {
+  flex: 1;
+  min-width: 120px;
+  border: 1px dashed var(--line-dim);
+  padding: 1rem;
+  text-align: center;
+}
+
+.bp-metric .bm-val {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--warn);
+  display: block;
+}
+
+.bp-metric .bm-label {
+  font-size: .5rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-top: .2rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   FLOW DIAGRAM (Journey)
+   ═══════════════════════════════════════════════════ */
+.flow-intro {
+  font-size: .82rem;
+  color: var(--dim);
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--warn);
+}
+
+.flow {
+  position: relative;
+  padding-left: 3.5rem;
+}
+
+/* Vertical connecting line */
+.flow::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--line-dim);
+}
+
+.flow-step {
+  position: relative;
+  padding: 1.2rem 0 2rem 2rem;
+}
+
+/* Step number circle */
+.flow-step::before {
+  content: attr(data-num);
+  position: absolute;
+  left: -3.5rem;
+  top: 1rem;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .55rem;
+  color: var(--accent);
+  background: var(--bg);
+  text-align: center;
+  line-height: 24px;
+}
+
+/* Horizontal leader from circle to content */
+.flow-step::after {
+  content: '';
+  position: absolute;
+  left: -2.4rem;
+  top: 1.65rem;
+  width: 2rem;
+  height: 0;
+  border-top: 1px dashed var(--line-dim);
+}
+
+.flow-step h3 {
+  font-weight: 600;
+  font-size: .88rem;
+  color: var(--white);
+  margin-bottom: .35rem;
+  letter-spacing: .04em;
+}
+
+.flow-step p {
+  font-size: .82rem;
+  color: var(--text);
+  line-height: 1.75;
+}
+
+.flow-step .flow-detail {
+  font-size: .72rem;
+  color: var(--dim);
+  margin-top: .3rem;
+  font-style: italic;
+}
+
+.flow-tag {
+  display: inline-block;
+  margin-top: .4rem;
+  font-size: .52rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: .12rem .55rem;
+  border-radius: 1px;
+}
+
+.flow-tag.open { border: 1px solid #4a8; color: #6cb89a; }
+.flow-tag.locked { border: 1px solid var(--warn); color: var(--warn); }
+
+/* ═══════════════════════════════════════════════════
+   PARK SECTION
+   ═══════════════════════════════════════════════════ */
+.park-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.park-card {
+  border: 1px solid var(--line-dim);
+  padding: 2rem;
+  position: relative;
+  transition: border-color .3s;
+}
+
+.park-card:hover { border-color: var(--accent); }
+
+.park-card::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -9px;
+  left: 14px;
+  background: var(--bg);
+  padding: 0 .6rem;
+  font-size: .52rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.park-card.v2 { border-color: var(--warn-dim); }
+.park-card.v2::before { color: var(--warn); }
+.park-card.v2:hover { border-color: var(--warn); }
+
+.park-card p { font-size: .82rem; line-height: 1.85; }
+
+.park-card .park-note {
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px dashed var(--line-dim);
+  font-size: .72rem;
+  color: var(--dim);
+  font-style: italic;
+}
+
+.park-card .arr { color: var(--accent); margin: 0 .3rem; }
+.park-card.v2 .arr { color: var(--warn); }
+
+/* ═══════════════════════════════════════════════════
+   MONETIZATION
+   ═══════════════════════════════════════════════════ */
+.mono-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.mono-card {
+  border: 1px dashed var(--line-dim);
+  padding: 1.8rem;
+  position: relative;
+  transition: border-color .3s, background .3s;
+}
+
+.mono-card:hover {
+  border-color: var(--accent);
+  background: rgba(110,207,246,.02);
+}
+
+.mono-card .num {
+  font-family: 'Bitter', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--line-dim);
+  position: absolute;
+  top: .4rem;
+  right: 1rem;
+  opacity: .4;
+}
+
+.mono-card h3 {
+  font-weight: 600;
+  font-size: .88rem;
+  color: var(--white);
+  margin-bottom: .35rem;
+}
+
+.mono-card .model {
+  font-size: .62rem;
+  color: var(--warn);
+  letter-spacing: .12em;
+  margin-bottom: .6rem;
+  text-transform: uppercase;
+}
+
+.mono-card p { font-size: .8rem; line-height: 1.75; }
+
+.mono-card .mono-note {
+  margin-top: .75rem;
+  font-size: .68rem;
+  color: var(--dim);
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════
+   TABLE
+   ═══════════════════════════════════════════════════ */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line-dim);
+  margin: 1.5rem 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .75rem;
+}
+
+thead {
+  font-size: .58rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+th {
+  padding: .75rem .85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  background: rgba(110,207,246,.04);
+}
+
+td {
+  padding: .55rem .85rem;
+  border-bottom: 1px dashed var(--line-dim);
+}
+
+tbody tr:hover { background: rgba(110,207,246,.04); }
+tbody tr:nth-child(even) { background: rgba(0,0,0,.08); }
+tbody tr:nth-child(even):hover { background: rgba(110,207,246,.04); }
+
+.stg {
+  font-size: .5rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: .12rem .45rem;
+  display: inline-block;
+}
+
+.stg.mvp { border: 1px solid var(--accent); color: var(--accent); }
+.stg.v2 { border: 1px solid var(--warn); color: var(--warn); }
+.stg.v3 { border: 1px solid var(--error); color: var(--error); }
+
+.table-footer-note {
+  padding: .65rem .85rem;
+  font-size: .58rem;
+  color: var(--dim);
+  letter-spacing: .1em;
+  border-top: 1px solid var(--line-dim);
+}
+
+/* ═══════════════════════════════════════════════════
+   ECONOMICS
+   ═══════════════════════════════════════════════════ */
+.econ-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.econ-box {
+  border: 1px solid var(--line-dim);
+  padding: 2.2rem;
+  position: relative;
+  transition: border-color .3s;
+}
+
+.econ-box:hover { border-color: var(--accent); }
+
+.econ-box::before {
+  content: attr(data-label);
+  position: absolute;
+  top: -9px;
+  left: 14px;
+  background: var(--bg);
+  padding: 0 .6rem;
+  font-size: .52rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+
+.econ-box .big {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  color: var(--white);
+  margin-bottom: .5rem;
+}
+
+.econ-box .econ-desc {
+  font-size: .82rem;
+  color: var(--dim);
+  margin-bottom: .75rem;
+}
+
+.econ-box .formula {
+  font-size: .75rem;
+  border-left: 2px solid var(--accent);
+  padding: .6rem 1.2rem;
+  margin-top: 1rem;
+  color: var(--dim);
+  background: rgba(110,207,246,.03);
+  line-height: 1.85;
+}
+
+/* Metrics row under economics */
+.econ-metrics-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.econ-metric-item {
+  flex: 1;
+  min-width: 120px;
+  border: 1px dashed var(--line-dim);
+  padding: 1rem;
+  text-align: center;
+}
+
+.econ-metric-item .emi-val {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--accent);
+  display: block;
+}
+
+.econ-metric-item .emi-label {
+  font-size: .48rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-top: .2rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   DIMENSION MARKS & SEPARATORS
+   ═══════════════════════════════════════════════════ */
+.dim-mark {
+  font-size: .52rem;
+  color: var(--line-dim);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 1.5rem 0 .5rem;
+}
+
+.dim-line {
+  width: min(60%, 500px);
+  height: 0;
+  margin: 0 auto;
+  border-top: 1px dashed var(--line-dim);
+  position: relative;
+}
+
+/* End marks on dimension line */
+.dim-line::before,
+.dim-line::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  width: 0;
+  height: 10px;
+  border-left: 1px solid var(--line-dim);
+}
+
+.dim-line::before { left: 0; }
+.dim-line::after { right: 0; }
+
+/* ═══════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════ */
+footer {
+  text-align: center;
+  padding: 3.5rem 2rem;
+  border-top: 1px dashed var(--line-dim);
+  position: relative;
+}
+
+footer .f-logo {
+  font-weight: 600;
+  font-size: .9rem;
+  color: var(--accent);
+  letter-spacing: .2em;
+}
+
+footer .f-line {
+  width: 60px;
+  height: 1px;
+  background: var(--line-dim);
+  margin: 1rem auto;
+}
+
+footer .f-text {
+  font-size: .6rem;
+  color: var(--line-dim);
+  letter-spacing: .18em;
+}
+
+footer .f-copy {
+  font-size: .5rem;
+  color: #2a3a5a;
+  letter-spacing: .15em;
+  margin-top: .5rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  nav ul { display: none; }
+  nav .mobile-menu { display: block; }
+  .bp-grid, .park-pair, .mono-grid, .econ-pair { grid-template-columns: 1fr; }
+  .hero h1::before, .hero h1::after { display: none; }
+  .title-block { max-width: 100%; }
+  .bp-metrics { flex-direction: column; }
+  .econ-metrics-row { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .section { padding: 3rem 1.2rem; }
+  .hero { padding: 5rem 1.5rem 3rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <div class="logo">ТаксиБрат</div>
+    <span class="mobile-menu">&#9776; NAV</span>
+    <ul>
+      <li><a href="#arch">Архитектура</a></li>
+      <li><a href="#driver">Путь водителя</a></li>
+      <li><a href="#park">Путь парка</a></li>
+      <li><a href="#money">Монетизация</a></li>
+      <li><a href="#scenarios">Сценарии</a></li>
+      <li><a href="#econ">Экономика</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <h1>ТаксиБрат</h1>
+  <p class="sub">Аудитор таксопарков &#9472; объективные рейтинги от тайных покупателей</p>
+  <p class="revision">REV. A &#9642; PRODUCT BLUEPRINT &#9642; 2026</p>
+
+  <div class="title-block">
+    <div class="title-block-row">
+      <span class="tb-label">Проект</span>
+      <span class="tb-value">ТаксиБрат</span>
+    </div>
+    <div class="title-block-row">
+      <span class="tb-label">Тип</span>
+      <span class="tb-value">Product Guide</span>
+    </div>
+    <div class="title-block-row">
+      <span class="tb-label">Ревизия</span>
+      <span class="tb-value">A</span>
+    </div>
+    <div class="title-block-row">
+      <span class="tb-label">Дата</span>
+      <span class="tb-value">2026</span>
+    </div>
+    <div class="title-block-row">
+      <span class="tb-label">Чертежей</span>
+      <span class="tb-value">6</span>
+    </div>
+  </div>
+  <div class="crosshair"></div>
+</section>
+
+<div class="dim-line"></div>
+<div class="dim-mark">Чертёж 01 &#9642; Архитектура системы</div>
+
+<!-- ═══════════ ARCHITECTURE ═══════════ -->
+<section class="section" id="arch">
+  <div class="section-title">
+    <span class="ref">DWG-01</span>
+    <h2>Архитектура системы</h2>
+  </div>
+  <p class="section-desc">Серверлесс-стек на бесплатных тирах. Монолитная архитектура с единой кодовой базой для мобильного интерфейса и десктопной админки.</p>
+  <div class="bp-grid">
+    <div class="bp-card" data-ref="A1 &#8212; Frontend">
+      <h3>Frontend + Backend</h3>
+      <div class="bp-desc">Единый монолит</div>
+      <ul>
+        <li>Next.js 15 монолит</li>
+        <li>Mobile-first + desktop admin</li>
+        <li>Vercel hosting (free tier)</li>
+      </ul>
+    </div>
+    <div class="bp-card" data-ref="A2 &#8212; Database">
+      <h3>База данных</h3>
+      <div class="bp-desc">Типобезопасный доступ</div>
+      <ul>
+        <li>Prisma 7 ORM</li>
+        <li>PostgreSQL (Supabase free)</li>
+        <li>Автоматические миграции</li>
+      </ul>
+    </div>
+    <div class="bp-card" data-ref="A3 &#8212; Auth">
+      <h3>Авторизация</h3>
+      <div class="bp-desc">Telegram-нативная</div>
+      <ul>
+        <li>NextAuth</li>
+        <li>Telegram Login Widget</li>
+        <li>JWT-сессии</li>
+      </ul>
+    </div>
+    <div class="bp-card" data-ref="A4 &#8212; Rating">
+      <h3>Rating Engine</h3>
+      <div class="bp-desc">Ядро продукта</div>
+      <ul>
+        <li>27 параметров &#215; настраиваемые веса</li>
+        <li>Итоговый рейтинг 0 &#8212; 5</li>
+        <li>Прозрачная формула</li>
+      </ul>
+    </div>
+  </div>
+  <div class="bp-metrics">
+    <div class="bp-metric">
+      <span class="bm-val">0 &#8381;</span>
+      <span class="bm-label">Инфраструктура</span>
+    </div>
+    <div class="bp-metric">
+      <span class="bm-val">27</span>
+      <span class="bm-label">Параметров</span>
+    </div>
+    <div class="bp-metric">
+      <span class="bm-val">0&#8212;5</span>
+      <span class="bm-label">Шкала рейтинга</span>
+    </div>
+    <div class="bp-metric">
+      <span class="bm-val">1</span>
+      <span class="bm-label">Кодовая база</span>
+    </div>
+  </div>
+</section>
+
+<div class="dim-line"></div>
+<div class="dim-mark">Чертёж 02 &#9642; Путь водителя</div>
+
+<!-- ═══════════ DRIVER JOURNEY ═══════════ -->
+<section class="section" id="driver">
+  <div class="section-title">
+    <span class="ref">DWG-02</span>
+    <h2>Путь водителя (6 шагов)</h2>
+  </div>
+  <p class="flow-intro">Воронка из 6 шагов. Первые 3 без авторизации для максимального охвата. Барьер на 4-м шаге фильтрует нецелевых пользователей.</p>
+  <div class="flow">
+    <div class="flow-step" data-num="01">
+      <h3>Hook (лендинг)</h3>
+      <p>Строка поиска «Введите название парка», топ-3 скрытых парка.</p>
+      <div class="flow-detail">Конверсия: посетитель &#8594; заинтересованный</div>
+      <span class="flow-tag open">Без авторизации</span>
+    </div>
+    <div class="flow-step" data-num="02">
+      <h3>«Горькая правда»</h3>
+      <p>Текущий рейтинг парка (например 3.1/5), список слабых параметров.</p>
+      <div class="flow-detail">Эмоциональный триггер &#8212; неудовлетворённость</div>
+      <span class="flow-tag open">Без авторизации</span>
+    </div>
+    <div class="flow-step" data-num="03">
+      <h3>Каталог</h3>
+      <p>Фильтрованный список, названия скрыты («Парк #12»), рейтинги видны.</p>
+      <div class="flow-detail">Есть лучшие парки, но нужен доступ</div>
+      <span class="flow-tag open">Без авторизации</span>
+    </div>
+    <div class="flow-step" data-num="04">
+      <h3>Регистрация + верификация</h3>
+      <p>Telegram-логин, загрузка фото ВУ + селфи. Ключевой барьер.</p>
+      <div class="flow-detail">Фильтрация: только реальные водители</div>
+      <span class="flow-tag locked">Барьер</span>
+    </div>
+    <div class="flow-step" data-num="05">
+      <h3>Одобрение</h3>
+      <p>Менеджер проверяет данные, бот отправляет контакты парка через Telegram.</p>
+      <div class="flow-detail">Момент монетизации: контакт = лид</div>
+      <span class="flow-tag locked">Авторизация</span>
+    </div>
+    <div class="flow-step" data-num="06">
+      <h3>Чат с куратором</h3>
+      <p>Прямой Telegram-чат с менеджером для сопровождения.</p>
+      <div class="flow-detail">Повышение конверсии лида в трудоустройство</div>
+      <span class="flow-tag locked">Авторизация</span>
+    </div>
+  </div>
+</section>
+
+<div class="dim-line"></div>
+<div class="dim-mark">Чертёж 03 &#9642; Путь парка</div>
+
+<!-- ═══════════ PARK JOURNEY ═══════════ -->
+<section class="section" id="park">
+  <div class="section-title">
+    <span class="ref">DWG-03</span>
+    <h2>Путь парка</h2>
+  </div>
+  <p class="section-desc">Два пути попадания в каталог: органический (инициатива платформы) и платный (инициатива парка).</p>
+  <div class="park-pair">
+    <div class="park-card" data-label="Органический (MVP)">
+      <p>
+        Тайный покупатель
+        <span class="arr">&#9656;</span>
+        аудит парка
+        <span class="arr">&#9656;</span>
+        менеджер заполняет 40+ полей
+        <span class="arr">&#9656;</span>
+        рейтинг
+        <span class="arr">&#9656;</span>
+        каталог
+      </p>
+      <div class="park-note">Парк не знает о присутствии. Аудит инициирован платформой.</div>
+    </div>
+    <div class="park-card v2" data-label="Платный (v2)">
+      <p>
+        Парк регистрируется
+        <span class="arr">&#9656;</span>
+        профиль
+        <span class="arr">&#9656;</span>
+        верификация
+        <span class="arr">&#9656;</span>
+        тариф
+        <span class="arr">&#9656;</span>
+        лиды
+      </p>
+      <div class="park-note">Парк активно заинтересован в привлечении водителей.</div>
+    </div>
+  </div>
+</section>
+
+<div class="dim-line"></div>
+<div class="dim-mark">Чертёж 04 &#9642; Монетизация</div>
+
+<!-- ═══════════ MONETIZATION ═══════════ -->
+<section class="section" id="money">
+  <div class="section-title">
+    <span class="ref">DWG-04</span>
+    <h2>Каналы монетизации</h2>
+  </div>
+  <p class="section-desc">Четыре канала дохода от MVP до масштабируемого маркетплейса.</p>
+  <div class="mono-grid">
+    <div class="mono-card">
+      <span class="num">01</span>
+      <h3>Скрытый лид (MVP)</h3>
+      <div class="model">CPA 500 &#8212; 2 000 &#8381;/лид</div>
+      <p>Название парка скрыто до верификации водителя. Основа монетизации.</p>
+      <div class="mono-note">Старт с первого дня, нулевые затраты</div>
+    </div>
+    <div class="mono-card">
+      <span class="num">02</span>
+      <h3>Подписка парка (v2)</h3>
+      <div class="model">SaaS 5 000 &#8212; 15 000 &#8381;/мес</div>
+      <p>Приоритет, аналитика, бейдж качества.</p>
+      <div class="mono-note">Рекуррентный доход, предсказуемый MRR</div>
+    </div>
+    <div class="mono-card">
+      <span class="num">03</span>
+      <h3>Реферальная программа (v2)</h3>
+      <div class="model">Revenue share 10 &#8212; 15%</div>
+      <p>Процент от первого месяца работы водителя.</p>
+      <div class="mono-note">Мотивирует качественный мэтчинг</div>
+    </div>
+    <div class="mono-card">
+      <span class="num">04</span>
+      <h3>Маркетплейс услуг (v3)</h3>
+      <div class="model">Commission + Listing</div>
+      <p>Страхование, кредиты, ТО &#8212; комиссия с каждой сделки.</p>
+      <div class="mono-note">Экосистемный эффект, масштабирование</div>
+    </div>
+  </div>
+</section>
+
+<div class="dim-line"></div>
+<div class="dim-mark">Чертёж 05 &#9642; 13 сценариев</div>
+
+<!-- ═══════════ 13 SCENARIOS ═══════════ -->
+<section class="section" id="scenarios">
+  <div class="section-title">
+    <span class="ref">DWG-05</span>
+    <h2>Все 13 сценариев</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Сценарий</th><th>Кто платит</th><th>Модель</th><th>Прогноз</th><th>Стадия</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Скрытый лид</td><td>Парк</td><td>CPA</td><td>500 &#8212; 2 000 &#8381;/лид</td><td><span class="stg mvp">MVP</span></td></tr>
+        <tr><td>Приоритетное размещение</td><td>Парк</td><td>Подписка</td><td>5 000 &#8212; 15 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Аналитика по водителям</td><td>Парк</td><td>SaaS</td><td>3 000 &#8212; 10 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Бейдж «Проверенный парк»</td><td>Парк</td><td>Подписка</td><td>2 000 &#8212; 5 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Реферальная программа</td><td>Парк</td><td>Rev. share</td><td>10 &#8212; 15%</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Продвижение в каталоге</td><td>Парк</td><td>CPC / фикс</td><td>3 000 &#8212; 8 000 &#8381;/мес</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Страхование водителей</td><td>Страховая</td><td>Комиссия</td><td>500 &#8212; 1 500 &#8381;/полис</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Кредит/лизинг на авто</td><td>Банк</td><td>Комиссия</td><td>2 000 &#8212; 10 000 &#8381;/сделка</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>ТО и ремонт</td><td>Сервис</td><td>Listing</td><td>500 &#8212; 3 000 &#8381;/заказ</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Обучение водителей</td><td>Образование</td><td>Комиссия</td><td>1 000 &#8212; 5 000 &#8381;/курс</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>Аренда авто</td><td>Парк/водитель</td><td>Комиссия</td><td>2 000 &#8212; 5 000 &#8381;/сделка</td><td><span class="stg v2">v2</span></td></tr>
+        <tr><td>Рекламные интеграции</td><td>Рекламодатель</td><td>CPM</td><td>10 000 &#8212; 50 000 &#8381;/мес</td><td><span class="stg v3">v3</span></td></tr>
+        <tr><td>White-label рейтинг</td><td>Агрегатор</td><td>B2B SaaS</td><td>50 000 &#8212; 200 000 &#8381;/мес</td><td><span class="stg v3">v3</span></td></tr>
+      </tbody>
+    </table>
+    <div class="table-footer-note">&#9633; 13 сценариев &#183; 3 стадии &#183; 6 моделей выручки</div>
+  </div>
+</section>
+
+<div class="dim-line"></div>
+<div class="dim-mark">Чертёж 06 &#9642; Экономика</div>
+
+<!-- ═══════════ ECONOMICS ═══════════ -->
+<section class="section" id="econ">
+  <div class="section-title">
+    <span class="ref">DWG-06</span>
+    <h2>Unit-экономика</h2>
+  </div>
+  <p class="section-desc">Нулевые затраты на инфраструктуру. Прибыль с первого лида. Рост через добавление платных каналов.</p>
+  <div class="econ-pair">
+    <div class="econ-box" data-label="MVP">
+      <div class="big">100 000 &#8381;/мес</div>
+      <p class="econ-desc">Только скрытые лиды, нулевые затраты.</p>
+      <div class="formula">100 лидов/мес &#215; 1 000 &#8381; = 100 000 &#8381;<br>Инфраструктура: 0 &#8381; (Vercel + Supabase free)<br>Маржинальность: ~95%</div>
+    </div>
+    <div class="econ-box" data-label="v2 (20 парков)">
+      <div class="big">175 000 &#8381;/мес</div>
+      <p class="econ-desc">Подписки + рефералы + приоритет.</p>
+      <div class="formula">Подписки + рефералы + приоритет = ~175 000 &#8381;/мес<br>Предсказуемый MRR от подписок</div>
+    </div>
+  </div>
+  <div class="econ-metrics-row">
+    <div class="econ-metric-item">
+      <span class="emi-val">100</span>
+      <span class="emi-label">Лидов / мес</span>
+    </div>
+    <div class="econ-metric-item">
+      <span class="emi-val">1 000 &#8381;</span>
+      <span class="emi-label">Ср. CPA</span>
+    </div>
+    <div class="econ-metric-item">
+      <span class="emi-val">~95%</span>
+      <span class="emi-label">Маржа</span>
+    </div>
+    <div class="econ-metric-item">
+      <span class="emi-val">20</span>
+      <span class="emi-label">Парков v2</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo">+ ТаксиБрат</div>
+  <div class="f-line"></div>
+  <p class="f-text">Product Blueprint &#9642; REV. A &#9642; 2026</p>
+  <p class="f-copy">Аудитор таксопарков &#183; Объективные рейтинги от тайных покупателей</p>
+</footer>
+
+<script>
+const sections = document.querySelectorAll('.section');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+sections.forEach(s => obs.observe(s));
+
+/* Nav active */
+const links = document.querySelectorAll('nav a[href^="#"]');
+const sObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      links.forEach(l => l.style.color = l.getAttribute('href') === '#'+id ? 'var(--accent)' : '');
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.section[id]').forEach(s => sObs.observe(s));
+</script>
+</body>
+</html>

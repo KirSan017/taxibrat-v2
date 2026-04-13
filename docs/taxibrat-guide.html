@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ТаксиБрат — Гид по проекту</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#755b00",
+            "primary-container": "#ffc800",
+            "on-primary-container": "#6e5500",
+            "surface": "#fcf9f8",
+            "surface-container-low": "#f6f3f2",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-high": "#eae7e7",
+            "surface-container-highest": "#e5e2e1",
+            "on-background": "#1c1b1b",
+            "on-surface": "#1c1b1b",
+            "on-surface-variant": "#4f4632",
+            "outline-variant": "#d2c5ab",
+            "secondary-container": "#e2dfde",
+            "on-secondary-container": "#636262",
+          },
+          fontFamily: {
+            "headline": ["Montserrat", "sans-serif"],
+            "body": ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            "xl": "1.5rem",
+            "full": "9999px",
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    ::selection {
+      background-color: #ffc800;
+      color: #6e5500;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background-color: #fcf9f8;
+      color: #1c1b1b;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    .ambient-shadow {
+      box-shadow: 0 20px 40px rgba(28, 27, 27, 0.06);
+    }
+
+    .ambient-shadow-lg {
+      box-shadow: 0 30px 60px rgba(28, 27, 27, 0.08);
+    }
+
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.80);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+
+    /* Funnel bars */
+    .funnel-bar {
+      transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Table rows */
+    .scenario-row:nth-child(even) {
+      background-color: #ffffff;
+    }
+    .scenario-row:nth-child(odd) {
+      background-color: #f6f3f2;
+    }
+
+    /* Timeline connector */
+    .timeline-line {
+      position: absolute;
+      left: 28px;
+      top: 56px;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, #ffc800, #d2c5ab);
+    }
+
+    @media (max-width: 768px) {
+      .timeline-line {
+        left: 20px;
+      }
+    }
+
+    /* Sticky nav active link */
+    .nav-link {
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .nav-link:hover {
+      color: #755b00;
+    }
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: #ffc800;
+      transition: width 0.3s ease;
+    }
+    .nav-link:hover::after {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body class="bg-surface font-body text-on-background">
+
+  <!-- ============================================ -->
+  <!-- NAVIGATION -->
+  <!-- ============================================ -->
+  <nav class="glass-nav fixed top-0 left-0 right-0 z-50 ambient-shadow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 md:h-20">
+        <!-- Logo -->
+        <a href="#hero" class="flex items-center gap-2 shrink-0">
+          <span class="material-symbols-outlined text-primary text-3xl">local_taxi</span>
+          <span class="font-headline font-extrabold text-lg tracking-tight text-on-background">Такси<span class="text-primary-container bg-on-primary-container px-1.5 py-0.5 rounded-lg ml-0.5">Брат</span></span>
+        </a>
+
+        <!-- Desktop Links -->
+        <div class="hidden md:flex items-center gap-8">
+          <a href="#driver-journey" class="nav-link font-body text-sm font-medium text-on-surface-variant">Путь водителя</a>
+          <a href="#park-journey" class="nav-link font-body text-sm font-medium text-on-surface-variant">Путь парка</a>
+          <a href="#funnel" class="nav-link font-body text-sm font-medium text-on-surface-variant">Воронка</a>
+          <a href="#monetization" class="nav-link font-body text-sm font-medium text-on-surface-variant">Монетизация</a>
+        </div>
+
+        <!-- Mobile menu button -->
+        <button id="mobile-menu-btn" class="md:hidden p-2 rounded-xl bg-surface-container-low">
+          <span class="material-symbols-outlined text-on-surface">menu</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden glass-nav px-4 pb-4">
+      <div class="flex flex-col gap-3">
+        <a href="#driver-journey" class="font-body text-sm font-medium text-on-surface-variant py-2">Путь водителя</a>
+        <a href="#park-journey" class="font-body text-sm font-medium text-on-surface-variant py-2">Путь парка</a>
+        <a href="#funnel" class="font-body text-sm font-medium text-on-surface-variant py-2">Воронка</a>
+        <a href="#monetization" class="font-body text-sm font-medium text-on-surface-variant py-2">Монетизация</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================ -->
+  <!-- HERO -->
+  <!-- ============================================ -->
+  <section id="hero" class="pt-32 md:pt-44 pb-20 md:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative overflow-hidden">
+    <div class="grid lg:grid-cols-12 gap-8 items-center">
+      <!-- Left: text -->
+      <div class="lg:col-span-7 reveal">
+        <div class="inline-flex items-center gap-2 bg-surface-container-low rounded-full px-4 py-2 mb-8">
+          <span class="material-symbols-outlined text-primary text-base">verified</span>
+          <span class="font-body text-xs font-semibold text-on-surface-variant tracking-wide uppercase">Сервис-аудитор таксопарков</span>
+        </div>
+
+        <h1 class="font-headline font-black text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight mb-6">
+          Такси<br />
+          <span class="text-on-primary-container bg-primary-container px-3 py-1 rounded-2xl inline-block mt-2">Брат</span>
+        </h1>
+
+        <p class="font-body text-lg md:text-xl text-on-surface-variant max-w-xl leading-relaxed mb-10">
+          Объективный рейтинг из 27 параметров. Данные от тайных покупателей. Прозрачность для водителей, аналитика для парков.
+        </p>
+
+        <!-- CTA pills -->
+        <div class="flex flex-wrap gap-4">
+          <a href="#driver-journey" class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container font-body font-bold text-sm px-7 py-3.5 rounded-full hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+            <span class="material-symbols-outlined text-lg">directions_car</span>
+            Каталог парков
+          </a>
+          <a href="#driver-journey" class="inline-flex items-center gap-2 bg-secondary-container text-on-secondary-container font-body font-bold text-sm px-7 py-3.5 rounded-full hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+            <span class="material-symbols-outlined text-lg">play_circle</span>
+            Как это работает
+          </a>
+        </div>
+      </div>
+
+      <!-- Right: photo + floating stat -->
+      <div class="lg:col-span-5 reveal reveal-delay-2 relative">
+        <div class="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
+          <img class="w-full h-full object-cover" alt="Жёлтое такси на ночной неоновой улице" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiEVgSy3rKO9LdQxCRKsxgE43YWo3p_4L5FyPFu-DY3IYRE0kkYds29Ut7JgnwqCGQiFk6KXiKAOqUtOOHxDQe72HuXePN6-vR5AScHTAHs2efVYpG2oU4u9NqJmG3ZiSLrKCfwNOMr1rukRiLZtxmw0ZYCGyVYCf7T2WbPQSEAeiWF8AWPIhVi7MlWGV4ntqSZu7ra9frrVPev1dGkJj5u3LR-Cxt5-cAfDJeOBdROI4q0zaO6AwNn3XYz8X3QBzzITFr40BHQSU"/>
+        </div>
+        <!-- Floating Stats Card -->
+        <div class="absolute -bottom-6 -left-6 bg-surface-container-lowest p-6 rounded-xl ambient-shadow-lg border-l-8 border-primary-container max-w-[240px]">
+          <span class="text-primary font-headline font-black text-4xl block mb-1">27</span>
+          <p class="text-xs font-bold text-on-surface uppercase tracking-widest">параметров рейтинга</p>
+        </div>
+        <!-- Top-right mini stat -->
+        <div class="absolute -top-4 -right-4 bg-primary-container text-on-primary-container p-4 rounded-xl ambient-shadow text-center">
+          <span class="font-headline font-black text-2xl block">40+</span>
+          <span class="text-xs font-bold">полей</span>
+        </div>
+      </div>
+    </div>
+    <!-- Decorative accent (like reference) -->
+    <div class="absolute top-0 right-0 w-1/3 h-full bg-primary-container/5 -skew-x-12 transform translate-x-1/2 -z-10 pointer-events-none"></div>
+  </section>
+
+
+  <!-- ============================================ -->
+  <!-- DRIVER JOURNEY -->
+  <!-- ============================================ -->
+  <section id="driver-journey" class="py-20 md:py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="mb-16 reveal">
+      <span class="font-body text-xs font-bold text-primary tracking-widest uppercase mb-3 block">Путь водителя</span>
+      <h2 class="font-headline font-black text-4xl md:text-5xl lg:text-6xl tracking-tight">6 шагов от<br />поиска до сделки</h2>
+    </div>
+
+    <div class="relative max-w-3xl mx-auto">
+      <!-- Timeline line -->
+      <div class="timeline-line hidden md:block"></div>
+
+      <!-- Step 1 -->
+      <div class="relative flex gap-6 md:gap-8 mb-12 reveal">
+        <div class="shrink-0 z-10">
+          <div class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center ambient-shadow">
+            <span class="font-headline font-black text-lg text-on-primary-container">1</span>
+          </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-6 md:p-8 ambient-shadow flex-1">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <h4 class="font-headline font-bold text-xl text-on-background">Крючок (Landing)</h4>
+            <span class="font-body text-xs font-bold bg-green-100 text-green-700 rounded-full px-3 py-1">Открыто</span>
+          </div>
+          <p class="font-body text-sm text-on-surface-variant leading-relaxed mb-3">
+            Водитель видит поисковую строку и топ-3 скрытых парка.
+            Названия замаскированы: вместо реального имени — анонимный номер.
+          </p>
+          <div class="flex items-center gap-2 text-on-surface-variant/60">
+            <span class="material-symbols-outlined text-base">search</span>
+            <span class="font-body text-xs font-medium">Поиск + top-3 превью</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="relative flex gap-6 md:gap-8 mb-12 reveal reveal-delay-1">
+        <div class="shrink-0 z-10">
+          <div class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center ambient-shadow">
+            <span class="font-headline font-black text-lg text-on-primary-container">2</span>
+          </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-6 md:p-8 ambient-shadow flex-1">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <h4 class="font-headline font-bold text-xl text-on-background">"Горькая правда"</h4>
+            <span class="font-body text-xs font-bold bg-green-100 text-green-700 rounded-full px-3 py-1">Открыто</span>
+          </div>
+          <p class="font-body text-sm text-on-surface-variant leading-relaxed mb-3">
+            Рейтинг парка 3.1 из 5. Водитель видит слабые параметры:
+            задержки выплат, низкий уровень поддержки, скрытые комиссии.
+          </p>
+          <div class="flex items-center gap-2 text-on-surface-variant/60">
+            <span class="material-symbols-outlined text-base">trending_down</span>
+            <span class="font-body text-xs font-medium">Рейтинг 3.1/5, слабые параметры</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="relative flex gap-6 md:gap-8 mb-12 reveal reveal-delay-2">
+        <div class="shrink-0 z-10">
+          <div class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center ambient-shadow">
+            <span class="font-headline font-black text-lg text-on-primary-container">3</span>
+          </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-6 md:p-8 ambient-shadow flex-1">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <h4 class="font-headline font-bold text-xl text-on-background">Каталог</h4>
+            <span class="font-body text-xs font-bold bg-green-100 text-green-700 rounded-full px-3 py-1">Открыто</span>
+          </div>
+          <p class="font-body text-sm text-on-surface-variant leading-relaxed mb-3">
+            Полный каталог с фильтрами. Названия скрыты: "Парк #12", "Парк #47".
+            Видна оценка, город, ключевые условия — но не контакты.
+          </p>
+          <div class="flex items-center gap-2 text-on-surface-variant/60">
+            <span class="material-symbols-outlined text-base">filter_list</span>
+            <span class="font-body text-xs font-medium">Фильтры + скрытые имена</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="relative flex gap-6 md:gap-8 mb-12 reveal reveal-delay-3">
+        <div class="shrink-0 z-10">
+          <div class="w-14 h-14 rounded-full bg-on-background flex items-center justify-center ambient-shadow">
+            <span class="font-headline font-black text-lg text-primary-container">4</span>
+          </div>
+        </div>
+        <div class="bg-on-background rounded-xl p-6 md:p-8 ambient-shadow flex-1">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <h4 class="font-headline font-bold text-xl text-surface-container-lowest">Регистрация + верификация</h4>
+            <span class="font-body text-xs font-bold bg-red-500/20 text-red-300 rounded-full px-3 py-1">Барьер</span>
+          </div>
+          <p class="font-body text-sm text-surface-container-high leading-relaxed mb-3">
+            Telegram Login Widget. Водитель загружает фото с водительским
+            удостоверением. Заявка уходит на модерацию.
+          </p>
+          <div class="flex items-center gap-2 text-surface-container-highest/60">
+            <span class="material-symbols-outlined text-base">photo_camera</span>
+            <span class="font-body text-xs font-medium">Telegram login + фото ВУ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="relative flex gap-6 md:gap-8 mb-12 reveal reveal-delay-4">
+        <div class="shrink-0 z-10">
+          <div class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center ambient-shadow">
+            <span class="font-headline font-black text-lg text-on-primary-container">5</span>
+          </div>
+        </div>
+        <div class="bg-primary-container rounded-xl p-6 md:p-8 ambient-shadow flex-1">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <h4 class="font-headline font-bold text-xl text-on-primary-container">Одобрение</h4>
+            <span class="font-body text-xs font-bold bg-on-primary-container/15 text-on-primary-container rounded-full px-3 py-1">Лид</span>
+          </div>
+          <p class="font-body text-sm text-on-primary-container/80 leading-relaxed mb-3">
+            Менеджер одобряет заявку. Бот отправляет водителю контакты парка
+            и реальное название. Лид зафиксирован.
+          </p>
+          <div class="flex items-center gap-2 text-on-primary-container/60">
+            <span class="material-symbols-outlined text-base">check_circle</span>
+            <span class="font-body text-xs font-medium">Контакты + имя парка раскрыты</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="relative flex gap-6 md:gap-8 reveal reveal-delay-5">
+        <div class="shrink-0 z-10">
+          <div class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center ambient-shadow">
+            <span class="font-headline font-black text-lg text-on-primary-container">6</span>
+          </div>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl p-6 md:p-8 ambient-shadow flex-1">
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <h4 class="font-headline font-bold text-xl text-on-background">Чат с куратором</h4>
+            <span class="font-body text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-3 py-1">Telegram</span>
+          </div>
+          <p class="font-body text-sm text-on-surface-variant leading-relaxed mb-3">
+            Водитель переходит в Telegram-чат с куратором парка.
+            Обсуждение условий, подключение, начало работы.
+          </p>
+          <div class="flex items-center gap-2 text-on-surface-variant/60">
+            <span class="material-symbols-outlined text-base">chat</span>
+            <span class="font-body text-xs font-medium">Прямой Telegram-чат</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- PARK JOURNEY -->
+  <!-- ============================================ -->
+  <section id="park-journey" class="py-20 md:py-32 px-4 sm:px-6 lg:px-8 bg-surface-container-low">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-16 reveal">
+        <span class="font-body text-xs font-bold text-primary tracking-widest uppercase mb-3 block">Путь парка</span>
+        <h2 class="font-headline font-black text-4xl md:text-5xl lg:text-6xl tracking-tight">Два пути<br />в каталог</h2>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6 mb-10">
+
+        <!-- Left: organic -->
+        <div class="bg-surface-container-lowest rounded-xl p-8 md:p-10 ambient-shadow reveal">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="bg-surface-container-high rounded-xl p-3">
+              <span class="material-symbols-outlined text-primary text-2xl">eco</span>
+            </div>
+            <div>
+              <h3 class="font-headline font-bold text-xl text-on-background">Органический путь</h3>
+              <span class="font-body text-xs font-semibold text-primary bg-primary-container/30 rounded-full px-2 py-0.5">MVP</span>
+            </div>
+          </div>
+          <ol class="space-y-4">
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary shrink-0 mt-0.5">01</span>
+              <p class="font-body text-sm text-on-surface-variant leading-relaxed">Тайный покупатель звонит в парк и проходит весь цикл собеседования</p>
+            </li>
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary shrink-0 mt-0.5">02</span>
+              <p class="font-body text-sm text-on-surface-variant leading-relaxed">Заполняет карточку ParkOffer: 40+ полей по 6 блокам условий</p>
+            </li>
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary shrink-0 mt-0.5">03</span>
+              <p class="font-body text-sm text-on-surface-variant leading-relaxed">Rating Engine автоматически рассчитывает оценку 0-5</p>
+            </li>
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary shrink-0 mt-0.5">04</span>
+              <p class="font-body text-sm text-on-surface-variant leading-relaxed">Парк появляется в каталоге с анонимным именем "Парк #N"</p>
+            </li>
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary shrink-0 mt-0.5">05</span>
+              <p class="font-body text-sm text-on-surface-variant leading-relaxed">Парк не знает, что он в каталоге. Контакт раскрывается водителю после верификации</p>
+            </li>
+          </ol>
+        </div>
+
+        <!-- Right: paid -->
+        <div class="bg-on-background rounded-xl p-8 md:p-10 ambient-shadow reveal reveal-delay-1">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="bg-primary-container/20 rounded-xl p-3">
+              <span class="material-symbols-outlined text-primary-container text-2xl">diamond</span>
+            </div>
+            <div>
+              <h3 class="font-headline font-bold text-xl text-surface-container-lowest">Платный путь</h3>
+              <span class="font-body text-xs font-semibold text-primary-container bg-primary-container/20 rounded-full px-2 py-0.5">v2</span>
+            </div>
+          </div>
+          <ol class="space-y-4">
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary-container shrink-0 mt-0.5">01</span>
+              <p class="font-body text-sm text-surface-container-high leading-relaxed">Парк сам регистрируется через форму на сайте</p>
+            </li>
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary-container shrink-0 mt-0.5">02</span>
+              <p class="font-body text-sm text-surface-container-high leading-relaxed">Заполняет данные и оплачивает подписку</p>
+            </li>
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary-container shrink-0 mt-0.5">03</span>
+              <p class="font-body text-sm text-surface-container-high leading-relaxed">Тайный покупатель верифицирует данные</p>
+            </li>
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary-container shrink-0 mt-0.5">04</span>
+              <p class="font-body text-sm text-surface-container-high leading-relaxed">Парк получает расширенный профиль в каталоге</p>
+            </li>
+            <li class="flex gap-3">
+              <span class="font-headline font-bold text-sm text-primary-container shrink-0 mt-0.5">05</span>
+              <p class="font-body text-sm text-surface-container-high leading-relaxed">Доступ к аналитике, дашборд, управление карточкой</p>
+            </li>
+          </ol>
+        </div>
+
+      </div>
+
+      <!-- Insight box -->
+      <div class="bg-primary-container rounded-xl p-8 md:p-10 ambient-shadow reveal">
+        <div class="flex items-start gap-4">
+          <div class="bg-on-primary-container/10 rounded-xl p-3 shrink-0">
+            <span class="material-symbols-outlined text-on-primary-container text-2xl">lightbulb</span>
+          </div>
+          <div>
+            <h4 class="font-headline font-bold text-lg text-on-primary-container mb-3">Что получают платные парки</h4>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-on-primary-container/70 text-lg">vertical_align_top</span>
+                <span class="font-body text-sm text-on-primary-container/80">Приоритет в выдаче</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-on-primary-container/70 text-lg">analytics</span>
+                <span class="font-body text-sm text-on-primary-container/80">Аналитика просмотров</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-on-primary-container/70 text-lg">workspace_premium</span>
+                <span class="font-body text-sm text-on-primary-container/80">Бейдж "Проверено"</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-on-primary-container/70 text-lg">visibility</span>
+                <span class="font-body text-sm text-on-primary-container/80">Реальное название</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- FUNNEL -->
+  <!-- ============================================ -->
+  <section id="funnel" class="py-20 md:py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="mb-16 reveal">
+      <span class="font-body text-xs font-bold text-primary tracking-widest uppercase mb-3 block">Воронка</span>
+      <h2 class="font-headline font-black text-4xl md:text-5xl lg:text-6xl tracking-tight">Конверсия<br />по этапам</h2>
+    </div>
+
+    <div class="max-w-3xl mx-auto space-y-4 reveal">
+
+      <!-- 100% -->
+      <div class="flex items-center gap-4">
+        <div class="funnel-bar bg-primary-container rounded-full h-14 flex items-center px-6" style="width: 100%;">
+          <div class="flex items-center justify-between w-full">
+            <span class="font-headline font-bold text-sm text-on-primary-container">Визит на лендинг</span>
+            <span class="font-headline font-black text-lg text-on-primary-container">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 60% -->
+      <div class="flex items-center gap-4">
+        <div class="funnel-bar bg-primary-container/80 rounded-full h-14 flex items-center px-6" style="width: 85%;">
+          <div class="flex items-center justify-between w-full">
+            <span class="font-headline font-bold text-sm text-on-primary-container">Открыл каталог</span>
+            <span class="font-headline font-black text-lg text-on-primary-container">60%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 40% -->
+      <div class="flex items-center gap-4">
+        <div class="funnel-bar bg-primary-container/65 rounded-full h-14 flex items-center px-6" style="width: 68%;">
+          <div class="flex items-center justify-between w-full">
+            <span class="font-headline font-bold text-sm text-on-primary-container">Просмотр карточки парка</span>
+            <span class="font-headline font-black text-lg text-on-primary-container">40%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 20% -->
+      <div class="flex items-center gap-4">
+        <div class="funnel-bar bg-on-background rounded-full h-14 flex items-center px-6" style="width: 50%;">
+          <div class="flex items-center justify-between w-full">
+            <span class="font-headline font-bold text-sm text-primary-container">Регистрация через Telegram</span>
+            <span class="font-headline font-black text-lg text-primary-container">20%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 12% -->
+      <div class="flex items-center gap-4">
+        <div class="funnel-bar bg-on-background/85 rounded-full h-14 flex items-center px-6" style="width: 38%;">
+          <div class="flex items-center justify-between w-full">
+            <span class="font-headline font-bold text-sm text-primary-container">Верификация пройдена</span>
+            <span class="font-headline font-black text-lg text-primary-container">12%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10% -->
+      <div class="flex items-center gap-4">
+        <div class="funnel-bar bg-primary rounded-full h-14 flex items-center px-6" style="width: 28%;">
+          <div class="flex items-center justify-between w-full">
+            <span class="font-headline font-bold text-sm text-primary-container">Контакт парка получен</span>
+            <span class="font-headline font-black text-lg text-primary-container">10%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Funnel note -->
+    <div class="max-w-3xl mx-auto mt-8 reveal reveal-delay-1">
+      <div class="bg-surface-container-lowest rounded-xl p-6 ambient-shadow flex items-start gap-3">
+        <span class="material-symbols-outlined text-primary text-xl shrink-0 mt-0.5">info</span>
+        <p class="font-body text-sm text-on-surface-variant leading-relaxed">
+          Воронка показывает конверсию от первого визита до получения контактов парка.
+          Ключевой барьер — шаг 4 (регистрация), где отсеивается 50% аудитории.
+          Это намеренно: верификация обеспечивает качество лидов для парков.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- MONETIZATION -->
+  <!-- ============================================ -->
+  <section id="monetization" class="py-20 md:py-32 px-4 sm:px-6 lg:px-8 bg-surface-container-low">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-16 reveal">
+        <span class="font-body text-xs font-bold text-primary tracking-widest uppercase mb-3 block">Монетизация</span>
+        <h2 class="font-headline font-black text-4xl md:text-5xl lg:text-6xl tracking-tight">4 канала<br />дохода</h2>
+      </div>
+
+      <!-- Bento grid -->
+      <div class="grid grid-cols-12 gap-4 md:gap-5">
+
+        <!-- Card 1: CPA -->
+        <div class="col-span-12 lg:col-span-6 bg-primary-container rounded-xl p-8 md:p-10 ambient-shadow reveal">
+          <div class="flex items-start gap-4 mb-5">
+            <div class="bg-on-primary-container/10 rounded-xl p-3 shrink-0">
+              <span class="material-symbols-outlined text-on-primary-container text-3xl">person_add</span>
+            </div>
+            <div>
+              <span class="font-body text-xs font-semibold text-on-primary-container/60 tracking-wide uppercase">Канал 1</span>
+              <h3 class="font-headline font-bold text-xl text-on-primary-container">Скрытый лид</h3>
+            </div>
+          </div>
+          <p class="font-body text-sm text-on-primary-container/80 leading-relaxed mb-4">
+            Водитель проходит верификацию и получает контакты парка.
+            Парк платит за привлечённого водителя по модели CPA.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <span class="bg-on-primary-container/10 rounded-full px-4 py-2 font-body text-sm font-bold text-on-primary-container">CPA 500-2 000 &#8381;</span>
+            <span class="bg-on-primary-container/10 rounded-full px-4 py-2 font-body text-xs font-semibold text-on-primary-container">MVP</span>
+          </div>
+        </div>
+
+        <!-- Card 2: SaaS -->
+        <div class="col-span-12 lg:col-span-6 bg-surface-container-lowest rounded-xl p-8 md:p-10 ambient-shadow reveal reveal-delay-1">
+          <div class="flex items-start gap-4 mb-5">
+            <div class="bg-surface-container-high rounded-xl p-3 shrink-0">
+              <span class="material-symbols-outlined text-primary text-3xl">subscriptions</span>
+            </div>
+            <div>
+              <span class="font-body text-xs font-semibold text-on-surface-variant/60 tracking-wide uppercase">Канал 2</span>
+              <h3 class="font-headline font-bold text-xl text-on-background">Подписка для парков</h3>
+            </div>
+          </div>
+          <p class="font-body text-sm text-on-surface-variant leading-relaxed mb-4">
+            SaaS-подписка с расширенным профилем, аналитикой, бейджами
+            и приоритетом в выдаче.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <span class="bg-surface-container-high rounded-full px-4 py-2 font-body text-sm font-bold text-on-background">5 000 - 15 000 &#8381;/мес</span>
+            <span class="bg-surface-container-high rounded-full px-4 py-2 font-body text-xs font-semibold text-on-surface-variant">v2</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Referral -->
+        <div class="col-span-12 lg:col-span-6 bg-on-background rounded-xl p-8 md:p-10 ambient-shadow reveal reveal-delay-2">
+          <div class="flex items-start gap-4 mb-5">
+            <div class="bg-primary-container/20 rounded-xl p-3 shrink-0">
+              <span class="material-symbols-outlined text-primary-container text-3xl">group_add</span>
+            </div>
+            <div>
+              <span class="font-body text-xs font-semibold text-surface-container-high/60 tracking-wide uppercase">Канал 3</span>
+              <h3 class="font-headline font-bold text-xl text-surface-container-lowest">Реферальная программа</h3>
+            </div>
+          </div>
+          <p class="font-body text-sm text-surface-container-high leading-relaxed mb-4">
+            Водитель приводит друга. Оба получают бонус. Платформа получает
+            rev share с каждого привлечённого водителя.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <span class="bg-primary-container/20 rounded-full px-4 py-2 font-body text-sm font-bold text-primary-container">Rev share 10-15%</span>
+            <span class="bg-primary-container/20 rounded-full px-4 py-2 font-body text-xs font-semibold text-primary-container">v2</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Marketplace -->
+        <div class="col-span-12 lg:col-span-6 bg-surface-container-lowest rounded-xl p-8 md:p-10 ambient-shadow reveal reveal-delay-3">
+          <div class="flex items-start gap-4 mb-5">
+            <div class="bg-surface-container-high rounded-xl p-3 shrink-0">
+              <span class="material-symbols-outlined text-primary text-3xl">storefront</span>
+            </div>
+            <div>
+              <span class="font-body text-xs font-semibold text-on-surface-variant/60 tracking-wide uppercase">Канал 4</span>
+              <h3 class="font-headline font-bold text-xl text-on-background">Маркетплейс услуг</h3>
+            </div>
+          </div>
+          <p class="font-body text-sm text-on-surface-variant leading-relaxed mb-4">
+            Страхование, ТО, мойки, обучение — партнёрские услуги
+            для водителей. Комиссия с каждой транзакции.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <span class="bg-surface-container-high rounded-full px-4 py-2 font-body text-sm font-bold text-on-background">Комиссия с транзакций</span>
+            <span class="bg-surface-container-high rounded-full px-4 py-2 font-body text-xs font-semibold text-on-surface-variant">v3</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- ALL SCENARIOS TABLE -->
+  <!-- ============================================ -->
+  <section class="py-20 md:py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="mb-16 reveal">
+      <span class="font-body text-xs font-bold text-primary tracking-widest uppercase mb-3 block">Сценарии</span>
+      <h2 class="font-headline font-black text-4xl md:text-5xl lg:text-6xl tracking-tight">Все 13 сценариев<br />монетизации</h2>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl ambient-shadow overflow-hidden reveal">
+      <!-- Desktop table -->
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[700px]">
+          <thead>
+            <tr class="bg-surface-container-high">
+              <th class="text-left font-headline font-bold text-xs text-on-surface-variant uppercase tracking-wider px-6 py-4">#</th>
+              <th class="text-left font-headline font-bold text-xs text-on-surface-variant uppercase tracking-wider px-6 py-4">Сценарий</th>
+              <th class="text-left font-headline font-bold text-xs text-on-surface-variant uppercase tracking-wider px-6 py-4">Кто платит</th>
+              <th class="text-left font-headline font-bold text-xs text-on-surface-variant uppercase tracking-wider px-6 py-4">Модель</th>
+              <th class="text-left font-headline font-bold text-xs text-on-surface-variant uppercase tracking-wider px-6 py-4">Оценка</th>
+              <th class="text-left font-headline font-bold text-xs text-on-surface-variant uppercase tracking-wider px-6 py-4">Этап</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">1</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Скрытый лид для парка</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Парк</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">CPA</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">500-2000 &#8381;</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-primary-container text-on-primary-container rounded-full px-3 py-1">MVP</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">2</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Подписка "Базовая"</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Парк</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">SaaS</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">5 000 &#8381;/мес</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-secondary-container text-on-secondary-container rounded-full px-3 py-1">v2</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">3</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Подписка "Про"</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Парк</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">SaaS</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">15 000 &#8381;/мес</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-secondary-container text-on-secondary-container rounded-full px-3 py-1">v2</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">4</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Реферал: водитель приводит водителя</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Парк</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Rev share</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">10-15%</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-secondary-container text-on-secondary-container rounded-full px-3 py-1">v2</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">5</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Приоритет в каталоге (boost)</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Парк</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">CPM</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">2 000-5 000 &#8381;/мес</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-secondary-container text-on-secondary-container rounded-full px-3 py-1">v2</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">6</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Бейдж "Проверено ТаксиБрат"</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Парк</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Разовый</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">3 000 &#8381;</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-secondary-container text-on-secondary-container rounded-full px-3 py-1">v2</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">7</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Раскрытие названия парка</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Парк</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">SaaS (в подписке)</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">вкл. в подписку</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-secondary-container text-on-secondary-container rounded-full px-3 py-1">v2</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">8</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Аналитика для парка (дашборд)</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Парк</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">SaaS (в подписке)</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">вкл. в подписку</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-secondary-container text-on-secondary-container rounded-full px-3 py-1">v2</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">9</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Страхование ОСАГО/КАСКО</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Страховая</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Комиссия</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">5-10%</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-surface-container-high text-on-surface-variant rounded-full px-3 py-1">v3</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">10</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Техобслуживание / мойки</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Партнёр</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Комиссия</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">10-20%</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-surface-container-high text-on-surface-variant rounded-full px-3 py-1">v3</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">11</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Обучение для водителей</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Учебный центр</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Комиссия</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">15-25%</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-surface-container-high text-on-surface-variant rounded-full px-3 py-1">v3</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">12</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">Аренда авто для водителей</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Арендодатель</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Комиссия</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">5-10%</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-surface-container-high text-on-surface-variant rounded-full px-3 py-1">v3</span></td>
+            </tr>
+            <tr class="scenario-row">
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">13</td>
+              <td class="px-6 py-4 font-body text-sm font-medium text-on-background">White-label рейтинг для агрегаторов</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Агрегатор</td>
+              <td class="px-6 py-4 font-body text-sm text-on-surface-variant">Лицензия</td>
+              <td class="px-6 py-4 font-body text-sm font-semibold text-primary">B2B</td>
+              <td class="px-6 py-4"><span class="font-body text-xs font-bold bg-surface-container-high text-on-surface-variant rounded-full px-3 py-1">v3</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================ -->
+  <!-- FOOTER -->
+  <!-- ============================================ -->
+  <footer class="bg-primary-container py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-10 items-start">
+
+        <!-- Logo + tagline -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-on-primary-container text-3xl">local_taxi</span>
+            <span class="font-headline font-black text-2xl text-on-primary-container">ТаксиБрат</span>
+          </div>
+          <p class="font-body text-sm text-on-primary-container/70 leading-relaxed max-w-xs">
+            Объективный рейтинг таксопарков России.
+            Данные от тайных покупателей.
+          </p>
+        </div>
+
+        <!-- Links -->
+        <div>
+          <h4 class="font-headline font-bold text-sm text-on-primary-container mb-4 uppercase tracking-wider">Разделы</h4>
+          <ul class="space-y-2">
+            <li><a href="#driver-journey" class="font-body text-sm text-on-primary-container/70 hover:text-on-primary-container transition-colors">Путь водителя</a></li>
+            <li><a href="#park-journey" class="font-body text-sm text-on-primary-container/70 hover:text-on-primary-container transition-colors">Путь парка</a></li>
+            <li><a href="#funnel" class="font-body text-sm text-on-primary-container/70 hover:text-on-primary-container transition-colors">Воронка</a></li>
+            <li><a href="#monetization" class="font-body text-sm text-on-primary-container/70 hover:text-on-primary-container transition-colors">Монетизация</a></li>
+          </ul>
+        </div>
+
+        <!-- Tech -->
+        <div>
+          <h4 class="font-headline font-bold text-sm text-on-primary-container mb-4 uppercase tracking-wider">Стек</h4>
+          <div class="flex flex-wrap gap-2">
+            <span class="font-body text-xs font-semibold bg-on-primary-container/10 text-on-primary-container rounded-full px-3 py-1.5">Next.js 15</span>
+            <span class="font-body text-xs font-semibold bg-on-primary-container/10 text-on-primary-container rounded-full px-3 py-1.5">React 19</span>
+            <span class="font-body text-xs font-semibold bg-on-primary-container/10 text-on-primary-container rounded-full px-3 py-1.5">TypeScript</span>
+            <span class="font-body text-xs font-semibold bg-on-primary-container/10 text-on-primary-container rounded-full px-3 py-1.5">Supabase</span>
+            <span class="font-body text-xs font-semibold bg-on-primary-container/10 text-on-primary-container rounded-full px-3 py-1.5">Prisma</span>
+            <span class="font-body text-xs font-semibold bg-on-primary-container/10 text-on-primary-container rounded-full px-3 py-1.5">Vercel</span>
+            <span class="font-body text-xs font-semibold bg-on-primary-container/10 text-on-primary-container rounded-full px-3 py-1.5">Tailwind</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="mt-12 pt-8 border-t border-on-primary-container/15 flex flex-col md:flex-row justify-between items-center gap-4">
+        <span class="font-body text-xs text-on-primary-container/60">2026 ТаксиБрат. Все права защищены.</span>
+        <div class="flex items-center gap-4">
+          <a href="#" class="font-body text-xs text-on-primary-container/60 hover:text-on-primary-container transition-colors">Политика конфиденциальности</a>
+          <a href="#" class="font-body text-xs text-on-primary-container/60 hover:text-on-primary-container transition-colors">Условия использования</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================ -->
+  <!-- SCRIPTS -->
+  <!-- ============================================ -->
+  <script>
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    menuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Close mobile menu on link click
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+      });
+    });
+
+    // IntersectionObserver for scroll reveal
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -60px 0px'
+    });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // Smooth scroll for nav links (offset for sticky nav)
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          const offset = 80;
+          const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Active nav link highlighting on scroll
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 120;
+        if (window.pageYOffset >= sectionTop) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.style.color = '';
+        if (link.getAttribute('href') === '#' + current) {
+          link.style.color = '#755b00';
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
