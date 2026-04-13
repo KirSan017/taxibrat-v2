@@ -16,3 +16,6 @@ export * from "./schema/class-revenue";
 export * from "./schema/tickets";
 export * from "./schema/ticket-messages";
 export * from "./schema/ticket-buffer";
+export * from "./schema/points-transactions";
+export * from "./schema/service-settings";
+export * from "./schema/news";

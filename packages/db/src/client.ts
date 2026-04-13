@@ -17,6 +17,9 @@ import * as classRevenueSchema from "./schema/class-revenue";
 import * as ticketsSchema from "./schema/tickets";
 import * as ticketMessagesSchema from "./schema/ticket-messages";
 import * as ticketBufferSchema from "./schema/ticket-buffer";
+import * as pointsTransactionsSchema from "./schema/points-transactions";
+import * as serviceSettingsSchema from "./schema/service-settings";
+import * as newsSchema from "./schema/news";
 
 const schema = {
   ...usersSchema,
@@ -36,6 +39,9 @@ const schema = {
   ...ticketsSchema,
   ...ticketMessagesSchema,
   ...ticketBufferSchema,
+  ...pointsTransactionsSchema,
+  ...serviceSettingsSchema,
+  ...newsSchema,
 };
 
 export function createDb(url: string) {

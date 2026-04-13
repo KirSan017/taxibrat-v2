@@ -10,7 +10,8 @@
     "db:migrate": "tsx src/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed-rating": "tsx src/seed-rating.ts"
+    "db:seed-rating": "tsx src/seed-rating.ts",
+    "db:seed-settings": "tsx src/seed-settings.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.0",
