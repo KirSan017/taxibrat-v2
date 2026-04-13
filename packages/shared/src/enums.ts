@@ -52,3 +52,47 @@ export enum NotificationType {
   POINTS = "POINTS",
   NEWS = "NEWS",
 }
+
+export enum DriverClass {
+  ECONOMY = "ECONOMY",
+  COMFORT = "COMFORT",
+  COMFORT_PLUS = "COMFORT_PLUS",
+  BUSINESS = "BUSINESS",
+  PREMIER = "PREMIER",
+  ELITE = "ELITE",
+}
+
+export enum District {
+  CAO = "CAO",
+  SVAO = "SVAO",
+  SAO = "SAO",
+  SZAO = "SZAO",
+  ZAO = "ZAO",
+  UZAO = "UZAO",
+  UAO = "UAO",
+  UVAO = "UVAO",
+  VAO = "VAO",
+  MYTISCHI = "MYTISCHI",
+  KRASNOGORSK = "KRASNOGORSK",
+  DOLGOPRUDNY = "DOLGOPRUDNY",
+  KHIMKI = "KHIMKI",
+  ODINTSOVO = "ODINTSOVO",
+  NOVOMOSKOVSKY = "NOVOMOSKOVSKY",
+  BUTOVO = "BUTOVO",
+  VIDNOE = "VIDNOE",
+  LUBERTSY = "LUBERTSY",
+  REUTOV = "REUTOV",
+  BALASHIKHA = "BALASHIKHA",
+}
+
+export enum ParkStatus {
+  DRAFT = "DRAFT",
+  ACTIVE = "ACTIVE",
+  ARCHIVED = "ARCHIVED",
+}
+
+export enum RatingWeightLevel {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+}

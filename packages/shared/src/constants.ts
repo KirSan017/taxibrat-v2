@@ -16,3 +16,11 @@ export const PAGINATION = {
   DEFAULT_LIMIT: 20,
   MAX_LIMIT: 100,
 } as const;
+
+export const RATING = {
+  MIN: 0.01,
+  MAX: 5.0,
+  DEFAULT_PRICE_COEFF: 0.6,
+  DEFAULT_PARAMS_COEFF: 0.4,
+  WEIGHT_MULTIPLIER: { LOW: 1, MEDIUM: 2, HIGH: 3 } as const,
+} as const;

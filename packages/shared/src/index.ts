@@ -3,3 +3,6 @@ export * from "./constants";
 export * from "./dto/auth.dto";
 export * from "./dto/user.dto";
 export * from "./dto/notification.dto";
+export * from "./dto/park.dto";
+export * from "./dto/catalog.dto";
+export * from "./dto/brand.dto";
