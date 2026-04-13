@@ -10,6 +10,7 @@ const envSchema = z.object({
   EXOLVE_SENDER: z.string().default(""),
   TELEGRAM_BOT_TOKEN: z.string().default(""),
   TELEGRAM_GATEWAY_TOKEN: z.string().default(""),
+  DADATA_API_KEY: z.string().default(""),
   API_PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
