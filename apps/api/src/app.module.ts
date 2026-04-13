@@ -11,6 +11,7 @@ import { RatingModule } from "./modules/rating/rating.module";
 import { BrandsModule } from "./modules/brands/brands.module";
 import { ParksModule } from "./modules/parks/parks.module";
 import { CatalogModule } from "./modules/catalog/catalog.module";
+import { TicketsModule } from "./modules/tickets/tickets.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CatalogModule } from "./modules/catalog/catalog.module";
     BrandsModule,
     ParksModule,
     CatalogModule,
+    TicketsModule,
   ],
 })
 export class AppModule {}
