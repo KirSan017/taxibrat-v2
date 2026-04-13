@@ -7,6 +7,10 @@ import { UsersModule } from "./modules/users/users.module";
 import { ManagersModule } from "./modules/managers/managers.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { AuditModule } from "./modules/audit/audit.module";
+import { RatingModule } from "./modules/rating/rating.module";
+import { BrandsModule } from "./modules/brands/brands.module";
+import { ParksModule } from "./modules/parks/parks.module";
+import { CatalogModule } from "./modules/catalog/catalog.module";
 
 @Module({
   imports: [
@@ -20,6 +24,10 @@ import { AuditModule } from "./modules/audit/audit.module";
     ManagersModule,
     NotificationsModule,
     AuditModule,
+    RatingModule,
+    BrandsModule,
+    ParksModule,
+    CatalogModule,
   ],
 })
 export class AppModule {}
