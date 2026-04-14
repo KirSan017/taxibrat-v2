@@ -14,6 +14,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { NotificationsGateway } from "../notifications/notifications.gateway";
 import { PointsService } from "../points/points.service";
 import { SettingsService } from "../settings/settings.service";
+import { ReferralsService } from "../referrals/referrals.service";
 
 @Injectable()
 export class TicketsService {
@@ -25,6 +26,7 @@ export class TicketsService {
     private notificationsGateway: NotificationsGateway,
     private pointsService: PointsService,
     private settingsService: SettingsService,
+    private referralsService: ReferralsService,
   ) {}
 
   async create(userId: string, dto: CreateTicketDto) {
@@ -228,6 +230,13 @@ export class TicketsService {
       link: `/tickets/${ticketId}`,
     });
     this.notificationsGateway.pushToUser(ticket.userId, { type: "ticket-updated", ticketId, status: "COMPLETED" });
+
+    // Award referral bonuses for rental/buyout tickets
+    if (ticket.topic === "TAXI_CONNECT") {
+      await this.referralsService.awardRentalBonus(ticket.userId, ticketId);
+    } else if (ticket.topic === "BUYOUT") {
+      await this.referralsService.awardBuyoutBonus(ticket.userId, ticketId);
+    }
 
     return { success: true };
   }

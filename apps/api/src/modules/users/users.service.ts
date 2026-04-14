@@ -17,6 +17,7 @@ import {
 } from "@taxibrat/shared";
 import { PointsService } from "../points/points.service";
 import { SettingsService } from "../settings/settings.service";
+import { ReferralsService } from "../referrals/referrals.service";
 
 @Injectable()
 export class UsersService {
@@ -24,6 +25,7 @@ export class UsersService {
     @Inject("DATABASE") private db: Database,
     private pointsService: PointsService,
     private settingsService: SettingsService,
+    private referralsService: ReferralsService,
   ) {}
 
   async getById(id: string) {
@@ -75,6 +77,9 @@ export class UsersService {
     if (isFirstApproval) {
       const bonus = await this.settingsService.getNumber("points_registration", 100);
       await this.pointsService.award(userId, bonus, PointsTransactionType.REGISTRATION, "Регистрация + заполнение профиля");
+
+      // Award referral registration bonus if user was invited
+      await this.referralsService.awardRegistrationBonus(userId);
     }
 
     await this.db.insert(notifications).values({
