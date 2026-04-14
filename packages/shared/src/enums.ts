@@ -149,3 +149,11 @@ export enum BuyoutStatus {
   ACTIVE = "ACTIVE",
   ARCHIVED = "ARCHIVED",
 }
+
+export enum No9OrderStatus {
+  PENDING = "PENDING",
+  ORDERED = "ORDERED",
+  BANNED = "BANNED",
+  CANCELLED = "CANCELLED",
+  EXPIRED = "EXPIRED",
+}

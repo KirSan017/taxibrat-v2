@@ -11,3 +11,4 @@ export * from "./dto/points.dto";
 export * from "./dto/settings.dto";
 export * from "./dto/news.dto";
 export * from "./dto/buyout.dto";
+export * from "./dto/order.dto";
