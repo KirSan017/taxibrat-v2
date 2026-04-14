@@ -20,3 +20,4 @@ export * from "./schema/points-transactions";
 export * from "./schema/service-settings";
 export * from "./schema/news";
 export * from "./schema/buyout-listings";
+export * from "./schema/no9-orders";

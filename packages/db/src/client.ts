@@ -21,6 +21,7 @@ import * as pointsTransactionsSchema from "./schema/points-transactions";
 import * as serviceSettingsSchema from "./schema/service-settings";
 import * as newsSchema from "./schema/news";
 import * as buyoutListingsSchema from "./schema/buyout-listings";
+import * as no9OrdersSchema from "./schema/no9-orders";
 
 const schema = {
   ...usersSchema,
@@ -44,6 +45,7 @@ const schema = {
   ...serviceSettingsSchema,
   ...newsSchema,
   ...buyoutListingsSchema,
+  ...no9OrdersSchema,
 };
 
 export function createDb(url: string) {
