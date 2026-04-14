@@ -19,3 +19,4 @@ export * from "./schema/ticket-buffer";
 export * from "./schema/points-transactions";
 export * from "./schema/service-settings";
 export * from "./schema/news";
+export * from "./schema/buyout-listings";

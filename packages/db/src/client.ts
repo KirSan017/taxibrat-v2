@@ -20,6 +20,7 @@ import * as ticketBufferSchema from "./schema/ticket-buffer";
 import * as pointsTransactionsSchema from "./schema/points-transactions";
 import * as serviceSettingsSchema from "./schema/service-settings";
 import * as newsSchema from "./schema/news";
+import * as buyoutListingsSchema from "./schema/buyout-listings";
 
 const schema = {
   ...usersSchema,
@@ -42,6 +43,7 @@ const schema = {
   ...pointsTransactionsSchema,
   ...serviceSettingsSchema,
   ...newsSchema,
+  ...buyoutListingsSchema,
 };
 
 export function createDb(url: string) {
