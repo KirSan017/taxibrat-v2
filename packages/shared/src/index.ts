@@ -10,3 +10,4 @@ export * from "./dto/ticket.dto";
 export * from "./dto/points.dto";
 export * from "./dto/settings.dto";
 export * from "./dto/news.dto";
+export * from "./dto/buyout.dto";

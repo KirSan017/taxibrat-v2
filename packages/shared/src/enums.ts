@@ -135,3 +135,17 @@ export enum PointsTransactionType {
   MANUAL_ADMIN = "MANUAL_ADMIN",
   IDEA = "IDEA",
 }
+
+export enum BuyoutOwnerType {
+  INDIVIDUAL = "INDIVIDUAL",
+  LEGAL_ENTITY = "LEGAL_ENTITY",
+  TAXI_PARK = "TAXI_PARK",
+  BANK = "BANK",
+}
+
+export enum BuyoutStatus {
+  DRAFT = "DRAFT",
+  PENDING_REVIEW = "PENDING_REVIEW",
+  ACTIVE = "ACTIVE",
+  ARCHIVED = "ARCHIVED",
+}
