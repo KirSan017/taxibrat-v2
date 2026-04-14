@@ -6,12 +6,14 @@ import type { Database } from "@taxibrat/db";
 import { tickets, users } from "@taxibrat/db";
 import {
   CreateTicketDto, ListTicketsDto, TicketStatus, TicketTopic,
-  TICKET_TOPIC_CONFIG, NotificationType,
+  TICKET_TOPIC_CONFIG, NotificationType, PointsTransactionType,
 } from "@taxibrat/shared";
 import { TicketDistributorService } from "./ticket-distributor.service";
 import { MessagesService } from "./messages.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { NotificationsGateway } from "../notifications/notifications.gateway";
+import { PointsService } from "../points/points.service";
+import { SettingsService } from "../settings/settings.service";
 
 @Injectable()
 export class TicketsService {
@@ -21,6 +23,8 @@ export class TicketsService {
     private messagesService: MessagesService,
     private notificationsService: NotificationsService,
     private notificationsGateway: NotificationsGateway,
+    private pointsService: PointsService,
+    private settingsService: SettingsService,
   ) {}
 
   async create(userId: string, dto: CreateTicketDto) {
@@ -50,6 +54,12 @@ export class TicketsService {
 
     // Create first message from user
     await this.messagesService.create(ticket.id, userId, dto.body);
+
+    // Charge points for paid topics
+    if (dto.topic === "USER_BASE_CHECK") {
+      const cost = await this.settingsService.getNumber("points_base_check_cost", 50);
+      await this.pointsService.charge(userId, cost, PointsTransactionType.BASE_CHECK, "Проверка по базе таксопарков");
+    }
 
     // Distribute to manager
     await this.distributor.assignTicket(ticket.id, dto.topic as TicketTopic, userId);
@@ -194,8 +204,13 @@ export class TicketsService {
 
     // Award points to user
     if (pointsAwarded > 0) {
-      await this.db.execute(
-        sql`UPDATE users SET friendship_points = friendship_points + ${pointsAwarded} WHERE id = ${ticket.userId}`
+      await this.pointsService.award(
+        ticket.userId,
+        pointsAwarded,
+        PointsTransactionType.PARK_CHECK,
+        "Тикет подтверждён",
+        ticketId,
+        smId,
       );
     }
 

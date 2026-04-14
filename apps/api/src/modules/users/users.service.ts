@@ -13,11 +13,18 @@ import {
   UpdateProfileDto,
   ListUsersDto,
   NotificationType,
+  PointsTransactionType,
 } from "@taxibrat/shared";
+import { PointsService } from "../points/points.service";
+import { SettingsService } from "../settings/settings.service";
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject("DATABASE") private db: Database) {}
+  constructor(
+    @Inject("DATABASE") private db: Database,
+    private pointsService: PointsService,
+    private settingsService: SettingsService,
+  ) {}
 
   async getById(id: string) {
     const [user] = await this.db
@@ -61,19 +68,21 @@ export class UsersService {
       .set({
         status: UserStatus.ACTIVE,
         rejectionReason: null,
-        friendshipPoints: isFirstApproval
-          ? POINTS.REGISTRATION_BONUS
-          : user.friendshipPoints,
       })
       .where(eq(users.id, userId))
       .returning();
+
+    if (isFirstApproval) {
+      const bonus = await this.settingsService.getNumber("points_registration", 100);
+      await this.pointsService.award(userId, bonus, PointsTransactionType.REGISTRATION, "Регистрация + заполнение профиля");
+    }
 
     await this.db.insert(notifications).values({
       userId,
       type: NotificationType.SYSTEM,
       title: "Профиль подтверждён",
       body: isFirstApproval
-        ? `Ваш профиль подтверждён! Начислено ${POINTS.REGISTRATION_BONUS} баллов дружбы.`
+        ? "Ваш профиль подтверждён! Баллы дружбы начислены."
         : "Ваш профиль успешно обновлён.",
     });
 
