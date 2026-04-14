@@ -16,6 +16,7 @@ import { CatalogModule } from "./modules/catalog/catalog.module";
 import { TicketsModule } from "./modules/tickets/tickets.module";
 import { NewsModule } from "./modules/news/news.module";
 import { BuyoutModule } from "./modules/buyout/buyout.module";
+import { OrdersModule } from "./modules/orders/orders.module";
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { BuyoutModule } from "./modules/buyout/buyout.module";
     TicketsModule,
     NewsModule,
     BuyoutModule,
+    OrdersModule,
   ],
 })
 export class AppModule {}
