@@ -21,3 +21,4 @@ export * from "./schema/service-settings";
 export * from "./schema/news";
 export * from "./schema/buyout-listings";
 export * from "./schema/no9-orders";
+export * from "./schema/referral-events";

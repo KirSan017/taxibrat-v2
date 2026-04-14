@@ -22,6 +22,7 @@ import * as serviceSettingsSchema from "./schema/service-settings";
 import * as newsSchema from "./schema/news";
 import * as buyoutListingsSchema from "./schema/buyout-listings";
 import * as no9OrdersSchema from "./schema/no9-orders";
+import * as referralEventsSchema from "./schema/referral-events";
 
 const schema = {
   ...usersSchema,
@@ -46,6 +47,7 @@ const schema = {
   ...newsSchema,
   ...buyoutListingsSchema,
   ...no9OrdersSchema,
+  ...referralEventsSchema,
 };
 
 export function createDb(url: string) {

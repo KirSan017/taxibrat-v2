@@ -157,3 +157,9 @@ export enum No9OrderStatus {
   CANCELLED = "CANCELLED",
   EXPIRED = "EXPIRED",
 }
+
+export enum ReferralEventType {
+  REGISTRATION = "REGISTRATION",
+  RENTAL = "RENTAL",
+  BUYOUT = "BUYOUT",
+}
