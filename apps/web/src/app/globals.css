@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #303030;
+  --color-secondary: #A1A1A1;
+  --color-accent: #F8D62E;
+  --color-error: #FA6868;
+  --color-bg-page: #FFFFFF;
+  --color-bg-canvas: #F3F1E7;
+  --color-border: #E5E5E5;
+  --color-placeholder: #B0B0B0;
+}
+
+/* Hide scrollbar for horizontal sliders */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
