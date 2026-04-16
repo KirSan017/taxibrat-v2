@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Onest } from "next/font/google";
 import "./globals.css";
+
+const onest = Onest({
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-onest",
+});
 
 export const metadata: Metadata = {
   title: "ТаксиБрат — честный рейтинг таксопарков",
@@ -12,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru">
-      <body className="min-h-screen bg-[#F3F1E7] text-[#1A1A1A] antialiased">
+    <html lang="ru" className={onest.variable}>
+      <body className="min-h-screen bg-white text-[#303030] font-[family-name:var(--font-onest)] antialiased flex flex-col">
         {children}
       </body>
     </html>
