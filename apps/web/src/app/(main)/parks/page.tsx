@@ -230,9 +230,46 @@ export default function ParksPage() {
 
         {/* ══════ PARKS LIST ══════ */}
         <section className="space-y-4 mb-8">
-          {paginated.map((park) => (
-            <ParkCard key={park.id} park={park} />
-          ))}
+          {paginated.length === 0 ? (
+            <div className="bg-white border border-[#E5E5E5] rounded-2xl px-6 py-16 text-center">
+              <div className="w-16 h-16 bg-[#FAFAFA] rounded-full mx-auto flex items-center justify-center mb-4">
+                <svg
+                  className="w-8 h-8 text-[#A1A1A1]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
+              </div>
+              <h3 className="text-base font-medium text-[#303030] mb-1">Ничего не найдено</h3>
+              <p className="text-sm text-[#A1A1A1] max-w-sm mx-auto mb-5">
+                Попробуйте изменить параметры фильтра — возможно, некоторые условия
+                слишком строгие.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDriverClass("Все");
+                  setBrand("Все");
+                  setModel("Все");
+                  setYear("Все");
+                  setSelectedDistricts([]);
+                  setCurrentPage(1);
+                }}
+              >
+                Сбросить фильтры
+              </Button>
+            </div>
+          ) : (
+            paginated.map((park) => <ParkCard key={park.id} park={park} />)
+          )}
         </section>
 
         {/* ══════ PAGINATION ══════ */}
