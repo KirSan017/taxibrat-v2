@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,7 +110,12 @@ export default function AdminBuyoutPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-xl font-medium text-[#303030]">Выкуп авто</h1>
-        <Button size="sm" onClick={() => setShowCreate(true)}>+ Добавить объявление</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowCreate(true)}>Быстро</Button>
+          <Link href="/admin/buyout/add">
+            <Button size="sm">+ Добавить объявление</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Table */}
@@ -131,8 +137,13 @@ export default function AdminBuyoutPage() {
               return (
                 <tr key={listing.id} className="border-b border-[#E5E5E5] last:border-0 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
-                    <p className="text-[#303030] font-medium">{listing.title}</p>
-                    <p className="text-xs text-[#A1A1A1]">{listing.ownerName}</p>
+                    <Link
+                      href={`/admin/buyout/${listing.id}`}
+                      className="block group"
+                    >
+                      <p className="text-[#303030] font-medium group-hover:underline">{listing.title}</p>
+                      <p className="text-xs text-[#A1A1A1]">{listing.ownerName}</p>
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-[#303030] hidden sm:table-cell">{listing.price} &#8381;</td>
                   <td className="px-4 py-3">
