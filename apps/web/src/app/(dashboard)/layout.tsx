@@ -17,13 +17,13 @@ const MOCK_USER = {
 /* ── nav items ─────────────────────────────────────────── */
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Личный кабинет", icon: HomeIcon },
-  { href: "/dashboard", label: "Проверки таксопарков", icon: CheckIcon, altHref: "/checks" },
-  { href: "/dashboard", label: "Выкуп авто", icon: CarIcon, altHref: "/buyout" },
-  { href: "/support", label: "Заказы «По делам, без 9%»", icon: OrdersIcon, altHref: "/orders" },
+  { href: "/checks", label: "Проверки таксопарков", icon: CheckIcon },
+  { href: "/buyout", label: "Выкуп авто", icon: CarIcon },
+  { href: "/orders", label: "Заказы «По делам, без 9%»", icon: OrdersIcon },
   { href: "/support", label: "Техподдержка", icon: SupportIcon },
   { href: "/profile", label: "Изменить профиль", icon: ProfileIcon },
   { href: "/referrals", label: "Приглашение друзей", icon: ReferralIcon },
-  { href: "/points", label: "Мои идеи", icon: IdeaIcon, altHref: "/ideas" },
+  { href: "/ideas", label: "Мои идеи", icon: IdeaIcon },
 ];
 
 /* ── bottom tab items (mobile) ─────────────────────────── */
@@ -61,9 +61,9 @@ export default function DashboardLayout({
           <nav className="hidden lg:flex items-center gap-6">
             <Link href="/" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Главная</Link>
             <Link href="/parks" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Таксопарки</Link>
-            <Link href="#" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">По делам, без 9%</Link>
-            <Link href="#" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Выкуп</Link>
-            <Link href="#" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Проверка по базе таксопарков</Link>
+            <Link href="/no9" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">По делам, без 9%</Link>
+            <Link href="/buyout" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Выкуп</Link>
+            <Link href="/support/new?topic=USER_BASE_CHECK" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Проверка по базе таксопарков</Link>
           </nav>
 
           {/* Right side: stats + avatar */}
@@ -180,7 +180,7 @@ export default function DashboardLayout({
             {/* Nav links */}
             <nav className="flex flex-col gap-1">
               {NAV_ITEMS.map((item) => {
-                const isActive = pathname === item.href || (item.altHref && pathname === item.altHref);
+                const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.label}
@@ -235,8 +235,8 @@ export default function DashboardLayout({
           </p>
           <div className="flex items-center gap-6">
             <Link href="/support" className="text-xs text-[#A1A1A1] hover:text-[#303030] transition-colors">Техподдержка</Link>
-            <Link href="#" className="text-xs text-[#A1A1A1] hover:text-[#303030] transition-colors">Политика конфиденциальности</Link>
-            <Link href="#" className="text-xs text-[#A1A1A1] hover:text-[#303030] transition-colors">Сотрудничество</Link>
+            <Link href="/privacy" className="text-xs text-[#A1A1A1] hover:text-[#303030] transition-colors">Политика конфиденциальности</Link>
+            <Link href="/cooperation" className="text-xs text-[#A1A1A1] hover:text-[#303030] transition-colors">Сотрудничество</Link>
           </div>
         </div>
       </footer>

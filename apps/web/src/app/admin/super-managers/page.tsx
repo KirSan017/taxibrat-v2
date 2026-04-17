@@ -156,8 +156,8 @@ export default function AdminSuperManagersPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
+      {/* Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#E5E5E5]">
@@ -212,6 +212,51 @@ export default function AdminSuperManagersPage() {
         </table>
         {filtered.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Супер-менеджеры не найдены</div>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+            Супер-менеджеры не найдены
+          </div>
+        ) : (
+          filtered.map((m) => (
+            <div key={m.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <Link
+                  href={`/admin/super-managers/${m.id}`}
+                  className="text-sm font-medium text-[#303030] hover:underline"
+                >
+                  {m.lastName} {m.firstName} {m.patronymic}
+                </Link>
+                <Badge variant={m.status === "WORKING" ? "green" : "gray"}>
+                  {m.status === "WORKING" ? "Работает" : "Отдыхает"}
+                </Badge>
+              </div>
+              <p className="text-xs text-[#A1A1A1] mb-2">{m.email}</p>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {m.sections.map((s) => (
+                  <span key={s} className="text-[10px] bg-gray-100 text-[#303030] px-1.5 py-0.5 rounded">
+                    {SECTION_LABELS[s]}
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-[#E5E5E5] text-xs">
+                <span className="text-[#A1A1A1]">
+                  Менеджеров: <span className="text-[#303030] font-medium">{m.managersCount}</span> &middot;
+                  Тикетов: <span className="text-[#303030] font-medium">{m.ticketsHandled}</span>
+                </span>
+                <button
+                  className="text-[#FA6868] hover:underline"
+                  onClick={() => setDeleteTarget(m)}
+                >
+                  Удалить
+                </button>
+              </div>
+            </div>
+          ))
         )}
       </div>
 

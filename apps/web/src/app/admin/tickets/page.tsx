@@ -88,8 +88,8 @@ export default function AdminTicketsPage() {
         ))}
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
+      {/* Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#E5E5E5]">
@@ -133,6 +133,42 @@ export default function AdminTicketsPage() {
         </table>
         {sorted.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Тикеты не найдены</div>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {sorted.length === 0 ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+            Тикеты не найдены
+          </div>
+        ) : (
+          sorted.map((ticket) => {
+            const sc = STATUS_CONFIG[ticket.status];
+            return (
+              <Link
+                key={ticket.id}
+                href={`/support/${ticket.id}`}
+                className={`block bg-white border rounded-xl p-4 ${
+                  ticket.expired ? "border-[#FA6868]/30 bg-[#FA6868]/5" : "border-[#E5E5E5]"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <h3 className="text-sm font-medium text-[#303030]">{ticket.title}</h3>
+                  <Badge variant={sc.variant}>{sc.label}</Badge>
+                </div>
+                <p className="text-xs text-[#A1A1A1]">{ticket.userName} &middot; {ticket.topic}</p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <p className="text-[11px] text-[#A1A1A1]">{ticket.date}</p>
+                  {ticket.expired && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#FA6868] text-white">
+                      Просрочен
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })
         )}
       </div>
     </div>

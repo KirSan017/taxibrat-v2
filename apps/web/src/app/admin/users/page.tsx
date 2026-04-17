@@ -143,8 +143,8 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
+      {/* Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#E5E5E5]">
@@ -182,6 +182,39 @@ export default function AdminUsersPage() {
         </table>
         {filtered.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Пользователи не найдены</div>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+            Пользователи не найдены
+          </div>
+        ) : (
+          filtered.map((user) => {
+            const sc = STATUS_CONFIG[user.status];
+            return (
+              <button
+                key={user.id}
+                onClick={() => setSelectedUser(user)}
+                className="w-full text-left bg-white border border-[#E5E5E5] rounded-xl p-4"
+              >
+                <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <h3 className="text-sm font-medium text-[#303030]">
+                    {user.lastName} {user.firstName} {user.patronymic}
+                  </h3>
+                  <Badge variant={sc.variant}>{sc.label}</Badge>
+                </div>
+                {canSeePhone && (
+                  <p className="text-xs text-[#A1A1A1]">{user.phone}</p>
+                )}
+                <p className="text-[11px] text-[#A1A1A1] mt-1">
+                  Регистрация: {user.registeredAt}
+                </p>
+              </button>
+            );
+          })
         )}
       </div>
     </div>

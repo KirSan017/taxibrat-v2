@@ -81,8 +81,8 @@ export default function AdminParksPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
+      {/* Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#E5E5E5]">
@@ -141,6 +141,51 @@ export default function AdminParksPage() {
         </table>
         {filtered.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Таксопарки не найдены</div>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+            Таксопарки не найдены
+          </div>
+        ) : (
+          filtered.map((park) => {
+            const sc = STATUS_CONFIG[park.status];
+            return (
+              <Link
+                key={park.id}
+                href={`/admin/parks/${park.id}`}
+                className={`block bg-white border rounded-xl p-4 ${
+                  park.advertised ? "bg-[#F8D62E]/5 border-[#F8D62E]/40" : "border-[#E5E5E5]"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-medium text-[#303030]">{park.name}</h3>
+                    <p className="text-xs text-[#A1A1A1] mt-0.5">{park.date}</p>
+                  </div>
+                  <Badge variant={sc.variant}>{sc.label}</Badge>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="flex items-center gap-1 text-[#303030]">
+                    <svg className="w-4 h-4 text-[#F8D62E]" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    {park.rating}
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {park.classes.map((c) => (
+                      <span key={c} className="text-xs text-[#A1A1A1] bg-gray-100 px-2 py-0.5 rounded">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </Link>
+            );
+          })
         )}
       </div>
     </div>

@@ -133,8 +133,8 @@ export default function AdminArchivePage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
+      {/* Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#E5E5E5]">
@@ -170,6 +170,33 @@ export default function AdminArchivePage() {
         </table>
         {paginated.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Записи не найдены</div>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {paginated.length === 0 ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+            Записи не найдены
+          </div>
+        ) : (
+          paginated.map((entry) => {
+            const rc = RESULT_CONFIG[entry.result];
+            return (
+              <div key={entry.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+                <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <h3 className="text-sm font-medium text-[#303030]">{entry.title}</h3>
+                  <Badge variant={rc.variant}>{rc.label}</Badge>
+                </div>
+                <p className="text-xs text-[#A1A1A1]">
+                  {ENTITY_LABELS[entry.entityType]} &middot; {entry.completedAt}
+                </p>
+                <p className="text-xs text-[#A1A1A1] mt-1">
+                  Исполнитель: <span className="text-[#303030]">{entry.assignee}</span> &middot; {entry.durationDays} дн
+                </p>
+              </div>
+            );
+          })
         )}
       </div>
 

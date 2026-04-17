@@ -134,7 +134,7 @@ export default function AdminOrdersPage() {
 
       {/* Completed orders */}
       <h2 className="text-sm font-medium text-[#A1A1A1] uppercase tracking-wider mb-3">Обработанные</h2>
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#E5E5E5]">
@@ -163,6 +163,30 @@ export default function AdminOrdersPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile cards for completed */}
+      <div className="md:hidden space-y-3">
+        {completedOrders.length === 0 ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+            Нет обработанных заказов
+          </div>
+        ) : (
+          completedOrders.map((order) => {
+            const sc = STATUS_CONFIG[order.status];
+            return (
+              <div key={order.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <p className="text-sm font-medium text-[#303030]">{order.userName}</p>
+                  <Badge variant={sc.variant}>{sc.label}</Badge>
+                </div>
+                <p className="text-xs text-[#A1A1A1]">
+                  {order.addressFrom} &rarr; {order.addressTo}
+                </p>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

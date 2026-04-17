@@ -47,6 +47,7 @@ const ROLE_LABELS: Record<AdminRole, string> = {
 /* ── breadcrumb map ───────────────────────────────────── */
 
 function getBreadcrumb(pathname: string): string {
+  if (pathname === "/admin") return "Главная";
   const item = NAV_ITEMS.find((i) => pathname.startsWith(i.href));
   return item?.label ?? "Админ-панель";
 }
@@ -70,7 +71,7 @@ export default function AdminLayout({
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 h-[64px] flex items-center justify-between">
           {/* Left: logo + admin badge */}
           <div className="flex items-center gap-3">
-            <Link href="/admin/parks" className="flex items-center gap-2">
+            <Link href="/admin" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-[#F8D62E] rounded-lg flex items-center justify-center">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#303030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -85,7 +86,7 @@ export default function AdminLayout({
 
           {/* Center: breadcrumbs (desktop) */}
           <div className="hidden md:flex items-center gap-2 text-xs text-[#A1A1A1]">
-            <Link href="/admin/parks" className="hover:text-[#303030] transition-colors">Админ-панель</Link>
+            <Link href="/admin" className="hover:text-[#303030] transition-colors">Админ-панель</Link>
             <span>/</span>
             <span className="text-[#303030]">{getBreadcrumb(pathname)}</span>
           </div>

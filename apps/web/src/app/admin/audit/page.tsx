@@ -87,8 +87,8 @@ export default function AdminAuditPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
+      {/* Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#E5E5E5]">
@@ -129,6 +129,39 @@ export default function AdminAuditPage() {
         </table>
         {paginated.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Записи не найдены</div>
+        )}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {paginated.length === 0 ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+            Записи не найдены
+          </div>
+        ) : (
+          paginated.map((entry) => (
+            <div key={entry.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+              <div className="flex items-start justify-between gap-3 mb-1.5">
+                <p className="text-sm font-medium text-[#303030]">{entry.actorName}</p>
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded whitespace-nowrap ${
+                  entry.action === "Создано" ? "bg-green-100 text-green-700" :
+                  entry.action === "Удалено" ? "bg-[#FA6868]/10 text-[#FA6868]" :
+                  "bg-gray-100 text-[#A1A1A1]"
+                }`}>
+                  {entry.action}
+                </span>
+              </div>
+              <p className="text-xs text-[#A1A1A1] mb-2">{entry.date}</p>
+              <p className="text-xs text-[#303030] mb-2">
+                {entry.entity} #{entry.entityId}
+              </p>
+              <div className="flex items-center gap-2 text-xs flex-wrap">
+                <span className="bg-[#FA6868]/5 text-[#FA6868] px-1.5 py-0.5 rounded">{entry.oldValue}</span>
+                <span className="text-[#A1A1A1]">&rarr;</span>
+                <span className="bg-green-50 text-green-700 px-1.5 py-0.5 rounded">{entry.newValue}</span>
+              </div>
+            </div>
+          ))
         )}
       </div>
 
