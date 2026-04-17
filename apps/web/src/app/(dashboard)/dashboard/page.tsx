@@ -101,14 +101,14 @@ export default function DashboardPage() {
           <span className="text-xs text-white/60 mt-auto">аренда</span>
         </Link>
         <Link
-          href="#"
+          href="/no9"
           className="bg-[#F8D62E] rounded-2xl p-5 text-[#303030] flex flex-col justify-between min-h-[140px] hover:bg-[#F8D62E]/80 transition-colors"
         >
           <span className="text-sm font-medium">По делам, без 9%</span>
           <span className="text-xs text-[#303030]/60 mt-auto">заказы</span>
         </Link>
         <Link
-          href="#"
+          href="/buyout"
           className="bg-[#F3F1E7] rounded-2xl p-5 text-[#303030] flex flex-col justify-between min-h-[140px] hover:bg-[#F3F1E7]/70 transition-colors"
         >
           <span className="text-sm font-medium">Автомобили</span>

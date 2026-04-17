@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/managers", label: "Менеджеры", icon: ManagerIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/stats", label: "Статистика", icon: StatsIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/audit", label: "Архив изменений", icon: AuditIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
+  { href: "/admin/archive", label: "Архив задач", icon: AuditIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/news", label: "Новости", icon: NewsIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/super-managers", label: "Супер-менеджеры", icon: ShieldIcon, roles: ["ADMIN"] },
   { href: "/admin/parks-list", label: "Список таксопарков", icon: ListIcon, roles: ["ADMIN"] },

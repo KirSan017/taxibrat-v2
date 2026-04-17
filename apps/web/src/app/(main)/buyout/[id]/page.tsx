@@ -126,7 +126,7 @@ export default function BuyoutDetailPage() {
               <Button size="lg" className="flex-1" onClick={() => setShowBooking(true)}>
                 Забронировать
               </Button>
-              <Link href="/dashboard/support">
+              <Link href="/support">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto">
                   Поддержка
                 </Button>
