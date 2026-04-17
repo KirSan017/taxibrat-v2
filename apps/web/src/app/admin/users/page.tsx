@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RejectModal } from "@/components/ui/reject-modal";
+import { SuccessModal } from "@/components/ui/success-modal";
 
 /* ── types & mock data ────────────────────────────────── */
 
@@ -46,6 +48,8 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<UserStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [rejectUser, setRejectUser] = useState<User | null>(null);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const filtered = MOCK_USERS.filter((u) => {
     if (statusFilter !== "ALL" && u.status !== statusFilter) return false;
@@ -60,6 +64,20 @@ export default function AdminUsersPage() {
 
   return (
     <div>
+      <RejectModal
+        open={!!rejectUser}
+        onClose={() => setRejectUser(null)}
+        onConfirm={(reason) => {
+          setSuccessMsg(`Профиль отклонён. Причина: ${reason}`);
+        }}
+        description="Укажите причину отклонения профиля. Пользователь получит уведомление."
+      />
+      <SuccessModal
+        open={!!successMsg}
+        onClose={() => setSuccessMsg("")}
+        title="Готово"
+        description={successMsg}
+      />
       {/* User detail modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -103,10 +121,25 @@ export default function AdminUsersPage() {
 
             {(selectedUser.status === "PENDING_REVIEW" || selectedUser.status === "PHONE_VERIFIED") && (
               <div className="flex gap-3">
-                <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => setSelectedUser(null)}>
+                <Button
+                  size="sm"
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setSuccessMsg(`Профиль ${selectedUser.lastName} подтверждён`);
+                    setSelectedUser(null);
+                  }}
+                >
                   Подтвердить
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1 border-[#FA6868] text-[#FA6868] hover:bg-[#FA6868] hover:text-white" onClick={() => setSelectedUser(null)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-[#FA6868] text-[#FA6868] hover:bg-[#FA6868] hover:text-white"
+                  onClick={() => {
+                    setRejectUser(selectedUser);
+                    setSelectedUser(null);
+                  }}
+                >
                   Отклонить
                 </Button>
               </div>

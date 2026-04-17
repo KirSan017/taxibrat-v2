@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RejectModal } from "@/components/ui/reject-modal";
 
 /* ── types & mock data ────────────────────────────────── */
 
@@ -88,14 +89,14 @@ function CreateForm({ onClose }: { onClose: () => void }) {
 export default function AdminBuyoutPage() {
   const [listings, setListings] = useState(MOCK_LISTINGS);
   const [showCreate, setShowCreate] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState<BuyoutListing | null>(null);
 
-  const handleAction = (id: string, action: "approve" | "reject" | "archive" | "restore") => {
+  const handleAction = (id: string, action: "approve" | "archive" | "restore") => {
     setListings((prev) =>
       prev.map((l) => {
         if (l.id !== id) return l;
         const statusMap: Record<string, BuyoutStatus> = {
           approve: "APPROVED",
-          reject: "REJECTED",
           archive: "ARCHIVED",
           restore: "PENDING",
         };
@@ -104,9 +105,24 @@ export default function AdminBuyoutPage() {
     );
   };
 
+  const handleReject = (id: string, _reason: string) => {
+    setListings((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, status: "REJECTED" as BuyoutStatus } : l))
+    );
+  };
+
   return (
     <div>
       {showCreate && <CreateForm onClose={() => setShowCreate(false)} />}
+
+      <RejectModal
+        open={!!rejectTarget}
+        onClose={() => setRejectTarget(null)}
+        onConfirm={(reason) => {
+          if (rejectTarget) handleReject(rejectTarget.id, reason);
+        }}
+        description={`Объявление «${rejectTarget?.title ?? ""}» будет отклонено. Владелец получит уведомление.`}
+      />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-xl font-medium text-[#303030]">Выкуп авто</h1>
@@ -162,7 +178,7 @@ export default function AdminBuyoutPage() {
                             Одобрить
                           </button>
                           <button
-                            onClick={() => handleAction(listing.id, "reject")}
+                            onClick={() => setRejectTarget(listing)}
                             className="px-2.5 py-1 rounded text-xs font-medium bg-[#FA6868]/10 text-[#FA6868] hover:bg-[#FA6868]/20 transition-colors"
                           >
                             Отклонить

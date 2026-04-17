@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { ParkCard, type ParkCardData } from "@/components/parks/park-card";
 
 /* ── mock data ──────────────────────────────────────────── */
@@ -23,9 +25,9 @@ const MOCK_PARKS: ParkCardData[] = [
   { id: 2, name: "Альфа", driverClass: "Комфорт", rating: 4.55, rent: 2500, deposit: 3000, commission: 3, lastReviewDate: "24.02.25", lastReviewAuthor: "Дмитрий К." },
   { id: 3, name: "Название скрыто", driverClass: "Эконом", rating: 4.05, rent: 1800, deposit: 5000, commission: 2, hidden: true, lastReviewDate: "22.02.25", lastReviewAuthor: "Сергей В." },
   { id: 4, name: "Драйв Парк", driverClass: "Бизнес", rating: 4.84, rent: 3500, deposit: 10000, commission: 1, lastReviewDate: "20.02.25", lastReviewAuthor: "Игорь Л.", advertised: true },
-  { id: 5, name: "Мега Такси", driverClass: "Эконом", rating: 3.92, rent: 1700, deposit: 3000, commission: 3, lastReviewDate: "18.02.25", lastReviewAuthor: "Андрей П." },
+  { id: 5, name: "Мега Такси", driverClass: "Эконом", rating: 3.92, rent: 1700, deposit: 3000, commission: 3, lastReviewDate: "18.02.25", lastReviewAuthor: "Андрей П.", hasAvailableCars: false },
   { id: 6, name: "Премьер Авто", driverClass: "Комфорт+", rating: 4.65, rent: 3000, deposit: 7000, commission: 2, lastReviewDate: "16.02.25", lastReviewAuthor: "Максим Р." },
-  { id: 7, name: "Экспресс Парк", driverClass: "Эконом", rating: 4.12, rent: 1900, deposit: 4000, commission: 2, lastReviewDate: "14.02.25", lastReviewAuthor: "Николай Б." },
+  { id: 7, name: "Экспресс Парк", driverClass: "Эконом", rating: 4.12, rent: 1900, deposit: 4000, commission: 2, lastReviewDate: "14.02.25", lastReviewAuthor: "Николай Б.", hasAvailableCars: false },
   { id: 8, name: "Голд Такси", driverClass: "Бизнес", rating: 4.78, rent: 4000, deposit: 12000, commission: 1, lastReviewDate: "12.02.25", lastReviewAuthor: "Олег Т." },
 ];
 
@@ -51,12 +53,32 @@ const DISTRICTS = [
 /* ── component ──────────────────────────────────────────── */
 
 export default function ParksPage() {
+  const router = useRouter();
   const [driverClass, setDriverClass] = useState("Все");
   const [brand, setBrand] = useState("Все");
   const [model, setModel] = useState("Все");
   const [year, setYear] = useState("Все");
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const avgRating =
+    MOCK_PARKS.reduce((sum, p) => sum + p.rating, 0) / MOCK_PARKS.length;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const term = searchQuery.trim();
+    if (!term) return;
+    const match = MOCK_PARKS.find(
+      (p) => !p.hidden && p.name.toLowerCase() === term.toLowerCase()
+    );
+    // If found park exists but has above-average rating — treat as "hidden" premium park
+    if (match && match.rating > avgRating) {
+      router.push(`/parks/hidden?name=${encodeURIComponent(match.name)}`);
+      return;
+    }
+    // Otherwise just do nothing (in a real app we'd filter the list)
+  };
 
   const models = MODELS_BY_BRAND[brand] || ["Все"];
 
@@ -134,6 +156,18 @@ export default function ParksPage() {
         {/* ══════ FILTERS ══════ */}
         <section className="mb-8">
           <h2 className="text-lg font-medium text-[#303030] mb-4">Выберите параметры и найдите таксопарк</h2>
+
+          {/* Search by name */}
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Поиск по названию парка..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button type="submit">Найти</Button>
+          </form>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {/* Driver class */}

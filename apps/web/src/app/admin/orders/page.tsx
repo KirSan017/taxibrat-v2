@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { CancelOrderModal } from "@/components/ui/cancel-order-modal";
 
 /* ── types & mock data ────────────────────────────────── */
 
@@ -37,6 +38,13 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; variant: "yellow" | "g
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState(MOCK_ORDERS);
   const [fiveMinCount, setFiveMinCount] = useState(2);
+  const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
+
+  const confirmCancel = () => {
+    if (!cancelTarget) return;
+    setOrders((prev) => prev.filter((o) => o.id !== cancelTarget.id));
+    setCancelTarget(null);
+  };
 
   const handleAction = (orderId: string, action: "ordered" | "banned" | "delayed") => {
     setOrders((prev) =>
@@ -55,6 +63,14 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
+      <CancelOrderModal
+        open={!!cancelTarget}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={confirmCancel}
+        balance={500}
+        title="Отменить заказ от имени пользователя?"
+        description={`Заказ ${cancelTarget?.userName ?? ""} будет отменён. Со счёта пользователя спишется 15 баллов.`}
+      />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-xl font-medium text-[#303030]">Заказы «По делам, без 9%»</h1>
         <div className="flex items-center gap-2">
@@ -125,6 +141,12 @@ export default function AdminOrdersPage() {
                   className="h-[38px] px-4 rounded-lg text-sm font-medium bg-[#F8D62E] text-[#303030] hover:bg-[#e6c427] transition-colors"
                 >
                   5 мин
+                </button>
+                <button
+                  onClick={() => setCancelTarget(order)}
+                  className="h-[38px] px-4 rounded-lg text-sm font-medium bg-gray-100 text-[#303030] hover:bg-gray-200 transition-colors"
+                >
+                  Отменить
                 </button>
               </div>
             </div>

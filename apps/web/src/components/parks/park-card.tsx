@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +15,7 @@ export interface ParkCardData {
   deposit: number;
   commission: number;
   advertised?: boolean;
+  hasAvailableCars?: boolean;
   reviewCount?: number;
   lastReviewDate?: string;
   lastReviewAuthor?: string;
@@ -23,14 +27,16 @@ interface ParkCardProps {
 
 export function ParkCard({ park }: ParkCardProps) {
   const displayName = park.hidden ? "Название скрыто" : park.name;
+  const hasAvailable = park.hasAvailableCars !== false;
+  const [infoOpen, setInfoOpen] = useState(false);
 
   return (
     <div
-      className={`bg-white rounded-xl p-5 md:p-6 transition-shadow hover:shadow-md ${
+      className={`relative bg-white rounded-xl p-5 md:p-6 transition-shadow hover:shadow-md ${
         park.advertised
           ? "border-2 border-green-500 ring-1 ring-green-500/20"
           : "border border-[#E5E5E5]"
-      }`}
+      } ${!hasAvailable ? "opacity-75" : ""}`}
     >
       <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-6">
         {/* Left: info */}
@@ -54,11 +60,28 @@ export function ParkCard({ park }: ParkCardProps) {
 
           <h3 className="text-base font-medium text-[#303030] truncate">{displayName}</h3>
 
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
             <Badge variant={park.driverClass === "Бизнес" || park.driverClass === "Комфорт+" ? "yellow" : "gray"}>
               {park.driverClass}
             </Badge>
             {park.advertised && <Badge variant="green">Рекомендуем</Badge>}
+            {!hasAvailable && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setInfoOpen(true);
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-200 text-[#A1A1A1] hover:bg-gray-300 transition-colors"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                Нет свободных машин
+              </button>
+            )}
           </div>
         </div>
 
@@ -93,9 +116,31 @@ export function ParkCard({ park }: ParkCardProps) {
               Подробнее
             </Button>
           </Link>
-          <Button size="sm">8 800 000 00 00</Button>
+          <Button size="sm" disabled={!hasAvailable}>8 800 000 00 00</Button>
         </div>
       </div>
+
+      {/* Info modal for "no cars" */}
+      {infoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/30" onClick={() => setInfoOpen(false)} />
+          <div className="relative bg-white rounded-2xl p-6 md:p-8 w-full max-w-[420px] text-center">
+            <div className="w-12 h-12 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-[#A1A1A1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-[#303030] mb-2">Нет свободных машин</h3>
+            <p className="text-sm text-[#A1A1A1] mb-5 leading-relaxed">
+              В таксопарке {park.hidden ? "" : `«${park.name}» `}сейчас нет свободных автомобилей.
+              Мы уведомим вас, как только появятся доступные машины.
+            </p>
+            <Button onClick={() => setInfoOpen(false)} className="w-full">Понятно</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
