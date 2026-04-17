@@ -4,7 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { Input } from "@/components/ui/input";
+import { SuccessModal } from "@/components/ui/success-modal";
 
 /* ── types & mock data ────────────────────────────────── */
 
@@ -45,6 +47,8 @@ export default function AdminSuperManagersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<WorkStatus | "ALL">("ALL");
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addedModalOpen, setAddedModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<SuperManager | null>(null);
   const [newSM, setNewSM] = useState({ lastName: "", firstName: "", patronymic: "", phone: "", email: "", sections: [] as Section[] });
 
   const filtered = MOCK_SM.filter((m) => {
@@ -109,7 +113,15 @@ export default function AdminSuperManagersPage() {
               <Button size="sm" variant="outline" className="flex-1" onClick={() => setAddModalOpen(false)}>
                 Отмена
               </Button>
-              <Button size="sm" className="flex-1" onClick={() => setAddModalOpen(false)}>
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  setAddModalOpen(false);
+                  setAddedModalOpen(true);
+                  setNewSM({ lastName: "", firstName: "", patronymic: "", phone: "", email: "", sections: [] });
+                }}
+              >
                 Добавить
               </Button>
             </div>
@@ -184,7 +196,13 @@ export default function AdminSuperManagersPage() {
                 <td className="px-4 py-3 text-[#303030] hidden lg:table-cell">{m.managersCount}</td>
                 <td className="px-4 py-3 text-[#303030] hidden lg:table-cell">{m.ticketsHandled}</td>
                 <td className="px-4 py-3">
-                  <button className="text-xs text-[#FA6868] hover:underline">
+                  <button
+                    className="text-xs text-[#FA6868] hover:underline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setDeleteTarget(m);
+                    }}
+                  >
                     Удалить
                   </button>
                 </td>
@@ -196,6 +214,27 @@ export default function AdminSuperManagersPage() {
           <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Супер-менеджеры не найдены</div>
         )}
       </div>
+
+      <SuccessModal
+        open={addedModalOpen}
+        onClose={() => setAddedModalOpen(false)}
+        title="Супер-менеджер добавлен"
+        description="Приглашение отправлено на указанный email. После активации аккаунт появится в списке."
+      />
+
+      <ConfirmModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        title="Удалить супер-менеджера?"
+        description={
+          deleteTarget
+            ? `Вы собираетесь удалить ${deleteTarget.lastName} ${deleteTarget.firstName}. Все курируемые им менеджеры станут свободными.`
+            : ""
+        }
+        confirmLabel="Удалить"
+        variant="warning"
+        onConfirm={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

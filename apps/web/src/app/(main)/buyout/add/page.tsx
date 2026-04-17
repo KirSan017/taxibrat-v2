@@ -1,9 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SuccessModal } from "@/components/ui/success-modal";
 
 /* ── types ─────────────────────────────────────────────── */
 
@@ -21,6 +23,7 @@ const BRANDS = ["Kia", "Hyundai", "Skoda", "Toyota", "Volkswagen", "Chevrolet", 
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AddBuyoutPage() {
+  const router = useRouter();
   const [photos, setPhotos] = useState<File[]>([]);
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
@@ -55,31 +58,16 @@ export default function AddBuyoutPage() {
 
   return (
     <>
-      {/* Success modal */}
-      {submitted && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/30" />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-[440px] mx-4 text-center">
-            <div className="w-16 h-16 bg-[#F8D62E] rounded-full mx-auto flex items-center justify-center mb-5">
-              <svg className="w-8 h-8 text-[#303030]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-medium text-[#303030] mb-2">Объявление создано</h2>
-            <p className="text-sm text-[#A1A1A1] mb-6">
-              Черновик сохранён. Супер-менеджер проверит данные и опубликует объявление в течение 1 рабочего дня.
-            </p>
-            <div className="flex gap-3">
-              <Link href="/buyout" className="flex-1">
-                <Button variant="outline" className="w-full">К объявлениям</Button>
-              </Link>
-              <Link href="/" className="flex-1">
-                <Button className="w-full">На главную</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        open={submitted}
+        onClose={() => setSubmitted(false)}
+        title="Объявление создано"
+        description="Черновик сохранён. Супер-менеджер проверит данные и опубликует объявление в течение 1 рабочего дня."
+        ctaLabel="На главную"
+        onCta={() => router.push("/")}
+        secondaryLabel="К объявлениям"
+        onSecondary={() => router.push("/buyout")}
+      />
 
       <div className="max-w-[720px] mx-auto px-6 py-8 md:py-12">
         <div className="mb-6">
