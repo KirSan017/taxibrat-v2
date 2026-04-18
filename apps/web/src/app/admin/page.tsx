@@ -1,21 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
+import { useAuth } from "@/lib/use-auth";
 
-/* ── role (mock) ─────────────────────────────────────── */
+/* ── types ────────────────────────────────────────── */
 
 type AdminRole = "MANAGER" | "SUPER_MANAGER" | "ADMIN";
-const MOCK_ROLE: AdminRole = "ADMIN";
-const MOCK_NAME = "Алексей Петров";
 
-const ROLE_LABELS: Record<AdminRole, string> = {
+const ROLE_LABELS: Record<string, string> = {
   MANAGER: "Менеджер",
   SUPER_MANAGER: "Супер-менеджер",
   ADMIN: "Администратор",
 };
 
-/* ── stats per role ──────────────────────────────────── */
+interface OverallStats {
+  users: { total: number; phoneVerified: number; active: number; inPeriod: number };
+  tickets?: { total?: number; open?: number; new?: number };
+  orders?: { total?: number; ordered?: number };
+  parks?: { total: number; active?: number; draft?: number };
+}
+
+interface AuditEntry {
+  id: string;
+  actorId?: string | null;
+  action: string;
+  entity: string;
+  entityId?: string | null;
+  createdAt: string;
+}
 
 interface StatCard {
   title: string;
@@ -23,46 +39,6 @@ interface StatCard {
   caption?: string;
   accent?: "yellow" | "green" | "red";
 }
-
-const STATS_BY_ROLE: Record<AdminRole, StatCard[]> = {
-  MANAGER: [
-    { title: "Активных тикетов", value: "12", caption: "в вашей очереди" },
-    { title: "Проверок парков", value: "5", caption: "на модерации" },
-    { title: "Заказов «По делам»", value: "8", caption: "активных", accent: "yellow" },
-    { title: "Обработано за день", value: "34", accent: "green" },
-  ],
-  SUPER_MANAGER: [
-    { title: "Менеджеров в работе", value: "9", caption: "из 12" },
-    { title: "Тикетов в очереди", value: "47" },
-    { title: "Авто на модерации", value: "6", accent: "yellow" },
-    { title: "Жалоб за сутки", value: "2", accent: "red" },
-  ],
-  ADMIN: [
-    { title: "Пользователей", value: "143 125", caption: "+45 за сутки", accent: "green" },
-    { title: "Таксопарков", value: "148", caption: "3 на модерации" },
-    { title: "Активных менеджеров", value: "12", caption: "в двух ролях" },
-    { title: "Тикетов открыто", value: "47", accent: "yellow" },
-  ],
-};
-
-/* ── activity feed ───────────────────────────────────── */
-
-interface ActivityItem {
-  id: string;
-  time: string;
-  text: string;
-  accent: "gray" | "yellow" | "green" | "red";
-}
-
-const ACTIVITY: ActivityItem[] = [
-  { id: "a1", time: "2 мин. назад", text: "Новый тикет #1245 — «Проверка парка Альфа»", accent: "yellow" },
-  { id: "a2", time: "8 мин. назад", text: "Пользователь завершил регистрацию: Сидорова М.А.", accent: "green" },
-  { id: "a3", time: "14 мин. назад", text: "Таксопарк «Драйв Парк» — новая проверка", accent: "gray" },
-  { id: "a4", time: "25 мин. назад", text: "Жалоба на водителя ID 1488", accent: "red" },
-  { id: "a5", time: "1 ч. назад", text: "Объявление выкупа одобрено: Kia Rio 2022", accent: "green" },
-];
-
-/* ── quick actions ───────────────────────────────────── */
 
 interface QuickAction {
   label: string;
@@ -76,76 +52,177 @@ const QUICK_ACTIONS: QuickAction[] = [
   { label: "Заказы «По делам»", href: "/admin/orders", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { label: "Пользователи", href: "/admin/users", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { label: "Статистика", href: "/admin/stats", roles: ["SUPER_MANAGER", "ADMIN"] },
+  { label: "Рейтинг (настройки)", href: "/admin/rating", roles: ["ADMIN"] },
   { label: "Список таксопарков", href: "/admin/parks-list", roles: ["ADMIN"] },
   { label: "Настройки", href: "/admin/settings", roles: ["ADMIN"] },
 ];
 
+const ACTION_LABELS: Record<string, string> = {
+  CREATE: "Создание",
+  UPDATE: "Обновление",
+  DELETE: "Удаление",
+  STATUS_CHANGE: "Смена статуса",
+};
+
+const ENTITY_LABELS: Record<string, string> = {
+  USER: "Пользователь",
+  PARK: "Таксопарк",
+  CAR: "Автомобиль",
+  TICKET: "Тикет",
+  POINTS: "Баллы",
+  BUYOUT: "Выкуп",
+  NEWS: "Новость",
+  MANAGER_STATUS: "Статус менеджера",
+  BUYOUT_LISTING: "Объявление",
+  SETTING: "Настройка",
+};
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diff / 60000);
+  if (mins < 1) return "только что";
+  if (mins < 60) return `${mins} мин. назад`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours} ч. назад`;
+  const days = Math.round(hours / 24);
+  return `${days} дн. назад`;
+}
+
 /* ── page ────────────────────────────────────────────── */
 
 export default function AdminDashboardPage() {
-  const role = MOCK_ROLE;
-  const stats = STATS_BY_ROLE[role];
+  const { user, loading: userLoading } = useAuth();
+  const role = (user?.role as AdminRole | undefined) ?? "MANAGER";
+  const fullName = [user?.lastName, user?.firstName].filter(Boolean).join(" ") || "—";
+
+  const [stats, setStats] = useState<OverallStats | null>(null);
+  const [activity, setActivity] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) return;
+
+    const tasks: Promise<void>[] = [];
+
+    if (role === "ADMIN") {
+      tasks.push(
+        api<OverallStats>("/admin/stats/overall", { token })
+          .then(setStats)
+          .catch(() => setStats(null))
+      );
+    }
+
+    tasks.push(
+      api<{ data: AuditEntry[] }>("/admin/audit?limit=10&page=1", { token })
+        .then((r) => setActivity(r?.data || []))
+        .catch(() => setActivity([]))
+    );
+
+    Promise.all(tasks).finally(() => setLoading(false));
+  }, [user, role]);
+
+  const cards: StatCard[] = (() => {
+    if (!stats) return [];
+    if (role === "ADMIN") {
+      return [
+        {
+          title: "Пользователей",
+          value: String(stats.users?.total ?? 0),
+          caption: stats.users?.inPeriod ? `+${stats.users.inPeriod} за период` : undefined,
+          accent: "green",
+        },
+        {
+          title: "Активных",
+          value: String(stats.users?.active ?? 0),
+          caption: "из общего числа",
+        },
+        {
+          title: "Парков",
+          value: String(stats.parks?.total ?? 0),
+          caption: stats.parks?.draft ? `${stats.parks.draft} на модерации` : undefined,
+        },
+        {
+          title: "Тикетов открыто",
+          value: String(stats.tickets?.open ?? stats.tickets?.new ?? 0),
+          accent: "yellow",
+        },
+      ];
+    }
+    return [];
+  })();
+
   const quickActions = QUICK_ACTIONS.filter((q) => q.roles.includes(role));
+
+  if (userLoading) {
+    return <div className="text-sm text-[#A1A1A1]">Загрузка...</div>;
+  }
 
   return (
     <div>
       <div className="mb-6">
         <p className="text-xs text-[#A1A1A1] uppercase tracking-wider">Админ-панель</p>
         <h1 className="text-xl md:text-2xl font-medium text-[#303030] mt-1">
-          Добрый день, {MOCK_NAME}
+          Добрый день, {fullName}
         </h1>
         <p className="text-sm text-[#A1A1A1] mt-1">
-          Роль: <span className="text-[#303030] font-medium">{ROLE_LABELS[role]}</span>
+          Роль: <span className="text-[#303030] font-medium">{ROLE_LABELS[role] || role}</span>
         </p>
       </div>
 
-      {/* Stats */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {stats.map((s) => (
-          <div
-            key={s.title}
-            className={`rounded-xl border p-4 ${
-              s.accent === "yellow"
-                ? "bg-[#F8D62E] border-[#F8D62E]"
-                : s.accent === "green"
-                ? "bg-green-50 border-green-100"
-                : s.accent === "red"
-                ? "bg-[#FA6868]/10 border-[#FA6868]/20"
-                : "bg-white border-[#E5E5E5]"
-            }`}
-          >
-            <p className="text-xs text-[#303030]/70 mb-1">{s.title}</p>
-            <p className="text-2xl font-medium text-[#303030]">{s.value}</p>
-            {s.caption && <p className="text-xs text-[#303030]/60 mt-1">{s.caption}</p>}
-          </div>
-        ))}
-      </section>
+      {/* Stats (admin only) */}
+      {role === "ADMIN" && (
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {loading && cards.length === 0 ? (
+            <div className="col-span-full text-sm text-[#A1A1A1]">Загрузка статистики...</div>
+          ) : (
+            cards.map((s) => (
+              <div
+                key={s.title}
+                className={`rounded-xl border p-4 ${
+                  s.accent === "yellow"
+                    ? "bg-[#F8D62E] border-[#F8D62E]"
+                    : s.accent === "green"
+                    ? "bg-green-50 border-green-100"
+                    : s.accent === "red"
+                    ? "bg-[#FA6868]/10 border-[#FA6868]/20"
+                    : "bg-white border-[#E5E5E5]"
+                }`}
+              >
+                <p className="text-xs text-[#303030]/70 mb-1">{s.title}</p>
+                <p className="text-2xl font-medium text-[#303030]">{s.value}</p>
+                {s.caption && <p className="text-xs text-[#303030]/60 mt-1">{s.caption}</p>}
+              </div>
+            ))
+          )}
+        </section>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Activity feed */}
         <section className="lg:col-span-2 bg-white rounded-xl border border-[#E5E5E5] p-5 md:p-6">
           <h2 className="text-sm font-medium text-[#303030] mb-4">Последние события</h2>
-          <div className="space-y-3">
-            {ACTIVITY.map((a) => (
-              <div key={a.id} className="flex items-start gap-3 pb-3 border-b border-[#E5E5E5] last:border-0 last:pb-0">
-                <div
-                  className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                    a.accent === "yellow"
-                      ? "bg-[#F8D62E]"
-                      : a.accent === "green"
-                      ? "bg-green-500"
-                      : a.accent === "red"
-                      ? "bg-[#FA6868]"
-                      : "bg-[#A1A1A1]"
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#303030]">{a.text}</p>
-                  <p className="text-[11px] text-[#A1A1A1] mt-0.5">{a.time}</p>
+          {loading && activity.length === 0 ? (
+            <p className="text-sm text-[#A1A1A1]">Загрузка...</p>
+          ) : activity.length === 0 ? (
+            <p className="text-sm text-[#A1A1A1]">Нет событий</p>
+          ) : (
+            <div className="space-y-3">
+              {activity.map((a) => (
+                <div key={a.id} className="flex items-start gap-3 pb-3 border-b border-[#E5E5E5] last:border-0 last:pb-0">
+                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0 bg-[#A1A1A1]" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-[#303030]">
+                      {ACTION_LABELS[a.action] || a.action} ·{" "}
+                      <span className="text-[#A1A1A1]">{ENTITY_LABELS[a.entity] || a.entity}</span>
+                    </p>
+                    <p className="text-[11px] text-[#A1A1A1] mt-0.5">{timeAgo(a.createdAt)}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Quick actions */}
@@ -168,7 +245,7 @@ export default function AdminDashboardPage() {
 
           <div className="mt-5 pt-5 border-t border-[#E5E5E5]">
             <p className="text-xs text-[#A1A1A1]">
-              Ваш уровень доступа &mdash; <Badge variant="yellow" className="ml-1">{ROLE_LABELS[role]}</Badge>
+              Ваш уровень доступа &mdash; <Badge variant="yellow" className="ml-1">{ROLE_LABELS[role] || role}</Badge>
             </p>
           </div>
         </section>
