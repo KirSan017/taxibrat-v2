@@ -4,7 +4,7 @@ import {
 import { users } from "./users";
 
 export const no9OrderStatusEnum = pgEnum("no9_order_status", [
-  "PENDING", "ORDERED", "BANNED", "CANCELLED", "EXPIRED",
+  "PENDING", "ORDERED", "BANNED", "CANCEL_REQUESTED", "CANCELLED", "EXPIRED",
 ]);
 
 export const no9Orders = pgTable(

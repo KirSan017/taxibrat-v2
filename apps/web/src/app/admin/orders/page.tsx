@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -34,6 +35,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" 
   PENDING: { label: "Назначен", variant: "yellow" },
   ORDERED: { label: "Заказан", variant: "green" },
   BANNED: { label: "Бан", variant: "red" },
+  CANCEL_REQUESTED: { label: "Запрос отмены", variant: "yellow" },
   CANCELLED: { label: "Отменён", variant: "gray" },
   EXPIRED: { label: "Истёк", variant: "gray" },
 };
@@ -50,6 +52,9 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [status, setStatus] = useState<FeatureStatus | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const LIMIT = 50;
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -58,8 +63,11 @@ export default function AdminOrdersPage() {
     if (!token) return;
     setLoading(true);
     setError("");
-    api<OrdersResponse>("/admin/orders/no9?page=1&limit=50", { token })
-      .then((res) => setOrders(res.data || []))
+    api<OrdersResponse>(`/admin/orders/no9?page=${page}&limit=${LIMIT}`, { token })
+      .then((res) => {
+        setOrders(res.data || []);
+        setTotal(res.total || 0);
+      })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка"))
       .finally(() => setLoading(false));
 
@@ -74,9 +82,12 @@ export default function AdminOrdersPage() {
     if (!user) return;
     loadOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, page]);
 
-  const handleAction = async (orderId: string, endpoint: "ordered" | "banned" | "five-min") => {
+  const handleAction = async (
+    orderId: string,
+    endpoint: "ordered" | "banned" | "five-min" | "confirm-cancel",
+  ) => {
     const token = getAccessToken();
     if (!token) return;
     try {
@@ -176,11 +187,31 @@ export default function AdminOrdersPage() {
                     </Button>
                   </div>
                 )}
+
+                {o.status === "CANCEL_REQUESTED" && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-[#FA6868] hover:bg-[#E85858] text-white"
+                      onClick={() => handleAction(o.id, "confirm-cancel")}
+                    >
+                      Подтвердить отмену
+                    </Button>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
+
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
+      </div>
     </div>
   );
 }

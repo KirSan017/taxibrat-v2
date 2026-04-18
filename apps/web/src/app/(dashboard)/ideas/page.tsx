@@ -44,7 +44,7 @@ const CATEGORIES = [
   "Другое",
 ];
 
-const IDEA_MARKER = "[ИДЕЯ]";
+const IDEA_MARKER = "[ИДЕЯ]"; // legacy tag kept for backward-compat rendering
 
 /* ── page ─────────────────────────────────────────── */
 
@@ -66,14 +66,8 @@ export default function IdeasPage() {
     const token = getAccessToken();
     if (!token) return;
     setLoading(true);
-    api<IdeasResponse>("/tickets?topic=OTHER&page=1&limit=100", { token })
-      .then((res) => {
-        // Filter only tickets with IDEA_MARKER
-        const ideaTickets = (res.data || []).filter((t) =>
-          (t.title || "").startsWith(IDEA_MARKER) || (t.body || "").startsWith(IDEA_MARKER),
-        );
-        setIdeas(ideaTickets);
-      })
+    api<IdeasResponse>("/tickets?topic=IDEA&page=1&limit=100", { token })
+      .then((res) => setIdeas(res.data || []))
       .catch(() => setIdeas([]))
       .finally(() => setLoading(false));
   };
@@ -96,11 +90,11 @@ export default function IdeasPage() {
     setError("");
     setSubmitting(true);
     try {
-      const body = `${IDEA_MARKER} [${category}] ${title}\n\n${description}`;
+      const body = `[${category}] ${title}\n\n${description}`;
       await api("/tickets", {
         method: "POST",
         token,
-        body: { topic: "OTHER", body },
+        body: { topic: "IDEA", body },
       });
       setShowForm(false);
       resetForm();

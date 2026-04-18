@@ -28,7 +28,9 @@ interface OrdersResponse {
 const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
   PENDING: { label: "Назначен", variant: "yellow" },
   ORDERED: { label: "Заказан", variant: "green" },
-  BANNED: { label: "Бан", variant: "red" },
+  // BANNED masked as ORDERED for user: backend already маскирует, но defense-in-depth
+  BANNED: { label: "Заказан", variant: "green" },
+  CANCEL_REQUESTED: { label: "Ожидает отмены", variant: "yellow" },
   CANCELLED: { label: "Отменён", variant: "gray" },
   EXPIRED: { label: "Истёк", variant: "gray" },
 };

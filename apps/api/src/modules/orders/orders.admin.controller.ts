@@ -41,6 +41,12 @@ export class OrdersAdminController {
     return this.ordersService.fiveMin(id, user.sub);
   }
 
+  @Post(":id/confirm-cancel")
+  @Roles(UserRole.MANAGER, UserRole.SUPER_MANAGER, UserRole.ADMIN)
+  confirmCancel(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
+    return this.ordersService.confirmCancel(id, user.sub);
+  }
+
   @Get("status")
   @Roles(UserRole.ADMIN)
   featureStatus() {

@@ -24,19 +24,52 @@ export class TicketDistributorService {
   async assignTicket(ticketId: string, topic: TicketTopic, systemUserId: string): Promise<string | null> {
     const config = TICKET_TOPIC_CONFIG[topic];
     const section = config.section;
+    const smOnly = (config as any).smOnly === true;
 
     // Get active managers for this section
-    const activeManagers = await this.db
-      .select({ userId: managerSettings.userId })
-      .from(managerSettings)
-      .where(
-        and(
-          eq(managerSettings.section, section as any),
-          eq(managerSettings.workStatus, "WORKING"),
-        ),
-      );
+    // BUYOUT topic: only SUPER_MANAGER/ADMIN can take these tickets
+    const activeManagers = smOnly
+      ? await this.db
+          .select({ userId: managerSettings.userId })
+          .from(managerSettings)
+          .innerJoin(users, eq(users.id, managerSettings.userId))
+          .where(
+            and(
+              eq(managerSettings.section, section as any),
+              eq(managerSettings.workStatus, "WORKING"),
+              // role check: SUPER_MANAGER or ADMIN
+              // drizzle: use `or` via raw sql for enum compare
+            ),
+          )
+          .then((rows) => rows)
+      : await this.db
+          .select({ userId: managerSettings.userId })
+          .from(managerSettings)
+          .where(
+            and(
+              eq(managerSettings.section, section as any),
+              eq(managerSettings.workStatus, "WORKING"),
+            ),
+          );
 
-    if (activeManagers.length === 0) {
+    // If smOnly, filter by role (SUPER_MANAGER or ADMIN)
+    let filteredManagers = activeManagers;
+    if (smOnly && activeManagers.length > 0) {
+      const ids = activeManagers.map((m) => m.userId);
+      const allowedRoles = await this.db
+        .select({ id: users.id, role: users.role })
+        .from(users);
+      const allowedSet = new Set(
+        allowedRoles
+          .filter((u) => ids.includes(u.id) && (u.role === "SUPER_MANAGER" || u.role === "ADMIN"))
+          .map((u) => u.id),
+      );
+      filteredManagers = activeManagers.filter((m) => allowedSet.has(m.userId));
+    }
+    // Reassign the variable used below
+    const managersForAssign = filteredManagers;
+
+    if (managersForAssign.length === 0) {
       // No active managers — put in buffer
       await this.db.insert(ticketBuffer).values({
         ticketId,
@@ -55,8 +88,8 @@ export class TicketDistributorService {
 
     // Round-robin assignment
     const counter = await this.redis.incr(`round_robin:${section}`);
-    const index = (counter - 1) % activeManagers.length;
-    const assignedToId = activeManagers[index].userId;
+    const index = (counter - 1) % managersForAssign.length;
+    const assignedToId = managersForAssign[index].userId;
 
     await this.db
       .update(tickets)

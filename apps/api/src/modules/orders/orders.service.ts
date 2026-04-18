@@ -104,16 +104,66 @@ export class OrdersService {
       throw new BadRequestException("Отмена возможна только в течение 10 минут после создания");
     }
 
-    // Charge cancellation fee
+    // Charge cancellation fee immediately
     const cancelCost = await this.settingsService.getNumber("points_order_cancel_cost", 15);
-    await this.pointsService.charge(userId, cancelCost, PointsTransactionType.ORDER_CANCEL, "Отмена заказа «По делам, без 9%»");
+    await this.pointsService.charge(userId, cancelCost, PointsTransactionType.ORDER_CANCEL, "Запрос на отмену заказа «По делам, без 9%»");
+
+    // Set CANCEL_REQUESTED (not CANCELLED). Final cancel must be confirmed by manager.
+    await this.db
+      .update(no9Orders)
+      .set({ status: "CANCEL_REQUESTED" as any })
+      .where(eq(no9Orders.id, orderId));
+
+    // Notify assigned manager
+    if (order.assignedToId) {
+      await this.notificationsService.create({
+        userId: order.assignedToId,
+        type: NotificationType.SYSTEM,
+        title: "Запрос на отмену заказа",
+        body: `Пользователь просит отменить заказ ${order.pointFrom} → ${order.pointTo}. Подтвердите отмену.`,
+        link: `/admin/orders/no9/${orderId}`,
+      });
+      this.notificationsGateway.pushToUser(order.assignedToId, {
+        type: "no9-order-cancel-requested",
+        orderId,
+      });
+    }
+
+    this.logger.log(`Order ${orderId} cancel requested by user ${userId}`);
+    return { success: true, status: "CANCEL_REQUESTED" };
+  }
+
+  async confirmCancel(orderId: string, managerId: string) {
+    const order = await this.getById(orderId);
+    this.assertManagerOwns(order, managerId);
+    if (order.status !== "CANCEL_REQUESTED") {
+      throw new BadRequestException("Заказ не в статусе CANCEL_REQUESTED");
+    }
 
     await this.db
       .update(no9Orders)
-      .set({ status: "CANCELLED" as any })
+      .set({
+        status: "CANCELLED" as any,
+        completedAt: new Date(),
+      })
       .where(eq(no9Orders.id, orderId));
 
-    this.logger.log(`Order ${orderId} cancelled by user ${userId}`);
+    await this.notificationsService.create({
+      userId: order.userId,
+      type: NotificationType.SYSTEM,
+      title: "Заказ отменён",
+      body: `Ваш заказ ${order.pointFrom} → ${order.pointTo} отменён менеджером.`,
+      link: `/orders/no9/${orderId}`,
+    });
+    this.notificationsGateway.pushToUser(order.userId, {
+      type: "no9-order-updated",
+      orderId,
+      status: "CANCELLED",
+    });
+
+    await this.tryResetManagerFiveMinCount(managerId);
+
+    this.logger.log(`Order ${orderId} cancel confirmed by ${managerId}`);
     return { success: true };
   }
 
@@ -164,18 +214,19 @@ export class OrdersService {
       })
       .where(eq(no9Orders.id, orderId));
 
-    // Notify user (shadow ban — generic message)
+    // Notify user (shadow ban — masked as if processed normally)
     await this.notificationsService.create({
       userId: order.userId,
       type: NotificationType.SYSTEM,
-      title: "Заказ обработан",
-      body: `Ваш заказ ${order.pointFrom} → ${order.pointTo} обработан.`,
+      title: "Ваш заказ обработан, ожидайте",
+      body: `Ваш заказ ${order.pointFrom} → ${order.pointTo} обработан, ожидайте.`,
       link: `/orders/no9/${orderId}`,
     });
+    // Push mask: tell client "ORDERED" so nothing betrays ban
     this.notificationsGateway.pushToUser(order.userId, {
       type: "no9-order-updated",
       orderId,
-      status: "BANNED",
+      status: "ORDERED",
     });
 
     // Check if manager has no unclosed orders → reset fiveMinCount
@@ -267,7 +318,13 @@ export class OrdersService {
         .where(eq(no9Orders.userId, userId)),
     ]);
 
-    return { data, total: Number(countResult[0].count), page: dto.page, limit: dto.limit };
+    // Shadow-ban masking: BANNED looks like ORDERED to the user
+    const masked = data.map((o: any) => ({
+      ...o,
+      status: o.status === "BANNED" ? "ORDERED" : o.status,
+    }));
+
+    return { data: masked, total: Number(countResult[0].count), page: dto.page, limit: dto.limit };
   }
 
   async listForManager(managerId: string, dto: ListNo9OrdersDto) {

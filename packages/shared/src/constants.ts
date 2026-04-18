@@ -27,13 +27,15 @@ export const RATING = {
 
 export const TICKET_TOPIC_CONFIG: Record<
   string,
-  { section: string; smReviewRequired: boolean; defaultPoints: number }
+  { section: string; smReviewRequired: boolean; defaultPoints: number; smOnly?: boolean }
 > = {
   PARK_CHECK: { section: "TAXI_CHECK", smReviewRequired: true, defaultPoints: 150 },
   USER_BASE_CHECK: { section: "CHAT", smReviewRequired: true, defaultPoints: 0 },
   TAXI_CONNECT: { section: "CHAT", smReviewRequired: true, defaultPoints: 150 },
-  BUYOUT: { section: "BUYOUT", smReviewRequired: false, defaultPoints: 0 },
+  // Бронирование выкупа идёт сразу на супер-менеджера
+  BUYOUT: { section: "BUYOUT", smReviewRequired: true, defaultPoints: 0, smOnly: true },
   LEGAL: { section: "CHAT", smReviewRequired: false, defaultPoints: 0 },
   FRIENDSHIP_POINTS: { section: "CHAT", smReviewRequired: false, defaultPoints: 0 },
+  IDEA: { section: "CHAT", smReviewRequired: true, defaultPoints: 50 },
   OTHER: { section: "CHAT", smReviewRequired: false, defaultPoints: 0 },
 };

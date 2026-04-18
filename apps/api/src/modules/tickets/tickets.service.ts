@@ -233,6 +233,8 @@ export class TicketsService {
         return { type: PointsTransactionType.TAXI_CONNECT, settingsKey: "points_taxi_connect", defaultAmount: 150 };
       case "BUYOUT":
         return { type: PointsTransactionType.BUYOUT, settingsKey: "points_buyout", defaultAmount: 1000 };
+      case "IDEA":
+        return { type: PointsTransactionType.IDEA, settingsKey: "points_idea", defaultAmount: 50 };
       default:
         // USER_BASE_CHECK (already charged), LEGAL, FRIENDSHIP_POINTS, OTHER — no points awarded
         return null;
@@ -376,6 +378,7 @@ export class TicketsService {
       BUYOUT: `ВЫКУП`,
       LEGAL: `Юридический вопрос ${userName}`,
       FRIENDSHIP_POINTS: `Баллы дружбы ${userName}`,
+      IDEA: `Идея от ${userName}`,
       OTHER: `Обращение ${userName}`,
     };
     return titles[topic] || `Тикет ${userName}`;
