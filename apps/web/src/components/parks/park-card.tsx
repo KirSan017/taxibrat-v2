@@ -36,7 +36,7 @@ export function ParkCard({ park }: ParkCardProps) {
         park.advertised
           ? "border-2 border-green-500 ring-1 ring-green-500/20"
           : "border border-[#E5E5E5]"
-      } ${!hasAvailable ? "opacity-75" : ""}`}
+      } ${!hasAvailable ? "opacity-60 grayscale" : ""}`}
     >
       <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-6">
         {/* Left: info */}

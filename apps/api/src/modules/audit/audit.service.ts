@@ -31,6 +31,7 @@ export class AuditService {
     actorId?: string;
     from?: string;
     to?: string;
+    search?: string;
     page: number;
     limit: number;
   }) {
@@ -39,6 +40,14 @@ export class AuditService {
     if (params.actorId) conditions.push(eq(auditLog.actorId, params.actorId));
     if (params.from) conditions.push(gte(auditLog.createdAt, new Date(params.from)));
     if (params.to) conditions.push(lte(auditLog.createdAt, new Date(params.to)));
+    if (params.search && params.search.trim()) {
+      const q = `%${params.search.trim()}%`;
+      conditions.push(sql`(
+        ${auditLog.oldValue}::text ILIKE ${q}
+        OR ${auditLog.newValue}::text ILIKE ${q}
+        OR ${auditLog.entityId}::text ILIKE ${q}
+      )`);
+    }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 

@@ -61,6 +61,7 @@ export default function AdminAuditPage() {
   const [actorIdFilter, setActorIdFilter] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [search, setSearch] = useState("");
 
   const load = () => {
     const token = getAccessToken();
@@ -74,6 +75,7 @@ export default function AdminAuditPage() {
     if (actorIdFilter) params.set("actorId", actorIdFilter);
     if (from) params.set("from", from);
     if (to) params.set("to", to);
+    if (search.trim()) params.set("search", search.trim());
     api<AuditResponse>(`/admin/audit?${params.toString()}`, { token })
       .then((res) => {
         setEntries(res.data || []);
@@ -116,6 +118,14 @@ export default function AdminAuditPage() {
         <div className="w-[220px]">
           <label className="block text-xs text-[#A1A1A1] mb-1">ID актора</label>
           <Input value={actorIdFilter} onChange={(e) => setActorIdFilter(e.target.value)} />
+        </div>
+        <div className="w-[260px]">
+          <label className="block text-xs text-[#A1A1A1] mb-1">Поиск по значениям</label>
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Имя, фраза, ID..."
+          />
         </div>
         <div>
           <label className="block text-xs text-[#A1A1A1] mb-1">От</label>

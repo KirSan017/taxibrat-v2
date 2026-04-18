@@ -17,6 +17,7 @@ export class AuditController {
     @Query("actorId") actorId?: string,
     @Query("from") from?: string,
     @Query("to") to?: string,
+    @Query("search") search?: string,
     @Query("page") page = "1",
     @Query("limit") limit = "20",
   ) {
@@ -25,6 +26,7 @@ export class AuditController {
       actorId,
       from,
       to,
+      search,
       page: parseInt(page, 10),
       limit: Math.min(parseInt(limit, 10), 100),
     });

@@ -78,6 +78,15 @@ export default function ProfilePage() {
 
   const isFirstTime = user?.status === "PHONE_VERIFIED";
 
+  // Phone change flow
+  const [phoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [phoneStep, setPhoneStep] = useState<"enter" | "code">("enter");
+  const [newPhone, setNewPhone] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
+  const [phoneMethod, setPhoneMethod] = useState<"SMS" | "TELEGRAM">("SMS");
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -117,7 +126,64 @@ export default function ProfilePage() {
   };
 
   const handlePhoneChangeClick = () => {
-    alert("Смена номера телефона — функция в разработке. Обратитесь в поддержку.");
+    setNewPhone("");
+    setPhoneCode("");
+    setPhoneError("");
+    setPhoneStep("enter");
+    setPhoneModalOpen(true);
+  };
+
+  const handleSendPhoneCode = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+    setPhoneError("");
+    const clean = newPhone.replace(/[^\d+]/g, "");
+    if (!/^\+?\d{10,15}$/.test(clean)) {
+      setPhoneError("Некорректный номер телефона");
+      return;
+    }
+    setPhoneLoading(true);
+    try {
+      await api("/users/me/change-phone/send-code", {
+        method: "POST",
+        token,
+        body: { newPhone: clean, method: phoneMethod },
+      });
+      setPhoneStep("code");
+    } catch (err: unknown) {
+      setPhoneError(err instanceof Error ? err.message : "Не удалось отправить код");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleConfirmPhoneCode = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+    setPhoneError("");
+    if (!/^\d{4,8}$/.test(phoneCode)) {
+      setPhoneError("Введите код из SMS/Telegram");
+      return;
+    }
+    setPhoneLoading(true);
+    try {
+      const clean = newPhone.replace(/[^\d+]/g, "");
+      await api("/users/me/change-phone/verify", {
+        method: "POST",
+        token,
+        body: { newPhone: clean, code: phoneCode },
+      });
+      setPhoneModalOpen(false);
+      setToast({ type: "success", message: "Телефон успешно изменён" });
+      setTimeout(() => setToast(null), 3000);
+      if (typeof window !== "undefined") {
+        setTimeout(() => window.location.reload(), 500);
+      }
+    } catch (err: unknown) {
+      setPhoneError(err instanceof Error ? err.message : "Не удалось подтвердить код");
+    } finally {
+      setPhoneLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -198,6 +264,106 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-[700px] relative">
+      {/* Phone change modal */}
+      {phoneModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/30" onClick={() => !phoneLoading && setPhoneModalOpen(false)} />
+          <div className="relative bg-white rounded-2xl p-6 md:p-8 w-full max-w-[440px]">
+            <button
+              type="button"
+              onClick={() => !phoneLoading && setPhoneModalOpen(false)}
+              className="absolute top-4 right-4 text-[#A1A1A1] hover:text-[#303030]"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+            <h2 className="text-lg font-medium text-[#303030] mb-1">
+              {phoneStep === "enter" ? "Новый номер" : "Подтверждение"}
+            </h2>
+            <p className="text-xs text-[#A1A1A1] mb-5">
+              {phoneStep === "enter"
+                ? "Укажите новый номер и способ получения кода."
+                : `Мы отправили код на ${newPhone} (${phoneMethod === "SMS" ? "SMS" : "Telegram"}).`}
+            </p>
+
+            {phoneStep === "enter" ? (
+              <>
+                <Input
+                  label="Новый телефон"
+                  placeholder="+7 (900) 000-00-00"
+                  type="tel"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                />
+                <div className="mt-4">
+                  <p className="text-xs text-[#A1A1A1] mb-2">Способ подтверждения</p>
+                  <div className="flex gap-2">
+                    {(["SMS", "TELEGRAM"] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setPhoneMethod(m)}
+                        className={`flex-1 h-[42px] rounded-lg border text-sm transition-colors ${
+                          phoneMethod === m
+                            ? "border-[#303030] bg-[#FAFAFA] text-[#303030]"
+                            : "border-[#E5E5E5] text-[#A1A1A1] hover:border-[#A1A1A1]"
+                        }`}
+                      >
+                        {m === "SMS" ? "SMS" : "Telegram"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {phoneError && (
+                  <p className="mt-3 text-xs text-[#FA6868]">{phoneError}</p>
+                )}
+                <Button
+                  type="button"
+                  className="w-full mt-5"
+                  onClick={handleSendPhoneCode}
+                  disabled={phoneLoading}
+                >
+                  {phoneLoading ? "Отправка..." : "Получить код"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Input
+                  label="Код подтверждения"
+                  placeholder="000000"
+                  inputMode="numeric"
+                  value={phoneCode}
+                  onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, ""))}
+                />
+                {phoneError && (
+                  <p className="mt-3 text-xs text-[#FA6868]">{phoneError}</p>
+                )}
+                <div className="flex gap-2 mt-5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setPhoneStep("enter")}
+                    disabled={phoneLoading}
+                  >
+                    Назад
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={handleConfirmPhoneCode}
+                    disabled={phoneLoading}
+                  >
+                    {phoneLoading ? "Проверка..." : "Подтвердить"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <SuccessModal
         open={successOpen}
         onClose={() => {
