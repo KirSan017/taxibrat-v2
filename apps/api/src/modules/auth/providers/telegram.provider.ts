@@ -10,37 +10,52 @@ export class TelegramProvider {
   async sendCode(phone: string, code: string): Promise<boolean> {
     const token = this.config.get("TELEGRAM_GATEWAY_TOKEN");
 
-    if (!token) {
-      this.logger.warn(`[DEV] Telegram to ${phone}: code ${code}`);
-      return true;
-    }
-
-    try {
-      const res = await fetch(
-        "https://gatewayapi.telegram.org/sendVerificationMessage",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+    // Prefer official Telegram Gateway if configured
+    if (token) {
+      try {
+        const res = await fetch(
+          "https://gatewayapi.telegram.org/sendVerificationMessage",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              phone_number: phone,
+              code,
+              ttl: 300,
+            }),
           },
-          body: JSON.stringify({
-            phone_number: phone,
-            code,
-            ttl: 300,
-          }),
-        },
-      );
+        );
 
-      if (!res.ok) {
-        this.logger.error(`Telegram Gateway error: ${res.status}`);
+        if (!res.ok) {
+          this.logger.error(`Telegram Gateway error: ${res.status}`);
+          return false;
+        }
+        return true;
+      } catch (err) {
+        this.logger.error("Telegram Gateway failed:", err);
         return false;
       }
-      return true;
-    } catch (err) {
-      this.logger.error("Telegram Gateway failed:", err);
-      return false;
     }
+
+    // Fallback: send via bot to admin's chat (dev/MVP mode)
+    const adminChatId = this.config.get("ADMIN_TELEGRAM_CHAT_ID");
+    if (adminChatId) {
+      const sent = await this.sendMessage(
+        adminChatId,
+        `🔑 <b>Код подтверждения для ${phone}:</b>\n\n<code>${code}</code>\n\nДействует 5 минут.`,
+      );
+      if (sent) {
+        this.logger.log(`Code for ${phone} sent to admin chat ${adminChatId}`);
+        return true;
+      }
+    }
+
+    // Last-resort: log to console (dev mode)
+    this.logger.warn(`[DEV] Telegram to ${phone}: code ${code}`);
+    return true;
   }
 
   /**
