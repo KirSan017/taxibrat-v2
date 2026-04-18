@@ -5,3 +5,7 @@ dist/
 *.env
 !.env.example
 .DS_Store
+apps/web/tsconfig.tsbuildinfo
+home-tree*.json
+file-shallow.json
+*.docx
