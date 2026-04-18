@@ -13,7 +13,27 @@ export const updateProfileSchema = z.object({
   carModelId: z.string().uuid().optional(),
   carYear: z.coerce.number().int().min(1990).max(2099).optional(),
   carPlate: z.string().max(20).optional(),
+  licenseFrontUrl: z.string().max(500).optional(),
+  licenseBackUrl: z.string().max(500).optional(),
+  faceWithLicenseUrl: z.string().max(500).optional(),
+  stsFrontUrl: z.string().max(500).optional(),
+  stsBackUrl: z.string().max(500).optional(),
 });
+
+export const DOCUMENT_TYPES = [
+  "licenseFront",
+  "licenseBack",
+  "faceWithLicense",
+  "stsFront",
+  "stsBack",
+] as const;
+
+export const uploadDocumentSchema = z.object({
+  documentType: z.enum(DOCUMENT_TYPES),
+  base64: z.string().min(10),
+});
+
+export type UploadDocumentDto = z.infer<typeof uploadDocumentSchema>;
 
 export const rejectUserSchema = z.object({
   reason: z.string().min(1).max(500),
@@ -51,4 +71,9 @@ export interface UserResponse {
   carModelId?: string | null;
   carYear?: number | null;
   carPlate?: string | null;
+  licenseFrontUrl?: string | null;
+  licenseBackUrl?: string | null;
+  faceWithLicenseUrl?: string | null;
+  stsFrontUrl?: string | null;
+  stsBackUrl?: string | null;
 }

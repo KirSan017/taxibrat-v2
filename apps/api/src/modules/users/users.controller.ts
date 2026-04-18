@@ -12,7 +12,12 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser, JwtPayload } from "../../common/decorators/current-user.decorator";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
 import { UsersService } from "./users.service";
-import { updateProfileSchema, UpdateProfileDto } from "@taxibrat/shared";
+import {
+  updateProfileSchema,
+  UpdateProfileDto,
+  uploadDocumentSchema,
+  UploadDocumentDto,
+} from "@taxibrat/shared";
 
 @Controller("users")
 @UseGuards(JwtAuthGuard)
@@ -35,6 +40,14 @@ export class UsersController {
       throw new BadRequestException("Невалидный токен авторизации — перезайдите в аккаунт");
     }
     return this.usersService.updateProfile(user.sub, dto);
+  }
+
+  @Post("me/document")
+  uploadDocument(
+    @CurrentUser() user: JwtPayload,
+    @Body(new ZodValidationPipe(uploadDocumentSchema)) dto: UploadDocumentDto,
+  ) {
+    return this.usersService.updateDocument(user.sub, dto.documentType, dto.base64);
   }
 
   @Post("me/photo")

@@ -72,6 +72,44 @@ export class UsersService {
     return updated;
   }
 
+  async updateDocument(userId: string, documentType: string, base64: string) {
+    await this.getById(userId);
+    const raw = (base64 ?? "").trim();
+    if (!raw) throw new BadRequestException("Пустой файл");
+    const dataUrl = raw.startsWith("data:image/")
+      ? raw
+      : `data:image/jpeg;base64,${raw}`;
+    // Limit ~4MB base64
+    if (dataUrl.length > 6_000_000) {
+      throw new BadRequestException("Файл слишком большой (максимум ~4 МБ)");
+    }
+    const columnMap: Record<string, string> = {
+      licenseFront: "licenseFrontUrl",
+      licenseBack: "licenseBackUrl",
+      faceWithLicense: "faceWithLicenseUrl",
+      stsFront: "stsFrontUrl",
+      stsBack: "stsBackUrl",
+    };
+    const column = columnMap[documentType];
+    if (!column) throw new BadRequestException("Неизвестный тип документа");
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ [column]: dataUrl } as any)
+      .where(eq(users.id, userId))
+      .returning();
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.UPDATE,
+      entity: AuditEntity.USER,
+      entityId: userId,
+      newValue: { documentType, uploaded: true },
+    });
+
+    return updated;
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.getById(userId);
 

@@ -43,6 +43,15 @@ interface ProfileForm {
   carClass: string;
 }
 
+type DocumentType = "licenseFront" | "licenseBack" | "faceWithLicense" | "stsFront" | "stsBack";
+const DOCUMENT_COLUMN: Record<DocumentType, string> = {
+  licenseFront: "licenseFrontUrl",
+  licenseBack: "licenseBackUrl",
+  faceWithLicense: "faceWithLicenseUrl",
+  stsFront: "stsFrontUrl",
+  stsBack: "stsBackUrl",
+};
+
 const EMPTY_FORM: ProfileForm = {
   lastName: "",
   firstName: "",
@@ -70,8 +79,57 @@ export default function ProfilePage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [brands, setBrands] = useState<ApiBrand[]>([]);
   const [models, setModels] = useState<ApiModel[]>([]);
+  const [docs, setDocs] = useState<Record<DocumentType, string | null>>({
+    licenseFront: null,
+    licenseBack: null,
+    faceWithLicense: null,
+    stsFront: null,
+    stsBack: null,
+  });
+  const [uploadingDoc, setUploadingDoc] = useState<DocumentType | null>(null);
+  const [fieldError, setFieldError] = useState<Record<string, string>>({});
 
   const isFirstTime = user?.status === "PHONE_VERIFIED";
+
+  const handleDocumentChange = async (
+    documentType: DocumentType,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      setToast({ type: "error", message: "Файл не более 4 МБ" });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      setDocs((prev) => ({ ...prev, [documentType]: dataUrl }));
+      setUploadingDoc(documentType);
+      try {
+        await api("/users/me/document", {
+          method: "POST",
+          token,
+          body: { documentType, base64: dataUrl },
+        });
+        setToast({ type: "success", message: "Документ загружен" });
+        setTimeout(() => setToast(null), 2500);
+      } catch (err: unknown) {
+        setToast({
+          type: "error",
+          message: err instanceof Error ? err.message : "Не удалось загрузить документ",
+        });
+        setTimeout(() => setToast(null), 3000);
+        setDocs((prev) => ({ ...prev, [documentType]: null }));
+      } finally {
+        setUploadingDoc(null);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Phone change flow
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
@@ -217,6 +275,11 @@ export default function ProfilePage() {
       carModelId: string | null;
       carYear: number | null;
       carPlate: string | null;
+      licenseFrontUrl: string | null;
+      licenseBackUrl: string | null;
+      faceWithLicenseUrl: string | null;
+      stsFrontUrl: string | null;
+      stsBackUrl: string | null;
     }>("/users/me", { token })
       .then((me) => {
         setForm({
@@ -233,6 +296,13 @@ export default function ProfilePage() {
           carYear: me.carYear != null ? String(me.carYear) : "",
           carPlate: me.carPlate || "",
         });
+        setDocs({
+          licenseFront: me.licenseFrontUrl || null,
+          licenseBack: me.licenseBackUrl || null,
+          faceWithLicense: me.faceWithLicenseUrl || null,
+          stsFront: me.stsFrontUrl || null,
+          stsBack: me.stsBackUrl || null,
+        });
       })
       .catch(() => {
         /* silent */
@@ -246,6 +316,7 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldError({});
     if (!form.lastName || !form.firstName || !form.birthDate) {
       setToast({ type: "error", message: "Заполните обязательные поля" });
       setTimeout(() => setToast(null), 3000);
@@ -276,10 +347,13 @@ export default function ProfilePage() {
       });
       setSuccessOpen(true);
     } catch (err: unknown) {
-      setToast({
-        type: "error",
-        message: err instanceof Error ? err.message : "Не удалось сохранить профиль",
-      });
+      const msg = err instanceof Error ? err.message : "Не удалось сохранить профиль";
+      if (/email/i.test(msg)) {
+        setFieldError({ email: msg });
+      } else if (/телефон|phone/i.test(msg)) {
+        setFieldError({ phone: msg });
+      }
+      setToast({ type: "error", message: msg });
       setTimeout(() => setToast(null), 3000);
     } finally {
       setSubmitting(false);
@@ -496,13 +570,19 @@ export default function ProfilePage() {
         </div>
 
         {/* Email */}
-        <Input
-          label="Email для уведомлений"
-          type="email"
-          placeholder="Email для уведомлений"
-          value={form.email}
-          onChange={(e) => update("email", e.target.value)}
-        />
+        <div>
+          <Input
+            label="Email для уведомлений"
+            type="email"
+            placeholder="Email для уведомлений"
+            value={form.email}
+            onChange={(e) => update("email", e.target.value)}
+            className={fieldError.email ? "border-[#FA6868] focus:border-[#FA6868]" : undefined}
+          />
+          {fieldError.email && (
+            <p className="mt-1 text-xs text-[#FA6868]">{fieldError.email}</p>
+          )}
+        </div>
 
         {/* Birth date */}
         <Input
@@ -532,44 +612,96 @@ export default function ProfilePage() {
         <div>
           <p className="text-sm font-medium text-[#303030] mb-3">Документы</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {[
-              "Сделать фото\nВодительских прав (лицевая) *",
-              "Сделать фото\nВодительских прав (оборотная)",
-              "Сделать фото\nЛица с правами *",
-            ].map((label, i) => (
-              <label
-                key={i}
-                className="border border-dashed border-[#E5E5E5] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A1A1A1] transition-colors min-h-[100px]"
-              >
-                <svg className="w-6 h-6 text-[#A1A1A1] mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                <span className="text-[10px] text-[#A1A1A1] whitespace-pre-line leading-tight">{label}</span>
-                <input type="file" accept="image/*" capture="environment" className="hidden" />
-              </label>
-            ))}
+            {([
+              { type: "licenseFront" as DocumentType, label: "Водительские права\n(лицевая) *" },
+              { type: "licenseBack" as DocumentType, label: "Водительские права\n(оборотная)" },
+              { type: "faceWithLicense" as DocumentType, label: "Лицо с правами *" },
+            ]).map((d) => {
+              const url = docs[d.type];
+              return (
+                <label
+                  key={d.type}
+                  className="relative border border-dashed border-[#E5E5E5] rounded-xl overflow-hidden flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A1A1A1] transition-colors min-h-[110px]"
+                >
+                  {url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={url} alt={d.label} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <svg className="w-6 h-6 text-[#A1A1A1] mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      <span className="text-[10px] text-[#A1A1A1] whitespace-pre-line leading-tight px-2">{d.label}</span>
+                    </>
+                  )}
+                  {uploadingDoc === d.type && (
+                    <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                      <span className="text-xs text-[#303030]">Загрузка...</span>
+                    </div>
+                  )}
+                  {url && (
+                    <div className="absolute bottom-1 right-1 bg-white/90 text-[9px] text-[#303030] rounded px-1.5 py-0.5">
+                      Заменить
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => handleDocumentChange(d.type, e)}
+                  />
+                </label>
+              );
+            })}
           </div>
         </div>
 
         {/* STS photos */}
         <div className="grid grid-cols-2 gap-3">
-          {[
-            "Загрузить фото\nСТС (лицевая)",
-            "Загрузить фото\nСТС (оборотная)",
-          ].map((label, i) => (
-            <label
-              key={i}
-              className="border border-dashed border-[#E5E5E5] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A1A1A1] transition-colors min-h-[80px]"
-            >
-              <svg className="w-6 h-6 text-[#A1A1A1] mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span className="text-[10px] text-[#A1A1A1] whitespace-pre-line leading-tight">{label}</span>
-              <input type="file" accept="image/*" capture="environment" className="hidden" />
-            </label>
-          ))}
+          {([
+            { type: "stsFront" as DocumentType, label: "СТС\n(лицевая)" },
+            { type: "stsBack" as DocumentType, label: "СТС\n(оборотная)" },
+          ]).map((d) => {
+            const url = docs[d.type];
+            return (
+              <label
+                key={d.type}
+                className="relative border border-dashed border-[#E5E5E5] rounded-xl overflow-hidden flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A1A1A1] transition-colors min-h-[90px]"
+              >
+                {url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={url} alt={d.label} className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <svg className="w-6 h-6 text-[#A1A1A1] mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span className="text-[10px] text-[#A1A1A1] whitespace-pre-line leading-tight px-2">{d.label}</span>
+                  </>
+                )}
+                {uploadingDoc === d.type && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <span className="text-xs text-[#303030]">Загрузка...</span>
+                  </div>
+                )}
+                {url && (
+                  <div className="absolute bottom-1 right-1 bg-white/90 text-[9px] text-[#303030] rounded px-1.5 py-0.5">
+                    Заменить
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => handleDocumentChange(d.type, e)}
+                />
+              </label>
+            );
+          })}
         </div>
 
         {/* Car plate */}

@@ -55,6 +55,12 @@ export const users = pgTable("users", {
   carModelId: uuid("car_model_id").references(() => carModels.id),
   carYear: integer("car_year"),
   carPlate: varchar("car_plate", { length: 20 }),
+  // Driver documents (uploaded as base64, stored as URLs)
+  licenseFrontUrl: varchar("license_front_url", { length: 500 }),
+  licenseBackUrl: varchar("license_back_url", { length: 500 }),
+  faceWithLicenseUrl: varchar("face_with_license_url", { length: 500 }),
+  stsFrontUrl: varchar("sts_front_url", { length: 500 }),
+  stsBackUrl: varchar("sts_back_url", { length: 500 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
