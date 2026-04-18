@@ -73,8 +73,52 @@ export default function ProfilePage() {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const isFirstTime = user?.status === "PHONE_VERIFIED";
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setToast({ type: "error", message: "Фото не более 2 МБ" });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      setPhotoPreview(dataUrl);
+      setUploadingPhoto(true);
+      try {
+        await api("/users/me/photo", {
+          method: "POST",
+          token,
+          body: { photoBase64: dataUrl },
+        });
+        setToast({ type: "success", message: "Фото обновлено" });
+        setTimeout(() => setToast(null), 2500);
+      } catch (err: unknown) {
+        setToast({
+          type: "error",
+          message: err instanceof Error ? err.message : "Не удалось загрузить фото",
+        });
+        setTimeout(() => setToast(null), 3000);
+        setPhotoPreview(null);
+      } finally {
+        setUploadingPhoto(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePhoneChangeClick = () => {
+    alert("Смена номера телефона — функция в разработке. Обратитесь в поддержку.");
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -187,9 +231,13 @@ export default function ProfilePage() {
         {/* Photo upload */}
         <div className="flex items-center gap-4 mb-2">
           <div className="w-14 h-14 bg-[#E5E5E5] rounded-full flex items-center justify-center shrink-0 overflow-hidden">
-            {user?.photoUrl ? (
+            {photoPreview || user?.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
+              <img
+                src={(photoPreview || user?.photoUrl) as string}
+                alt="avatar"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <svg className="w-7 h-7 text-[#A1A1A1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
@@ -198,8 +246,15 @@ export default function ProfilePage() {
             )}
           </div>
           <label className="text-sm text-[#A1A1A1] cursor-pointer hover:text-[#303030] transition-colors">
-            Ваше фото
-            <input type="file" accept="image/*" capture="environment" className="hidden" />
+            {uploadingPhoto ? "Загрузка..." : "Ваше фото"}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoChange}
+              disabled={uploadingPhoto}
+            />
           </label>
         </div>
 
@@ -225,7 +280,7 @@ export default function ProfilePage() {
           />
         </div>
 
-        {/* Phone (readonly) */}
+        {/* Phone (readonly + change button) */}
         <div className="relative">
           <Input
             label="Телефон"
@@ -233,6 +288,17 @@ export default function ProfilePage() {
             readOnly
             className="bg-gray-50 pr-10"
           />
+          <button
+            type="button"
+            onClick={handlePhoneChangeClick}
+            className="absolute right-3 top-[30px] w-7 h-7 text-[#A1A1A1] hover:text-[#303030] transition-colors"
+            title="Изменить телефон"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+          </button>
         </div>
 
         {/* Email */}

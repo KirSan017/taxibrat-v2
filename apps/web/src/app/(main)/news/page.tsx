@@ -1,80 +1,68 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api-client";
 
-/* ── mock data ──────────────────────────────────────────── */
+/* ── types ──────────────────────────────────────────────── */
 
 interface NewsItem {
-  id: number;
+  id: string;
   title: string;
-  date: string;
-  preview: string;
-  content: string;
+  body: string;
+  linkUrl?: string | null;
+  createdAt: string;
+  publishedAt?: string | null;
 }
 
-const MOCK_NEWS: NewsItem[] = [
-  {
-    id: 1,
-    title: "Запуск сервиса «По делам, без 9%»",
-    date: "15.04.2026",
-    preview: "Мы рады представить новый сервис для водителей такси — заказы без комиссии агрегатора.",
-    content: "Мы рады представить новый сервис для водителей такси — заказы без комиссии агрегатора. Теперь каждый зарегистрированный пользователь может получить заказ напрямую, оплатив всего 50 баллов дружбы. Это позволяет экономить до 9% с каждой поездки. Сервис работает по всей Москве и Московской области. Для использования достаточно зарегистрироваться на платформе и заполнить профиль водителя.",
-  },
-  {
-    id: 2,
-    title: "Обновление рейтинга таксопарков",
-    date: "10.04.2026",
-    preview: "Добавлены 12 новых параметров оценки таксопарков для более точного сравнения.",
-    content: "Мы расширили систему оценки таксопарков, добавив 12 новых параметров. Теперь в рейтинге учитываются: наличие подменного автомобиля, условия по каско и ОСАГО, доступность детских кресел, наличие газового оборудования и многое другое. Все данные собираются на основе отзывов реальных водителей и проверок нашей команды.",
-  },
-  {
-    id: 3,
-    title: "Программа «Баллы дружбы» — как это работает",
-    date: "05.04.2026",
-    preview: "Подробный гайд по программе лояльности: как копить и тратить баллы дружбы.",
-    content: "Баллы дружбы — это внутренняя валюта платформы ТаксиБрат. Вы получаете баллы за: регистрацию (100 баллов), приглашение друга (50 баллов), проверку таксопарка (30 баллов), написание отзыва (20 баллов). Баллы можно потратить на: заказ «По делам» (50 баллов), детальную проверку парка (30 баллов), приоритетное размещение объявления (100 баллов).",
-  },
-  {
-    id: 4,
-    title: "Выкуп авто — новый раздел",
-    date: "01.04.2026",
-    preview: "Теперь на платформе можно найти автомобили для выкупа от таксопарков, банков и частных лиц.",
-    content: "Мы запустили маркетплейс автомобилей для выкупа. В разделе представлены предложения от таксопарков, банков, юридических и физических лиц. Каждое объявление проходит модерацию. Вы можете забронировать автомобиль онлайн — наш менеджер свяжется с вами для уточнения деталей. Все автомобили подходят для работы в такси.",
-  },
-  {
-    id: 5,
-    title: "Партнёрская программа для таксопарков",
-    date: "25.03.2026",
-    preview: "Приглашаем таксопарки к сотрудничеству — размещайте свои парки в нашем рейтинге.",
-    content: "Мы открываем партнёрскую программу для таксопарков Москвы и Московской области. Размещение в рейтинге бесплатно. Рекламные позиции доступны по специальным тарифам. Партнёры получают: выделенную карточку в каталоге, приоритет в поисковой выдаче, доступ к аналитике по просмотрам и заявкам.",
-  },
-  {
-    id: 6,
-    title: "Техническое обновление платформы",
-    date: "20.03.2026",
-    preview: "Ускорили работу сайта, обновили дизайн и добавили новые фильтры в каталог.",
-    content: "Провели масштабное техническое обновление платформы. Скорость загрузки страниц увеличилась на 40%. Обновили дизайн каталога таксопарков — теперь информация представлена компактнее и нагляднее. Добавили фильтры по районам Москвы и году выпуска автомобилей. Исправили ряд ошибок, о которых сообщали пользователи.",
-  },
-  {
-    id: 7,
-    title: "Итоги первого месяца работы",
-    date: "15.03.2026",
-    preview: "143 000+ пользователей, 148 проверенных парков и 1 200+ выполненных заказов.",
-    content: "Подводим итоги первого месяца работы платформы. Более 143 000 пользователей зарегистрировались на ТаксиБрат. Мы проверили 148 таксопарков в Москве и Московской области. Через сервис «По делам» выполнено более 1 200 заказов. Средняя оценка платформы — 4.7 из 5. Спасибо всем, кто поддерживает проект!",
-  },
-];
+interface NewsResponse {
+  data: NewsItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
-const ITEMS_PER_PAGE = 5;
+const LIMIT = 20;
+
+function formatDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+  } catch {
+    return "";
+  }
+}
+
+function makePreview(body: string): string {
+  const flat = body.replace(/\s+/g, " ").trim();
+  return flat.length > 180 ? `${flat.slice(0, 180)}…` : flat;
+}
 
 /* ── component ──────────────────────────────────────────── */
 
 export default function NewsPage() {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [items, setItems] = useState<NewsItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const totalPages = Math.max(1, Math.ceil(MOCK_NEWS.length / ITEMS_PER_PAGE));
-  const paginated = MOCK_NEWS.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    api<NewsResponse>(`/news?page=${page}&limit=${LIMIT}`)
+      .then((r) => {
+        setItems(r.data || []);
+        setTotal(r.total || 0);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : "Не удалось загрузить новости");
+        setItems([]);
+      })
+      .finally(() => setLoading(false));
+  }, [page]);
+
+  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
   return (
     <>
@@ -92,10 +80,20 @@ export default function NewsPage() {
 
       <div className="max-w-[1600px] mx-auto px-6 py-8 md:py-12">
         <div className="max-w-3xl">
-          {/* ══════ NEWS LIST ══════ */}
+          {loading && <p className="text-sm text-[#A1A1A1]">Загрузка...</p>}
+          {error && !loading && (
+            <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4">
+              <p className="text-sm text-[#FA6868]">{error}</p>
+            </div>
+          )}
+          {!loading && !error && items.length === 0 && (
+            <p className="text-sm text-[#A1A1A1]">Новостей пока нет</p>
+          )}
+
           <div className="space-y-4 mb-8">
-            {paginated.map((item) => {
+            {items.map((item) => {
               const isExpanded = expandedId === item.id;
+              const preview = makePreview(item.body);
               return (
                 <article
                   key={item.id}
@@ -107,9 +105,11 @@ export default function NewsPage() {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="text-xs text-[#A1A1A1] mb-1.5">{item.date}</p>
+                        <p className="text-xs text-[#A1A1A1] mb-1.5">
+                          {formatDate(item.publishedAt || item.createdAt)}
+                        </p>
                         <h3 className="text-base font-medium text-[#303030] mb-2">{item.title}</h3>
-                        <p className="text-sm text-[#A1A1A1] leading-relaxed">{item.preview}</p>
+                        <p className="text-sm text-[#A1A1A1] leading-relaxed">{preview}</p>
                       </div>
                       <svg
                         className={`w-5 h-5 text-[#A1A1A1] shrink-0 mt-1 transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -124,8 +124,18 @@ export default function NewsPage() {
 
                   {isExpanded && (
                     <div className="px-5 pb-5 md:px-6 md:pb-6">
-                      <div className="border-t border-[#E5E5E5] pt-4">
-                        <p className="text-sm text-[#303030] leading-relaxed">{item.content}</p>
+                      <div className="border-t border-[#E5E5E5] pt-4 space-y-3">
+                        <p className="text-sm text-[#303030] leading-relaxed whitespace-pre-line">{item.body}</p>
+                        {item.linkUrl && (
+                          <a
+                            href={item.linkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block text-sm text-[#303030] underline hover:text-black"
+                          >
+                            Подробнее →
+                          </a>
+                        )}
                       </div>
                     </div>
                   )}
@@ -134,12 +144,11 @@ export default function NewsPage() {
             })}
           </div>
 
-          {/* ══════ PAGINATION ══════ */}
           {totalPages > 1 && (
             <nav className="flex items-center justify-center gap-1 mb-12">
               <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
                 className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-[#A1A1A1] hover:bg-gray-100 disabled:opacity-30"
               >
                 &laquo;
@@ -147,9 +156,9 @@ export default function NewsPage() {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
-                  onClick={() => setCurrentPage(p)}
+                  onClick={() => setPage(p)}
                   className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                    p === currentPage
+                    p === page
                       ? "bg-[#303030] text-white"
                       : "text-[#303030] hover:bg-gray-100"
                   }`}
@@ -158,8 +167,8 @@ export default function NewsPage() {
                 </button>
               ))}
               <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
                 className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-[#A1A1A1] hover:bg-gray-100 disabled:opacity-30"
               >
                 &raquo;

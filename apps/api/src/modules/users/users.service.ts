@@ -42,6 +42,16 @@ export class UsersService {
     return user;
   }
 
+  async updatePhoto(userId: string, photoUrl: string | null) {
+    await this.getById(userId);
+    const [updated] = await this.db
+      .update(users)
+      .set({ photoUrl })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.getById(userId);
 
