@@ -30,6 +30,8 @@ interface TicketDetail {
   creatorId: string;
   assignedManagerId?: string | null;
   rentalConfirmedAt?: string | null;
+  relatedEntityType?: string | null;
+  relatedEntityId?: string | null;
   createdAt: string;
   messages: Message[];
 }
@@ -45,13 +47,33 @@ const STATUS_MAP: Record<string, { label: string; variant: "yellow" | "gray" | "
 
 const TOPIC_LABELS: Record<string, string> = {
   PARK_CHECK: "Проверка таксопарка",
+  PARK_ADD: "Добавление таксопарка",
   USER_BASE_CHECK: "Проверка по базе",
   TAXI_CONNECT: "Подключение к такси",
   BUYOUT: "Выкуп авто",
   LEGAL: "Юридический вопрос",
   FRIENDSHIP_POINTS: "Баллы дружбы",
+  IDEA: "Идея",
   OTHER: "Иное",
 };
+
+function getRelatedLink(ticket: TicketDetail): { href: string; label: string } | null {
+  if (!ticket.relatedEntityId) return null;
+  if (ticket.topic === "PARK_CHECK" || ticket.topic === "PARK_ADD") {
+    return { href: `/admin/parks/${ticket.relatedEntityId}`, label: "Открыть редактор парка" };
+  }
+  if (ticket.topic === "TAXI_CONNECT") {
+    // TAXI_CONNECT has relatedEntityType = PARK_CLASS, link to park via class
+    return { href: `/admin/parks-list`, label: "К парку" };
+  }
+  if (ticket.topic === "BUYOUT") {
+    return { href: `/admin/buyout/${ticket.relatedEntityId}`, label: "Открыть карточку выкупа" };
+  }
+  if (ticket.topic === "USER_BASE_CHECK" && ticket.relatedEntityType === "USER") {
+    return { href: `/admin/users/${ticket.relatedEntityId}`, label: "К пользователю" };
+  }
+  return null;
+}
 
 /* ── component ───────────────────────────────────────── */
 
@@ -66,6 +88,7 @@ export default function AdminTicketChatPage() {
   const [sending, setSending] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [confirmRentalOpen, setConfirmRentalOpen] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -116,7 +139,6 @@ export default function AdminTicketChatPage() {
 
   const handleClose = async () => {
     if (!ticketId) return;
-    if (!confirm("Отправить тикет на проверку СМ / закрыть?")) return;
     const token = getAccessToken();
     if (!token) return;
     try {
@@ -227,6 +249,14 @@ export default function AdminTicketChatPage() {
         description="Пользователю будут начислены дополнительные баллы дружбы (по умолчанию 300). Действие необратимо."
         confirmLabel="Подтвердить"
       />
+      <ConfirmModal
+        open={confirmCloseOpen}
+        onClose={() => setConfirmCloseOpen(false)}
+        onConfirm={handleClose}
+        title="Отправить тикет на проверку СМ?"
+        description="Тикет перейдёт в статус «На проверке СМ» и будет ждать решения супер-менеджера."
+        confirmLabel="Отправить"
+      />
       <SuccessModal
         open={!!successMsg}
         onClose={() => setSuccessMsg("")}
@@ -252,9 +282,17 @@ export default function AdminTicketChatPage() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {(() => {
+            const rel = getRelatedLink(ticket);
+            return rel ? (
+              <Link href={rel.href}>
+                <Button size="sm" variant="outline">{rel.label}</Button>
+              </Link>
+            ) : null;
+          })()}
           {canClose && (
-            <Button size="sm" onClick={handleClose}>
+            <Button size="sm" onClick={() => setConfirmCloseOpen(true)}>
               Закрыть
             </Button>
           )}
