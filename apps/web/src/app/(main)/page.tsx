@@ -53,8 +53,8 @@ const FEATURES = [
   {
     title: "Подключим\nвас к такси",
     description: "Поможем выбрать лучший таксопарк под ваши параметры: класс, район, автомобиль.",
-    color: "bg-white border border-[#E5E5E5]",
-    textColor: "text-[#303030]",
+    color: "bg-[#303030]",
+    textColor: "text-white",
     image: "/figma/feature-connect.png",
   },
 ];
@@ -130,8 +130,18 @@ export default function HomePage() {
   return (
     <>
       {/* ══════ HERO ══════ */}
-      <section className="bg-[#F3F1E7]">
-        <div className="max-w-[1600px] mx-auto px-6 py-12 md:py-20">
+      <section className="bg-white relative overflow-hidden">
+        {/* Decorative yellow dots pattern */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #F8D62E 2px, transparent 2px)",
+            backgroundSize: "32px 32px",
+          }}
+        />
+        <div className="relative max-w-[1600px] mx-auto px-6 py-12 md:py-20">
           <div className="grid md:grid-cols-[1.1fr_1fr] gap-10 md:gap-16 items-center">
             {/* Left side */}
             <div className="max-w-2xl">
@@ -153,12 +163,12 @@ export default function HomePage() {
                   </Button>
                 </Link>
               </div>
-              {/* Users counter */}
-              <div className="mt-10 inline-flex items-center gap-4 bg-[#F8D62E] rounded-[20px] px-7 py-5">
-                <span className="text-[56px] md:text-[64px] font-medium leading-none text-[#303030] tracking-tight">
-                  {publicStats ? `${publicStats.users}+` : "615+"}
+              {/* Users counter — white card with shadow (per Figma) */}
+              <div className="mt-10 inline-flex items-center gap-5 bg-white rounded-2xl px-7 py-5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-[#F1F1F1]">
+                <span className="text-[56px] md:text-[64px] font-medium leading-none text-[#F8D62E] tracking-tight">
+                  {publicStats ? publicStats.users.toLocaleString("ru-RU") : "615"}
                 </span>
-                <span className="text-xs md:text-sm text-[#303030]/70 max-w-[160px] leading-tight font-medium">
+                <span className="text-xs md:text-sm text-[#A1A1A1] max-w-[160px] leading-tight">
                   Зарегистрированных пользователей
                 </span>
               </div>
