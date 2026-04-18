@@ -113,18 +113,18 @@ export default function HomePage() {
       {/* ══════ HERO ══════ */}
       <section className="bg-[#F3F1E7]">
         <div className="max-w-[1600px] mx-auto px-6 py-12 md:py-20">
-          <div className="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
+          <div className="grid md:grid-cols-[1.1fr_1fr] gap-10 md:gap-16 items-center">
             {/* Left side */}
             <div className="max-w-2xl">
-              <p className="text-sm text-[#A1A1A1] mb-3">Сервис для водителей таксистов</p>
-              <h1 className="text-3xl md:text-[44px] md:leading-[1.15] font-medium text-[#303030]">
+              <p className="text-sm text-[#A1A1A1] mb-4">Сервис для водителей таксистов</p>
+              <h1 className="text-[36px] md:text-[56px] leading-[1.08] font-medium text-[#303030] tracking-tight">
                 Выбери лучший таксопарк у себя на районе{" "}
                 <span className="text-[#F8D62E]">за 2 минуты</span>
               </h1>
-              <p className="mt-5 text-sm text-[#A1A1A1] max-w-md leading-relaxed">
+              <p className="mt-6 text-sm md:text-base text-[#A1A1A1] max-w-md leading-relaxed">
                 Первый независимый рейтинг таксопарков Москвы и МО. Узнай реальные условия, сравни парки и начни работать на лучших условиях.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <div className="mt-10 flex flex-col sm:flex-row gap-3">
                 <Button size="lg" onClick={() => setAuthOpen(true)}>
                   Зарегистрироваться
                 </Button>
@@ -135,11 +135,11 @@ export default function HomePage() {
                 </Link>
               </div>
               {/* Users counter */}
-              <div className="mt-8 inline-flex items-center gap-3 bg-[#F8D62E] rounded-2xl px-6 py-4">
-                <span className="text-[40px] md:text-[48px] font-medium leading-none text-[#303030]">
+              <div className="mt-10 inline-flex items-center gap-4 bg-[#F8D62E] rounded-[20px] px-7 py-5">
+                <span className="text-[56px] md:text-[64px] font-medium leading-none text-[#303030] tracking-tight">
                   {publicStats ? `${publicStats.users}+` : "615+"}
                 </span>
-                <span className="text-xs text-[#303030]/70 max-w-[140px] leading-tight">
+                <span className="text-xs md:text-sm text-[#303030]/70 max-w-[160px] leading-tight font-medium">
                   Зарегистрированных пользователей
                 </span>
               </div>
@@ -162,16 +162,27 @@ export default function HomePage() {
 
       {/* ══════ STATS + PARKS SLIDER ══════ */}
       <section className="bg-white">
-        <div className="max-w-[1600px] mx-auto px-6 py-12 md:py-16">
+        <div className="max-w-[1600px] mx-auto px-6 py-14 md:py-20">
           {/* Stats row */}
-          <div className="flex items-start gap-6 mb-12">
-            <span className="text-[64px] md:text-[78px] font-medium leading-none text-[#F8D62E]">
-              {publicStats?.parks ?? 148}
-            </span>
-            <p className="mt-3 text-base md:text-lg font-medium text-[#303030] max-w-xs">
-              Таксопарков проверено
-              <br />в Москве и МО
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+            <div className="flex items-start gap-5">
+              <span className="text-[72px] md:text-[88px] font-medium leading-[0.9] text-[#F8D62E] tracking-tight">
+                {publicStats?.parks ?? 148}
+              </span>
+              <p className="mt-3 text-lg md:text-xl font-medium text-[#303030] max-w-xs leading-snug">
+                Таксопарков проверено
+                <br />в Москве и МО
+              </p>
+            </div>
+            <Link
+              href="/parks"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#303030] hover:gap-3 transition-all"
+            >
+              Смотреть все
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
 
           {/* Park cards horizontal scroll */}
@@ -273,26 +284,28 @@ export default function HomePage() {
       {/* ══════ CTA ══════ */}
       <section className="bg-[#F3F1E7]">
         <div className="max-w-[1600px] mx-auto px-6 py-12 md:py-16">
-          <div className="bg-[#F8D62E] rounded-2xl p-8 md:p-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="max-w-xl">
-              <h2 className="text-2xl md:text-3xl font-medium text-[#303030] leading-snug">
-                Зарегистрируйтесь сейчас и получите 100 баллов дружбы
-                <span className="text-[#303030]/60"> на сервис «По делам, без 9%» и проверку в базе таксопарков</span>
+          <div className="bg-[#F8D62E] rounded-[32px] p-8 md:p-14 flex flex-col md:flex-row md:items-center gap-8 md:gap-12 relative overflow-hidden">
+            <div className="max-w-2xl relative z-10">
+              <h2 className="text-[28px] md:text-[40px] leading-[1.15] font-medium text-[#303030]">
+                Зарегистрируйтесь сейчас и получите{" "}
+                <span className="whitespace-nowrap">100 баллов дружбы</span>
               </h2>
-              <p className="mt-3 text-sm text-[#303030]/60">
-                2 простых шага — и вы получаете доступ ко всем инструментам сервиса.
+              <p className="mt-4 text-sm md:text-base text-[#303030]/70 max-w-lg leading-relaxed">
+                Баллы можно потратить на сервис «По делам, без 9%» и проверку в базе таксопарков. 2 простых шага — и доступ ко всем инструментам платформы.
               </p>
-              <Button size="lg" className="mt-6" onClick={() => setAuthOpen(true)}>
+              <Button size="lg" className="mt-8" onClick={() => setAuthOpen(true)}>
                 Зарегистрироваться
               </Button>
             </div>
-            {/* Decorative aside — friendship points */}
-            <div className="bg-white rounded-xl p-6 text-center shrink-0 w-full md:w-auto md:min-w-[240px]">
-              <p className="text-3xl">💛</p>
-              <p className="mt-2 text-sm font-medium text-[#303030]">&quot;Баллы дружбы&quot;</p>
-              <p className="mt-1 text-xs text-[#A1A1A1] max-w-[200px] mx-auto">
-                Копите баллы за активность и тратьте на сервисы платформы
-              </p>
+            {/* Friendship points illustration */}
+            <div className="shrink-0 hidden md:block relative z-10">
+              <Image
+                src="/figma/cta-banner.png"
+                alt=""
+                width={280}
+                height={280}
+                className="w-[200px] lg:w-[260px] h-auto"
+              />
             </div>
           </div>
         </div>
