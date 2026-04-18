@@ -162,4 +162,73 @@ export class ParksService {
 
     return { success: true };
   }
+
+  async submitForReview(id: string, userId: string) {
+    const previous = await this.getById(id);
+    if (previous.status !== "DRAFT") {
+      throw new ConflictException("Отправить на проверку можно только черновик (DRAFT)");
+    }
+    const [updated] = await this.db
+      .update(taxiParks)
+      .set({ status: "PENDING_REVIEW" as any })
+      .where(eq(taxiParks.id, id))
+      .returning();
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.PARK,
+      entityId: id,
+      oldValue: { status: previous.status },
+      newValue: { status: "PENDING_REVIEW" },
+    });
+
+    return updated;
+  }
+
+  async approveModeration(id: string, userId: string) {
+    const previous = await this.getById(id);
+    if (previous.status !== "PENDING_REVIEW") {
+      throw new ConflictException("Одобрить можно только парк на проверке (PENDING_REVIEW)");
+    }
+    const [updated] = await this.db
+      .update(taxiParks)
+      .set({ status: "ACTIVE" as any })
+      .where(eq(taxiParks.id, id))
+      .returning();
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.PARK,
+      entityId: id,
+      oldValue: { status: previous.status },
+      newValue: { status: "ACTIVE" },
+    });
+
+    return updated;
+  }
+
+  async rejectModeration(id: string, userId: string, reason?: string) {
+    const previous = await this.getById(id);
+    if (previous.status !== "PENDING_REVIEW") {
+      throw new ConflictException("Отклонить можно только парк на проверке (PENDING_REVIEW)");
+    }
+    const [updated] = await this.db
+      .update(taxiParks)
+      .set({ status: "DRAFT" as any })
+      .where(eq(taxiParks.id, id))
+      .returning();
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.PARK,
+      entityId: id,
+      oldValue: { status: previous.status },
+      newValue: { status: "DRAFT", rejectionReason: reason ?? null },
+    });
+
+    return updated;
+  }
 }

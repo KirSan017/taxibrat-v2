@@ -77,8 +77,9 @@ interface Vehicle {
   modelName?: string | null;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "gray" | "green" | "red" }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: "gray" | "green" | "red" | "yellow" }> = {
   DRAFT: { label: "Черновик", variant: "gray" },
+  PENDING_REVIEW: { label: "На проверке СМ", variant: "yellow" },
   ACTIVE: { label: "Активен", variant: "green" },
   ARCHIVED: { label: "Архив", variant: "red" },
 };
@@ -192,16 +193,26 @@ export default function AdminParkEditPage() {
     }
   };
 
+  const handleSubmitForReview = async () => {
+    if (!parkId) return;
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      await api(`/admin/parks/${parkId}/submit-for-review`, { method: "POST", token });
+      setSuccessMsg("Парк отправлен на проверку супер-менеджеру");
+      setSuccessOpen(true);
+      loadData();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось отправить на проверку");
+    }
+  };
+
   const handleApprove = async () => {
     if (!parkId) return;
     const token = getAccessToken();
     if (!token) return;
     try {
-      await api(`/admin/parks/${parkId}`, {
-        method: "PATCH",
-        token,
-        body: { status: "ACTIVE" },
-      });
+      await api(`/admin/parks/${parkId}/approve`, { method: "POST", token });
       setSuccessMsg("Таксопарк одобрен и активирован");
       setSuccessOpen(true);
       loadData();
@@ -215,10 +226,10 @@ export default function AdminParkEditPage() {
     const token = getAccessToken();
     if (!token) return;
     try {
-      await api(`/admin/parks/${parkId}`, {
-        method: "PATCH",
+      await api(`/admin/parks/${parkId}/reject`, {
+        method: "POST",
         token,
-        body: { status: "ARCHIVED", rejectionReason: reason },
+        body: { reason },
       });
       setSuccessMsg("Таксопарк отклонён");
       setSuccessOpen(true);
@@ -246,7 +257,8 @@ export default function AdminParkEditPage() {
   if (!park) return null;
 
   const status = STATUS_CONFIG[park.status] || { label: park.status, variant: "gray" as const };
-  const canModerate = user?.role === "ADMIN" || user?.role === "SUPER_MANAGER" || user?.role === "MANAGER";
+  const isManager = user?.role === "MANAGER";
+  const isSmOrAdmin = user?.role === "ADMIN" || user?.role === "SUPER_MANAGER";
 
   return (
     <div className="max-w-[900px]">
@@ -284,29 +296,32 @@ export default function AdminParkEditPage() {
           </div>
         </div>
 
-        {canModerate && (
-          <div className="flex gap-2">
-            {park.status === "DRAFT" && (
-              <>
-                <Button
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={handleApprove}
-                >
-                  Одобрить
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-[#FA6868] text-[#FA6868]"
-                  onClick={() => setRejectOpen(true)}
-                >
-                  Отклонить
-                </Button>
-              </>
-            )}
-          </div>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          {isManager && park.status === "DRAFT" && (
+            <Button size="sm" onClick={handleSubmitForReview}>
+              Отправить на проверку СМ
+            </Button>
+          )}
+          {isSmOrAdmin && park.status === "PENDING_REVIEW" && (
+            <>
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleApprove}
+              >
+                Одобрить
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-[#FA6868] text-[#FA6868]"
+                onClick={() => setRejectOpen(true)}
+              >
+                Отклонить
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {error && (

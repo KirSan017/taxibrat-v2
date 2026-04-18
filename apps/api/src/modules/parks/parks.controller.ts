@@ -66,4 +66,26 @@ export class ParksController {
   delete(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
     return this.parksService.delete(id, user.sub);
   }
+
+  @Post(":id/submit-for-review")
+  @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER, UserRole.MANAGER)
+  submitForReview(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.parksService.submitForReview(id, user.sub);
+  }
+
+  @Post(":id/approve")
+  @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER)
+  approveModeration(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.parksService.approveModeration(id, user.sub);
+  }
+
+  @Post(":id/reject")
+  @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER)
+  rejectModeration(
+    @Param("id") id: string,
+    @Body() body: { reason?: string },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.parksService.rejectModeration(id, user.sub, body?.reason);
+  }
 }

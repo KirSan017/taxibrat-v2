@@ -7,7 +7,7 @@ export const districtEnum = pgEnum("district", [
   "NOVOMOSKOVSKY", "BUTOVO", "VIDNOE", "LUBERTSY", "REUTOV", "BALASHIKHA",
 ]);
 
-export const parkStatusEnum = pgEnum("park_status", ["DRAFT", "ACTIVE", "ARCHIVED"]);
+export const parkStatusEnum = pgEnum("park_status", ["DRAFT", "PENDING_REVIEW", "ACTIVE", "ARCHIVED"]);
 
 export const taxiParks = pgTable(
   "taxi_parks",
