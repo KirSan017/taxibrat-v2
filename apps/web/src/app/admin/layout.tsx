@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 
 /* ── roles ────────────────────────────────────────────── */
@@ -29,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/audit", label: "Архив изменений", icon: AuditIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/archive", label: "Архив задач", icon: AuditIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/news", label: "Новости", icon: NewsIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
+  { href: "/admin/cooperation", label: "Сотрудничество", icon: HandshakeIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/super-managers", label: "Супер-менеджеры", icon: ShieldIcon, roles: ["ADMIN"] },
   { href: "/admin/parks-list", label: "Список таксопарков", icon: ListIcon, roles: ["ADMIN"] },
   { href: "/admin/settings", label: "Настройки сервиса", icon: SettingsIcon, roles: ["ADMIN"] },
@@ -141,14 +143,13 @@ export default function AdminLayout({
             <button
               className="lg:hidden p-2 -mr-2"
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? "Закрыть меню" : "Открыть меню"}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#303030" strokeWidth="2">
-                {sidebarOpen ? (
-                  <path d="M18 6L6 18M6 6l12 12" />
-                ) : (
-                  <path d="M3 12h18M3 6h18M3 18h18" />
-                )}
-              </svg>
+              {sidebarOpen ? (
+                <X className="w-6 h-6 text-[#303030]" />
+              ) : (
+                <Menu className="w-6 h-6 text-[#303030]" />
+              )}
             </button>
           </div>
         </div>
@@ -383,6 +384,15 @@ function BellIcon({ className = "" }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 01-3.46 0" />
+    </svg>
+  );
+}
+
+function HandshakeIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 17l-5-5 2-2 3 3 7-7 2 2-9 9z" />
+      <path d="M3 3h18v18H3z" opacity="0.2" />
     </svg>
   );
 }

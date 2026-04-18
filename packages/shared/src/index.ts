@@ -13,3 +13,4 @@ export * from "./dto/news.dto";
 export * from "./dto/buyout.dto";
 export * from "./dto/order.dto";
 export * from "./dto/referral.dto";
+export * from "./dto/cooperation.dto";

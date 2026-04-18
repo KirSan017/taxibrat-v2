@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { api } from "@/lib/api-client";
 
 /* ── component ──────────────────────────────────────────── */
 
@@ -12,10 +13,24 @@ export default function CooperationPage() {
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setSubmitting(true);
+    setError("");
+    try {
+      await api<{ success: boolean }>("/cooperation", {
+        method: "POST",
+        body: { name, email, phone, message },
+      });
+      setSent(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось отправить");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -88,8 +103,11 @@ export default function CooperationPage() {
                 </div>
               </div>
 
-              <Button size="lg" className="w-full" type="submit">
-                Отправить
+              {error && (
+                <p className="text-sm text-[#FA6868] mb-3">{error}</p>
+              )}
+              <Button size="lg" className="w-full" type="submit" disabled={submitting}>
+                {submitting ? "Отправка..." : "Отправить"}
               </Button>
             </form>
           )}
