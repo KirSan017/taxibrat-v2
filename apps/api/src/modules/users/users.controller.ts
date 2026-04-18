@@ -30,6 +30,10 @@ export class UsersController {
     @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateProfileDto,
   ) {
+    if (!user?.sub) {
+      console.error("PATCH /users/me: user.sub is undefined. user =", JSON.stringify(user));
+      throw new BadRequestException("Невалидный токен авторизации — перезайдите в аккаунт");
+    }
     return this.usersService.updateProfile(user.sub, dto);
   }
 
