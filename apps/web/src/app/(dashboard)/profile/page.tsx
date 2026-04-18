@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { SuccessModal } from "@/components/ui/success-modal";
+import { useAuth } from "@/lib/use-auth";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
-/* ── mock data ─────────────────────────────────────────── */
+/* ── constants ─────────────────────────────────────────── */
 
 const CAR_CLASSES = ["Эконом", "Комфорт", "Комфорт+", "Бизнес", "Премьер", "Элит"];
+
+const CITIES = [
+  "Москва", "Санкт-Петербург", "Казань", "Екатеринбург", "Новосибирск",
+  "Нижний Новгород", "Челябинск", "Самара", "Омск", "Ростов-на-Дону",
+];
 
 const CAR_BRANDS = [
   "Audi", "BMW", "Chery", "Chevrolet", "Ford", "Geely", "Genesis",
@@ -16,23 +25,39 @@ const CAR_BRANDS = [
 ];
 
 const CAR_MODELS: Record<string, string[]> = {
-  "Hyundai": ["Solaris", "Creta", "Tucson", "Santa Fe", "Sonata"],
-  "Kia": ["Rio", "Ceed", "K5", "Sportage", "Sorento"],
-  "Toyota": ["Camry", "Corolla", "RAV4", "Land Cruiser"],
-  "Volkswagen": ["Polo", "Tiguan", "Passat", "Jetta"],
-  "Skoda": ["Octavia", "Rapid", "Kodiaq", "Superb"],
-  "BMW": ["3 Series", "5 Series", "X3", "X5"],
+  Hyundai: ["Solaris", "Creta", "Tucson", "Santa Fe", "Sonata"],
+  Kia: ["Rio", "Ceed", "K5", "Sportage", "Sorento"],
+  Toyota: ["Camry", "Corolla", "RAV4", "Land Cruiser"],
+  Volkswagen: ["Polo", "Tiguan", "Passat", "Jetta"],
+  Skoda: ["Octavia", "Rapid", "Kodiaq", "Superb"],
+  BMW: ["3 Series", "5 Series", "X3", "X5"],
   "Mercedes-Benz": ["E-Class", "S-Class", "C-Class", "GLC"],
 };
 
-const INITIAL_FORM = {
+/* ── types ─────────────────────────────────────────── */
+
+interface ProfileForm {
+  lastName: string;
+  firstName: string;
+  patronymic: string;
+  email: string;
+  birthDate: string;
+  city: string;
+  carYear: string;
+  carNumber: string;
+  carBrand: string;
+  carModel: string;
+  carClass: string;
+}
+
+const EMPTY_FORM: ProfileForm = {
   lastName: "",
   firstName: "",
-  middleName: "",
-  phone: "8 800 000 00 00",
+  patronymic: "",
   email: "",
   birthDate: "",
-  workStartDate: "26.02.25",
+  city: "",
+  carYear: "",
   carNumber: "",
   carBrand: "",
   carModel: "",
@@ -42,29 +67,105 @@ const INITIAL_FORM = {
 /* ── component ─────────────────────────────────────────── */
 
 export default function ProfilePage() {
-  const [form, setForm] = useState(INITIAL_FORM);
-  const [isFirstTime] = useState(true);
+  const { user } = useAuth();
+  const [form, setForm] = useState<ProfileForm>(EMPTY_FORM);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [successOpen, setSuccessOpen] = useState(false);
 
-  const update = (field: string, value: string) => {
+  const isFirstTime = user?.status === "PHONE_VERIFIED";
+
+  useEffect(() => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    api<{
+      firstName: string | null;
+      lastName: string | null;
+      patronymic: string | null;
+      email: string | null;
+      birthDate: string | null;
+    }>("/users/me", { token })
+      .then((me) => {
+        setForm({
+          ...EMPTY_FORM,
+          firstName: me.firstName || "",
+          lastName: me.lastName || "",
+          patronymic: me.patronymic || "",
+          email: me.email || "",
+          birthDate: me.birthDate || "",
+        });
+      })
+      .catch(() => {
+        /* silent */
+      })
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  const update = <K extends keyof ProfileForm>(field: K, value: ProfileForm[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.lastName || !form.firstName || !form.birthDate) {
-      setToast({ type: "error", message: "Не получилось обновить. Проверьте поля" });
+      setToast({ type: "error", message: "Заполните обязательные поля" });
       setTimeout(() => setToast(null), 3000);
       return;
     }
-    setToast({ type: "success", message: "Успешно обновлено" });
-    setTimeout(() => setToast(null), 3000);
+    const token = getAccessToken();
+    if (!token) return;
+    setSubmitting(true);
+    try {
+      const payload: Record<string, string> = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        birthDate: form.birthDate,
+      };
+      if (form.patronymic) payload.patronymic = form.patronymic;
+      if (form.email) payload.email = form.email;
+
+      await api("/users/me", {
+        method: "PATCH",
+        token,
+        body: payload,
+      });
+      setSuccessOpen(true);
+    } catch (err: unknown) {
+      setToast({
+        type: "error",
+        message: err instanceof Error ? err.message : "Не удалось сохранить профиль",
+      });
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const availableModels = CAR_MODELS[form.carBrand] || [];
 
+  if (loading) {
+    return <div className="max-w-[700px] text-sm text-[#A1A1A1]">Загрузка...</div>;
+  }
+
   return (
     <div className="max-w-[700px] relative">
+      <SuccessModal
+        open={successOpen}
+        onClose={() => {
+          setSuccessOpen(false);
+          if (typeof window !== "undefined") {
+            window.location.reload();
+          }
+        }}
+        title={isFirstTime ? "Профиль отправлен на проверку" : "Профиль обновлён"}
+        description={isFirstTime ? "После подтверждения вы получите 100 баллов дружбы." : "Ваши данные успешно сохранены."}
+      />
+
       {/* Toast notifications */}
       {toast && (
         <div
@@ -85,15 +186,20 @@ export default function ProfilePage() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Photo upload */}
         <div className="flex items-center gap-4 mb-2">
-          <div className="w-14 h-14 bg-[#E5E5E5] rounded-full flex items-center justify-center shrink-0">
-            <svg className="w-7 h-7 text-[#A1A1A1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+          <div className="w-14 h-14 bg-[#E5E5E5] rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+            {user?.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
+            ) : (
+              <svg className="w-7 h-7 text-[#A1A1A1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            )}
           </div>
           <label className="text-sm text-[#A1A1A1] cursor-pointer hover:text-[#303030] transition-colors">
             Ваше фото
-            <input type="file" accept="image/*" className="hidden" />
+            <input type="file" accept="image/*" capture="environment" className="hidden" />
           </label>
         </div>
 
@@ -114,8 +220,8 @@ export default function ProfilePage() {
           <Input
             label="Отчество"
             placeholder="Отчество"
-            value={form.middleName}
-            onChange={(e) => update("middleName", e.target.value)}
+            value={form.patronymic}
+            onChange={(e) => update("patronymic", e.target.value)}
           />
         </div>
 
@@ -123,20 +229,10 @@ export default function ProfilePage() {
         <div className="relative">
           <Input
             label="Телефон"
-            value={form.phone}
+            value={user?.phone || ""}
             readOnly
             className="bg-gray-50 pr-10"
           />
-          <button
-            type="button"
-            className="absolute right-3 top-[38px] text-[#A1A1A1] hover:text-[#303030] transition-colors"
-            title="Изменить номер"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </button>
         </div>
 
         {/* Email */}
@@ -157,13 +253,20 @@ export default function ProfilePage() {
           onChange={(e) => update("birthDate", e.target.value)}
         />
 
-        {/* Work start date */}
-        <Input
-          label="Год и месяц начала работы в такси*"
-          placeholder="ДД.ММ.ГГ"
-          value={form.workStartDate}
-          onChange={(e) => update("workStartDate", e.target.value)}
-        />
+        {/* City */}
+        <div className="w-full">
+          <label className="block text-sm font-medium text-[#303030] mb-1.5">Город</label>
+          <select
+            value={form.city}
+            onChange={(e) => update("city", e.target.value)}
+            className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] outline-none focus:border-[#303030] transition-colors bg-white appearance-none cursor-pointer"
+          >
+            <option value="">Выберите город</option>
+            {CITIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Document photos */}
         <div>
@@ -183,7 +286,7 @@ export default function ProfilePage() {
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
                 <span className="text-[10px] text-[#A1A1A1] whitespace-pre-line leading-tight">{label}</span>
-                <input type="file" accept="image/*" className="hidden" />
+                <input type="file" accept="image/*" capture="environment" className="hidden" />
               </label>
             ))}
           </div>
@@ -204,7 +307,7 @@ export default function ProfilePage() {
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               <span className="text-[10px] text-[#A1A1A1] whitespace-pre-line leading-tight">{label}</span>
-              <input type="file" accept="image/*" className="hidden" />
+              <input type="file" accept="image/*" capture="environment" className="hidden" />
             </label>
           ))}
         </div>
@@ -251,6 +354,15 @@ export default function ProfilePage() {
           </select>
         </div>
 
+        {/* Car year */}
+        <Input
+          label="Год автомобиля"
+          placeholder="2023"
+          type="number"
+          value={form.carYear}
+          onChange={(e) => update("carYear", e.target.value)}
+        />
+
         {/* Car class select */}
         <div className="w-full">
           <label className="block text-sm font-medium text-[#303030] mb-1.5">Класс авто</label>
@@ -269,11 +381,13 @@ export default function ProfilePage() {
         {/* Submit */}
         <Button
           type="submit"
+          disabled={submitting}
           className="w-full !bg-[#F8D62E] !text-[#303030] hover:!bg-[#F8D62E]/80 !h-[56px] !text-base !font-medium"
         >
-          {isFirstTime
-            ? "Отправить на проверку и получить 100 баллов дружбы"
-            : "Сохранить"}
+          {submitting ? "Сохранение..." :
+            isFirstTime
+              ? "Отправить на проверку и получить 100 баллов"
+              : "Сохранить"}
         </Button>
       </form>
     </div>

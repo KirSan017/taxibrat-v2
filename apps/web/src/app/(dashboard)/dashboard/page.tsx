@@ -1,62 +1,79 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/use-auth";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
-/* ── mock data ─────────────────────────────────────────── */
+/* ── types ─────────────────────────────────────────── */
 
-const MOCK_USER = {
-  name: "Иван",
-  status: "PENDING" as "PENDING" | "REJECTED" | "ACTIVE",
-  rejectionReason: "",
-  points: 156,
-  checks: 3,
-  orders: 0,
+interface TicketListItem {
+  id: string;
+  topic: string;
+  status: string;
+  body?: string | null;
+  title?: string | null;
+  createdAt: string;
+}
+
+interface TicketsResponse {
+  data: TicketListItem[];
+  total: number;
+}
+
+const STATUS_MAP: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
+  NEW: { label: "Новый", variant: "yellow" },
+  IN_PROGRESS: { label: "В работе", variant: "gray" },
+  PENDING_SM_REVIEW: { label: "На проверке СМ", variant: "yellow" },
+  SM_REJECTED: { label: "Отклонён СМ", variant: "red" },
+  COMPLETED: { label: "Завершён", variant: "green" },
+  CANCELLED: { label: "Отменён", variant: "gray" },
 };
 
-const MOCK_TICKETS = [
-  {
-    id: "1",
-    title: "Проверка таксопарка «Альфа»",
-    status: "IN_PROGRESS" as const,
-    date: "14.04.2025",
-    preview: "Менеджер запросил дополнительные документы...",
-  },
-  {
-    id: "2",
-    title: "Заказ «По делам» #1204",
-    status: "COMPLETED" as const,
-    date: "12.04.2025",
-    preview: "Заказ выполнен успешно. Спасибо за обращение!",
-  },
-  {
-    id: "3",
-    title: "Проверка таксопарка «Мега Такси»",
-    status: "NEW" as const,
-    date: "10.04.2025",
-    preview: "Ожидает назначения менеджера",
-  },
-];
-
-const STATUS_MAP = {
-  NEW: { label: "Новый", variant: "yellow" as const },
-  IN_PROGRESS: { label: "В работе", variant: "gray" as const },
-  COMPLETED: { label: "Завершён", variant: "green" as const },
-  REJECTED: { label: "Отклонён", variant: "red" as const },
+const TOPIC_LABELS: Record<string, string> = {
+  PARK_CHECK: "Проверка таксопарка",
+  USER_BASE_CHECK: "Проверка по базе",
+  TAXI_CONNECT: "Подключение к такси",
+  BUYOUT: "Выкуп авто",
+  LEGAL: "Юридический вопрос",
+  FRIENDSHIP_POINTS: "Баллы дружбы",
+  OTHER: "Иное",
 };
 
 const POINTS_INFO = [
-  { label: "Приглашение друга — 300 б. в лен и 100 б. другу", icon: "gift" },
-  { label: "Отправить на проверку — 200 баллов", icon: "check" },
-  { label: "Пожаловаться на водителя — 150 баллов", icon: "flag" },
-  { label: "Взять такси в аренду через наш сервис — 500 баллов", icon: "car" },
-  { label: "Выкуп авто в рассрочку через нас — 1000 баллов", icon: "star" },
+  { label: "Приглашение друга — 300 б. вам и 100 б. другу" },
+  { label: "Отправить на проверку — 200 баллов" },
+  { label: "Пожаловаться на водителя — 150 баллов" },
+  { label: "Взять такси в аренду через наш сервис — 500 баллов" },
+  { label: "Выкуп авто в рассрочку через нас — 1000 баллов" },
 ];
 
-/* ── component ─────────────────────────────────────────── */
+/* ── component ─────────────────────────────────────── */
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const [tickets, setTickets] = useState<TicketListItem[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [ticketsTotal, setTicketsTotal] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setTicketsLoading(true);
+    api<TicketsResponse>("/tickets?page=1&limit=3", { token })
+      .then((res) => {
+        setTickets(res.data || []);
+        setTicketsTotal(res.total || 0);
+      })
+      .catch(() => setTickets([]))
+      .finally(() => setTicketsLoading(false));
+  }, [user]);
+
+  if (!user) return null;
+
   return (
     <div className="max-w-[900px]">
       {/* Title */}
@@ -64,32 +81,73 @@ export default function DashboardPage() {
         <h1 className="text-2xl md:text-3xl font-medium text-[#303030]">
           Личный кабинет
         </h1>
-        <span className="text-xs text-[#A1A1A1]">Янв 16, 2025</span>
+        <span className="text-xs text-[#A1A1A1]">
+          {new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
+        </span>
       </div>
 
       {/* Profile status banner */}
-      {MOCK_USER.status === "PENDING" && (
+      {user.status === "PHONE_VERIFIED" && (
         <div className="bg-[#F8D62E]/10 border border-[#F8D62E]/30 rounded-xl p-4 mb-6">
-          <p className="text-sm font-medium text-[#303030]">Ваша заявка принята.</p>
+          <p className="text-sm font-medium text-[#303030]">Заполните профиль для полного доступа</p>
           <p className="text-xs text-[#A1A1A1] mt-1">
-            Ваш профиль проходит верификацию. Пожалуйста, ожидайте ответа.
+            Заполните данные профиля и получите 100 баллов дружбы.
           </p>
-          <Link href="/support" className="text-xs text-[#303030] underline mt-2 inline-block">
-            Отследить заявку
+          <Link href="/profile" className="text-xs text-[#303030] underline mt-2 inline-block">
+            Заполнить профиль
           </Link>
         </div>
       )}
-      {MOCK_USER.status === "REJECTED" && (
+      {user.status === "PENDING_REVIEW" && (
+        <div className="bg-[#F8D62E]/10 border border-[#F8D62E]/30 rounded-xl p-4 mb-6">
+          <p className="text-sm font-medium text-[#303030]">Ваш профиль на проверке</p>
+          <p className="text-xs text-[#A1A1A1] mt-1">
+            Ваш профиль проходит верификацию. Пожалуйста, ожидайте ответа.
+          </p>
+        </div>
+      )}
+      {user.status === "REJECTED" && (
         <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-6">
           <p className="text-sm font-medium text-[#FA6868]">Профиль отклонён</p>
           <p className="text-xs text-[#A1A1A1] mt-1">
-            Причина: {MOCK_USER.rejectionReason || "Не указана"}
+            Причина: {user.rejectionReason || "Не указана"}
           </p>
           <Link href="/profile" className="text-xs text-[#303030] underline mt-2 inline-block">
             Исправить профиль
           </Link>
         </div>
       )}
+      {user.status === "ACTIVE" && (
+        <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-6">
+          <p className="text-sm font-medium text-green-700">
+            Добро пожаловать, {user.firstName || "водитель"}!
+          </p>
+          <p className="text-xs text-[#A1A1A1] mt-1">
+            Ваш профиль подтверждён. Пользуйтесь всеми возможностями сервиса.
+          </p>
+        </div>
+      )}
+
+      {/* Quick stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+        <div className="border border-[#E5E5E5] rounded-xl p-4 bg-white">
+          <p className="text-xs text-[#A1A1A1] mb-1">Баллы дружбы</p>
+          <p className="text-2xl font-medium text-[#303030]">{(user.friendshipPoints || 0) + 615}</p>
+        </div>
+        <div className="border border-[#E5E5E5] rounded-xl p-4 bg-white">
+          <p className="text-xs text-[#A1A1A1] mb-1">Обращений</p>
+          <p className="text-2xl font-medium text-[#303030]">{ticketsTotal}</p>
+        </div>
+        <div className="border border-[#E5E5E5] rounded-xl p-4 bg-white">
+          <p className="text-xs text-[#A1A1A1] mb-1">Статус</p>
+          <p className="text-sm font-medium text-[#303030] mt-1">
+            {user.status === "ACTIVE" ? "Активен"
+              : user.status === "PENDING_REVIEW" ? "На проверке"
+              : user.status === "REJECTED" ? "Отклонён"
+              : "Не заполнен"}
+          </p>
+        </div>
+      </div>
 
       {/* Quick action cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -120,20 +178,14 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {/* Subscription CTA */}
         <div className="bg-[#F8D62E] rounded-2xl p-6">
-          <p className="text-sm font-medium text-[#303030] mb-1">Подписаться</p>
-          <p className="text-sm font-medium text-[#303030]">и тусить за 5 минут!</p>
-          <div className="mt-4 flex gap-2">
-            <span className="bg-white rounded-full px-3 py-1 text-xs font-medium text-[#303030]">Бонус / Комплименту</span>
-          </div>
+          <p className="text-sm font-medium text-[#303030] mb-1">Пригласите друзей</p>
+          <p className="text-sm font-medium text-[#303030]">и получайте баллы!</p>
           <Link
             href="/referrals"
             className="mt-4 inline-flex items-center gap-2 bg-[#303030] text-white text-xs font-medium rounded-lg px-4 py-2.5 hover:bg-[#404040] transition-colors"
           >
-            Пригласи и будь счастливчиком
+            Реферальная программа
           </Link>
-          <p className="text-xs text-[#303030]/60 mt-3">
-            <Link href="/referrals" className="underline">Ещё акции</Link>
-          </p>
         </div>
 
         {/* How to earn points */}
@@ -152,49 +204,45 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* News section */}
+      {/* Recent tickets */}
       <div className="mb-8">
-        <h2 className="text-lg font-medium text-[#303030] mb-4">Новости сервиса</h2>
-        <div className="space-y-4">
-          {MOCK_TICKETS.map((ticket) => (
-            <Link
-              key={ticket.id}
-              href={`/support/${ticket.id}`}
-              className="block border border-[#E5E5E5] rounded-xl p-4 hover:shadow-sm transition-shadow"
-            >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <h3 className="text-sm font-medium text-[#303030]">{ticket.title}</h3>
-                <Badge variant={STATUS_MAP[ticket.status].variant}>
-                  {STATUS_MAP[ticket.status].label}
-                </Badge>
-              </div>
-              <p className="text-xs text-[#A1A1A1] mb-1">{ticket.preview}</p>
-              <p className="text-[10px] text-[#A1A1A1]">{ticket.date}</p>
+        <h2 className="text-lg font-medium text-[#303030] mb-4">Последние обращения</h2>
+        {ticketsLoading ? (
+          <p className="text-sm text-[#A1A1A1]">Загрузка...</p>
+        ) : tickets.length === 0 ? (
+          <div className="border border-[#E5E5E5] rounded-xl p-8 text-center">
+            <p className="text-sm text-[#A1A1A1]">Обращений пока нет</p>
+            <Link href="/support/new" className="text-xs text-[#303030] underline mt-2 inline-block">
+              Создать обращение
             </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Pagination (news) */}
-      <div className="flex items-center justify-center gap-2">
-        {[1, 2, 3].map((page) => (
-          <button
-            key={page}
-            className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-              page === 1
-                ? "bg-[#F8D62E] text-[#303030]"
-                : "text-[#A1A1A1] hover:bg-gray-50"
-            }`}
-          >
-            {page}
-          </button>
-        ))}
-        <button className="w-8 h-8 rounded-lg text-xs text-[#A1A1A1] hover:bg-gray-50">
-          ...
-        </button>
-        <button className="w-8 h-8 rounded-lg text-xs text-[#A1A1A1] hover:bg-gray-50">
-          22
-        </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {tickets.map((ticket) => {
+              const status = STATUS_MAP[ticket.status] || { label: ticket.status, variant: "gray" as const };
+              return (
+                <Link
+                  key={ticket.id}
+                  href={`/support/${ticket.id}`}
+                  className="block border border-[#E5E5E5] rounded-xl p-4 hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="text-sm font-medium text-[#303030]">
+                      {ticket.title || TOPIC_LABELS[ticket.topic] || ticket.topic}
+                    </h3>
+                    <Badge variant={status.variant}>{status.label}</Badge>
+                  </div>
+                  {ticket.body && (
+                    <p className="text-xs text-[#A1A1A1] mb-1 line-clamp-2">{ticket.body}</p>
+                  )}
+                  <p className="text-[10px] text-[#A1A1A1]">
+                    {new Date(ticket.createdAt).toLocaleDateString("ru-RU")}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

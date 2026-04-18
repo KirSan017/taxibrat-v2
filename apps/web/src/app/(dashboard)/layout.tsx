@@ -1,18 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-
-/* ── mock user ─────────────────────────────────────────── */
-const MOCK_USER = {
-  name: "Иван Иванов",
-  phone: "8 800 000 00 00",
-  rank: 145,
-  checks: 3,
-  points: 156,
-  notifications: 2,
-};
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/use-auth";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
 /* ── nav items ─────────────────────────────────────────── */
 const NAV_ITEMS = [
@@ -34,13 +27,57 @@ const BOTTOM_TABS = [
   { href: "/profile", label: "Профиль", icon: ProfileIcon },
 ];
 
+function getInitials(firstName: string | null, lastName: string | null): string {
+  const f = (firstName || "").trim();
+  const l = (lastName || "").trim();
+  if (f || l) return `${f.charAt(0)}${l.charAt(0)}`.toUpperCase() || "?";
+  return "?";
+}
+
+function formatDisplayName(firstName: string | null, lastName: string | null, phone: string): string {
+  const n = [firstName, lastName].filter(Boolean).join(" ");
+  return n || phone;
+}
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+
+  // Auth guard
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [loading, user, router]);
+
+  // Load unread notifications count
+  useEffect(() => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) return;
+    api<{ unread: number }>("/notifications?page=1&limit=1", { token })
+      .then((res) => setUnread(res.unread || 0))
+      .catch(() => setUnread(0));
+  }, [user]);
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-sm text-[#A1A1A1]">Загрузка...</div>
+      </div>
+    );
+  }
+
+  const displayBalance = (user.friendshipPoints || 0) + 615;
+  const displayName = formatDisplayName(user.firstName, user.lastName, user.phone);
+  const initials = getInitials(user.firstName, user.lastName);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -69,27 +106,25 @@ export default function DashboardLayout({
           {/* Right side: stats + avatar */}
           <div className="flex items-center gap-3">
             <Link
-              href="/support"
-              className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-[#303030] bg-gray-50 rounded-full px-3 py-1.5"
-            >
-              <CheckCircleIcon className="w-4 h-4" />
-              <span>{MOCK_USER.checks} проверки</span>
-            </Link>
-            <Link
               href="/points"
               className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-[#303030] bg-gray-50 rounded-full px-3 py-1.5"
             >
               <HeartIcon className="w-4 h-4 text-[#FA6868]" />
-              <span>{MOCK_USER.points}</span>
+              <span>{displayBalance}</span>
             </Link>
             <button className="relative p-2">
               <BellIcon className="w-5 h-5 text-[#303030]" />
-              {MOCK_USER.notifications > 0 && (
+              {unread > 0 && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-[#FA6868] rounded-full" />
               )}
             </button>
             <Link href="/profile" className="w-8 h-8 bg-[#E5E5E5] rounded-full overflow-hidden flex items-center justify-center">
-              <UserIcon className="w-5 h-5 text-[#A1A1A1]" />
+              {user.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-medium text-[#A1A1A1]">{initials}</span>
+              )}
             </Link>
 
             {/* Mobile hamburger */}
@@ -151,28 +186,28 @@ export default function DashboardLayout({
             {/* User card */}
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 bg-[#E5E5E5] rounded-full flex items-center justify-center">
-                  <UserIcon className="w-7 h-7 text-[#A1A1A1]" />
+                <div className="w-12 h-12 bg-[#E5E5E5] rounded-full flex items-center justify-center overflow-hidden">
+                  {user.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-medium text-[#A1A1A1]">{initials}</span>
+                  )}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#303030]">{MOCK_USER.name}</p>
-                  <p className="text-xs text-[#A1A1A1]">{MOCK_USER.phone}</p>
-                  <p className="text-xs text-[#A1A1A1]">место в рейтинге: {MOCK_USER.rank}</p>
+                  <p className="text-sm font-medium text-[#303030]">{displayName}</p>
+                  <p className="text-xs text-[#A1A1A1]">{user.phone}</p>
                 </div>
               </div>
               {/* Mini stats */}
               <div className="flex items-center gap-4 mt-3">
                 <div className="flex items-center gap-1 text-xs text-[#303030]">
-                  <CheckCircleIcon className="w-4 h-4 text-[#A1A1A1]" />
-                  <span>{MOCK_USER.checks} проверки</span>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-[#303030]">
                   <HeartIcon className="w-4 h-4 text-[#FA6868]" />
-                  <span>{MOCK_USER.points}</span>
+                  <span>{displayBalance}</span>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-[#303030]">
                   <BellIcon className="w-4 h-4 text-[#A1A1A1]" />
-                  <span>{MOCK_USER.notifications}</span>
+                  <span>{unread}</span>
                 </div>
               </div>
             </div>
@@ -326,15 +361,6 @@ function PointsIcon({ className = "" }: { className?: string }) {
   );
 }
 
-function UserIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
 function BellIcon({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -348,15 +374,6 @@ function HeartIcon({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" stroke="none">
       <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-    </svg>
-  );
-}
-
-function CheckCircleIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-      <polyline points="22,4 12,14.01 9,11.01" />
     </svg>
   );
 }

@@ -9,11 +9,15 @@ export interface User {
   phone: string;
   firstName: string | null;
   lastName: string | null;
+  patronymic?: string | null;
+  email?: string | null;
+  birthDate?: string | null;
   role: string;
   status: string;
   friendshipPoints: number;
   referralCode: string;
   photoUrl: string | null;
+  rejectionReason?: string | null;
 }
 
 export function useAuth() {
