@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { RATING } from "@taxibrat/shared";
 
-// TODO: integrate Yandex-specific commissions (per-class aggregator fees)
-// into calcTotalCost. Requires additional config from ТЗ — deferred until the
-// exact commission schedule is documented.
+// TODO: Brand/Model ratings (ТЗ) — currently computed on-the-fly in
+// CatalogService.resortByVehicleRating. Sufficient for MVP; persistent
+// aggregate tables can be added later if needed for analytics.
 
 @Injectable()
 export class RatingService {
@@ -61,11 +61,28 @@ export class RatingService {
     return this.clamp(5.0 * (bestCost / thisCost));
   }
 
-  calcTotalCost(rentPrice: number, parkCommission: number, withdrawalCommission: number, dailyRevenue: number): number {
-    const parkComm = dailyRevenue * (parkCommission / 100);
-    const netAfterParkComm = dailyRevenue - dailyRevenue * 0.25 - parkComm;
+  calcTotalCost(
+    rentPrice: number,
+    parkCommission: number,
+    withdrawalCommission: number,
+    dailyRevenue: number,
+    yandexCommission: number = 0,
+    driverClass: string = "",
+    yandexCommissionEconomy: number = 0,
+  ): number {
+    // Yandex commission on revenue (ТЗ 597-600)
+    const yandexRate =
+      driverClass === "ECONOMY" && yandexCommissionEconomy > 0
+        ? yandexCommissionEconomy
+        : yandexCommission;
+    const yandexComm = dailyRevenue * (yandexRate / 100);
+    const afterYandex = dailyRevenue - yandexComm;
+
+    // Park commission on post-Yandex revenue
+    const parkComm = afterYandex * (parkCommission / 100);
+    const netAfterParkComm = afterYandex - afterYandex * 0.25 - parkComm;
     const withdrawalComm = netAfterParkComm * (withdrawalCommission / 100);
-    return rentPrice + parkComm + withdrawalComm;
+    return rentPrice + parkComm + withdrawalComm + yandexComm;
   }
 
   calcParamsRating(scores: number[], weightMultipliers: number[]): number {

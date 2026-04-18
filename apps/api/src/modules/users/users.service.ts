@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { eq, and, ilike, or, sql, gt } from "drizzle-orm";
@@ -78,14 +79,24 @@ export class UsersService {
       throw new BadRequestException("Account is banned");
     }
 
-    const [updated] = await this.db
-      .update(users)
-      .set({
-        ...dto,
-        status: UserStatus.PENDING_REVIEW,
-      })
-      .where(eq(users.id, userId))
-      .returning();
+    let updated: typeof users.$inferSelect;
+    try {
+      [updated] = await this.db
+        .update(users)
+        .set({
+          ...dto,
+          status: UserStatus.PENDING_REVIEW,
+        })
+        .where(eq(users.id, userId))
+        .returning();
+    } catch (err: any) {
+      const code = err?.code;
+      const constraint = String(err?.constraint_name ?? err?.constraint ?? "");
+      if (code === "23505" && constraint.includes("email")) {
+        throw new ConflictException("Этот email уже используется другим пользователем");
+      }
+      throw err;
+    }
 
     await this.auditService.log({
       actorId: userId,

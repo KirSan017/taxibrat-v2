@@ -47,6 +47,8 @@ export class RatingRecalculator {
     return {
       priceCoeff: config ? parseFloat(String(config.priceCoefficient)) : RATING.DEFAULT_PRICE_COEFF,
       paramsCoeff: config ? parseFloat(String(config.paramsCoefficient)) : RATING.DEFAULT_PARAMS_COEFF,
+      yandexCommission: config ? parseFloat(String(config.yandexCommission)) : 0,
+      yandexCommissionEconomy: config ? parseFloat(String(config.yandexCommissionEconomy)) : 0,
     };
   }
 
@@ -67,6 +69,7 @@ export class RatingRecalculator {
       .where(eq(parkClasses.driverClass, driverClass as any));
 
     const revenue = await this.getRevenue(driverClass);
+    const cfg = await this.getConfig();
     let bestCost = Infinity;
 
     for (const cls of allClasses) {
@@ -81,6 +84,9 @@ export class RatingRecalculator {
           parseFloat(String(cls.parkCommission)),
           parseFloat(String(cls.withdrawalCommission)),
           revenue,
+          cfg.yandexCommission,
+          driverClass,
+          cfg.yandexCommissionEconomy,
         );
         if (cost < bestCost) bestCost = cost;
       }
@@ -133,6 +139,9 @@ export class RatingRecalculator {
       parseFloat(String(cls.parkCommission)),
       parseFloat(String(cls.withdrawalCommission)),
       revenue,
+      config.yandexCommission,
+      cls.driverClass,
+      config.yandexCommissionEconomy,
     );
 
     const priceRating = bestCost > 0

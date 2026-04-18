@@ -84,4 +84,18 @@ export class TicketsAdminController {
   ) {
     return this.ticketsService.reject(id, user.sub, dto.reason);
   }
+
+  /**
+   * Confirm that the user actually rented a taxi (ТЗ 632-633).
+   * Awards a separate bonus (points_rental_confirmed, default 300),
+   * in addition to the 150 awarded on ticket approval.
+   */
+  @Post(":id/confirm-rental")
+  @Roles(UserRole.SUPER_MANAGER, UserRole.ADMIN)
+  confirmRental(
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+  ) {
+    return this.ticketsService.confirmRental(id, user.sub);
+  }
 }

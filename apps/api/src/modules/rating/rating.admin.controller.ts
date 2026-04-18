@@ -49,13 +49,34 @@ export class RatingAdminController {
   }
 
   @Patch("config")
-  async updateConfig(@Body() body: { priceCoefficient: string; paramsCoefficient: string }) {
+  async updateConfig(
+    @Body() body: {
+      priceCoefficient?: string;
+      paramsCoefficient?: string;
+      yandexCommission?: string;
+      yandexCommissionEconomy?: string;
+    },
+  ) {
     const [config] = await this.db.select().from(ratingConfig).limit(1);
     if (config) {
-      await this.db
-        .update(ratingConfig)
-        .set(body)
-        .where(eq(ratingConfig.id, config.id));
+      const updates: Record<string, any> = {};
+      if (typeof body.priceCoefficient === "string") updates.priceCoefficient = body.priceCoefficient;
+      if (typeof body.paramsCoefficient === "string") updates.paramsCoefficient = body.paramsCoefficient;
+      if (typeof body.yandexCommission === "string") updates.yandexCommission = body.yandexCommission;
+      if (typeof body.yandexCommissionEconomy === "string") updates.yandexCommissionEconomy = body.yandexCommissionEconomy;
+      if (Object.keys(updates).length > 0) {
+        await this.db
+          .update(ratingConfig)
+          .set(updates)
+          .where(eq(ratingConfig.id, config.id));
+      }
+    } else {
+      await this.db.insert(ratingConfig).values({
+        priceCoefficient: body.priceCoefficient ?? "0.60",
+        paramsCoefficient: body.paramsCoefficient ?? "0.40",
+        yandexCommission: body.yandexCommission ?? "0",
+        yandexCommissionEconomy: body.yandexCommissionEconomy ?? "0",
+      } as any);
     }
     await this.recalculator.recalcAll();
     return { success: true };

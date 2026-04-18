@@ -391,6 +391,77 @@ export class TicketsService {
     return { success: true };
   }
 
+  /**
+   * Confirm actual rental for a TAXI_CONNECT ticket (ТЗ 632-633 — "взяли в аренду такси").
+   * Only works on COMPLETED TAXI_CONNECT tickets that haven't been confirmed yet.
+   * Awards `points_rental_confirmed` (default 300) separately from the TAXI_CONNECT
+   * approval bonus (150). Idempotent: rentalConfirmedAt prevents double-awarding.
+   */
+  async confirmRental(ticketId: string, actorId: string) {
+    const ticket = await this.getById(ticketId);
+    if (ticket.topic !== "TAXI_CONNECT") {
+      throw new BadRequestException("Факт аренды можно подтвердить только для тикетов TAXI_CONNECT");
+    }
+    if (ticket.status !== "COMPLETED") {
+      throw new BadRequestException("Тикет должен быть в статусе COMPLETED");
+    }
+    if ((ticket as any).rentalConfirmedAt) {
+      throw new BadRequestException("Факт аренды уже подтверждён ранее");
+    }
+
+    const bonus = await this.settingsService.getNumber("points_rental_confirmed", 300);
+    const now = new Date();
+
+    await this.db
+      .update(tickets)
+      .set({
+        rentalConfirmedAt: now,
+        rentalConfirmedById: actorId,
+      } as any)
+      .where(eq(tickets.id, ticketId));
+
+    if (bonus > 0) {
+      await this.pointsService.award(
+        ticket.userId,
+        bonus,
+        PointsTransactionType.RENTAL_CONFIRMED,
+        "Подтверждён факт аренды такси",
+        ticketId,
+        actorId,
+      );
+    }
+
+    await this.messagesService.createSystem(
+      ticketId,
+      actorId,
+      `Факт аренды подтверждён. Начислено ${bonus} баллов дружбы.`,
+    );
+
+    await this.notificationsService.create({
+      userId: ticket.userId,
+      type: NotificationType.TICKET,
+      title: "Факт аренды подтверждён",
+      body: `Начислено ${bonus} баллов дружбы за подтверждённую аренду.`,
+      link: `/tickets/${ticketId}`,
+    });
+    this.notificationsGateway.pushToUser(ticket.userId, {
+      type: "ticket-updated",
+      ticketId,
+      status: "COMPLETED",
+    });
+
+    await this.auditService.log({
+      actorId,
+      action: AuditAction.UPDATE,
+      entity: AuditEntity.TICKET,
+      entityId: ticketId,
+      oldValue: { rentalConfirmedAt: null },
+      newValue: { rentalConfirmedAt: now.toISOString(), pointsAwarded: bonus },
+    });
+
+    return { success: true, pointsAwarded: bonus };
+  }
+
   async reject(ticketId: string, smId: string, reason: string) {
     const ticket = await this.getById(ticketId);
     if (ticket.status !== "PENDING_SM_REVIEW") {
