@@ -17,6 +17,7 @@ interface Park {
   status: string;
   rating?: number | null;
   isAdvertised?: boolean;
+  isSuperAdvertised?: boolean;
   createdAt: string;
 }
 
@@ -143,9 +144,10 @@ export default function AdminParksPage() {
                     <Link href={`/admin/parks/${park.id}`} className="text-[#303030] font-medium hover:underline">
                       {park.name}
                     </Link>
-                    {park.isAdvertised && (
-                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F8D62E] text-[#303030]">
-                        AD
+                    {(park.isAdvertised || park.isSuperAdvertised) && (
+                      <span className="ml-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F8D62E] text-[#303030]">
+                        <span aria-hidden>★</span>
+                        {park.isSuperAdvertised ? "Супер реклама" : "Реклама"}
                       </span>
                     )}
                     {(() => {

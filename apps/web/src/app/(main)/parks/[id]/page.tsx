@@ -296,6 +296,23 @@ export default function ParkDetailPage() {
                   </svg>
                 ))}
               </div>
+              <div className="relative group">
+                <svg
+                  className="w-4 h-4 text-[#A1A1A1] cursor-help"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="12" y1="16" x2="12" y2="12" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div className="pointer-events-none absolute hidden group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-[#303030] text-white text-xs leading-relaxed rounded-lg shadow-lg z-20">
+                  Рейтинг основан на всех параметрах таксопарка и цене всех автомобилей этого класса в сравнении с другими таксопарками, при этом каждый параметр имеет свой вес.
+                </div>
+              </div>
             </div>
 
             {/* Address */}
