@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
-import { getAccessToken } from "@/lib/auth";
+import { getAccessToken, setTokens } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
 
 /* ── types ────────────────────────────────────────────── */
@@ -48,6 +50,7 @@ function formatFullName(u: UserItem): string {
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +65,11 @@ export default function AdminUsersPage() {
   const LIMIT = 50;
   const [duplicates, setDuplicates] = useState<Array<{ id: string; firstName: string | null; lastName: string | null }>>([]);
   const [dupsByUser, setDupsByUser] = useState<Record<string, number>>({});
+  const [impersonateOpen, setImpersonateOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
+  const isAdmin = currentUser?.role === "ADMIN";
   const canSeePhone = currentUser?.role !== "MANAGER";
 
   const loadUsers = () => {
@@ -155,6 +162,45 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleImpersonate = async () => {
+    if (!selectedUser) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setActionLoading(true);
+    try {
+      const res = await api<{ accessToken: string }>(
+        `/admin/users/${selectedUser.id}/impersonate`,
+        { method: "POST", token },
+      );
+      setTokens(res.accessToken, "");
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось войти как пользователь");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedUser) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setActionLoading(true);
+    try {
+      await api(`/admin/users/${selectedUser.id}`, {
+        method: "DELETE",
+        token,
+      });
+      setSuccessMsg(`Пользователь ${formatFullName(selectedUser)} удалён`);
+      setSelectedUser(null);
+      loadUsers();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось удалить пользователя");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <div>
       <RejectModal
@@ -168,6 +214,23 @@ export default function AdminUsersPage() {
         onClose={() => setSuccessMsg("")}
         title="Готово"
         description={successMsg}
+      />
+      <ConfirmModal
+        open={impersonateOpen}
+        onClose={() => setImpersonateOpen(false)}
+        title="Войти как пользователь?"
+        description={`Вы перейдёте в аккаунт ${selectedUser ? formatFullName(selectedUser) : ""}. Сессия длится 1 час, все действия будут залогированы.`}
+        confirmLabel="Войти"
+        onConfirm={handleImpersonate}
+      />
+      <ConfirmModal
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title="Удалить пользователя?"
+        description={`Это действие удалит учётную запись ${selectedUser ? formatFullName(selectedUser) : ""} и все связанные данные. Отменить нельзя.`}
+        confirmLabel="Удалить"
+        variant="warning"
+        onConfirm={handleDelete}
       />
 
       {/* User detail modal */}
@@ -254,6 +317,29 @@ export default function AdminUsersPage() {
                   }}
                 >
                   Отклонить
+                </Button>
+              </div>
+            )}
+
+            {isAdmin && selectedUser.id !== currentUser?.id && (
+              <div className="mt-4 pt-4 border-t border-[#E5E5E5] flex gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  disabled={actionLoading}
+                  onClick={() => setImpersonateOpen(true)}
+                >
+                  Войти как пользователь
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-[#FA6868] text-[#FA6868] hover:bg-[#FA6868] hover:text-white"
+                  disabled={actionLoading}
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Удалить
                 </Button>
               </div>
             )}

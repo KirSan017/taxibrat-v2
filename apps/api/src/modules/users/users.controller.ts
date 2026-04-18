@@ -57,4 +57,27 @@ export class UsersController {
     }
     return this.usersService.updatePhoto(user.sub, photoUrl);
   }
+
+  /* ── Phone change flow ────────────────────────── */
+
+  @Post("me/change-phone/send-code")
+  requestPhoneChange(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: { newPhone: string; method: "SMS" | "TELEGRAM" },
+  ) {
+    if (!dto?.newPhone) throw new BadRequestException("Укажите новый номер");
+    const method = dto.method === "TELEGRAM" ? "TELEGRAM" : "SMS";
+    return this.usersService.requestPhoneChange(user.sub, dto.newPhone, method);
+  }
+
+  @Post("me/change-phone/verify")
+  confirmPhoneChange(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: { newPhone: string; code: string },
+  ) {
+    if (!dto?.newPhone || !dto?.code) {
+      throw new BadRequestException("Укажите номер и код");
+    }
+    return this.usersService.confirmPhoneChange(user.sub, dto.newPhone, dto.code);
+  }
 }

@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -29,8 +31,17 @@ export class UsersAdminController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPER_MANAGER)
-  listUsers(@Query(new ZodValidationPipe(listUsersSchema)) dto: ListUsersDto) {
-    return this.usersService.listUsers(dto);
+  listUsers(
+    @CurrentUser() viewer: JwtPayload,
+    @Query(new ZodValidationPipe(listUsersSchema)) dto: ListUsersDto,
+  ) {
+    return this.usersService.listUsers(dto, viewer);
+  }
+
+  @Get(":id")
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPER_MANAGER)
+  async getUser(@Param("id") id: string, @CurrentUser() viewer: JwtPayload) {
+    return this.usersService.getByIdMasked(id, viewer);
   }
 
   @Get(":id/duplicates")
@@ -55,5 +66,37 @@ export class UsersAdminController {
     @Body(new ZodValidationPipe(rejectUserSchema)) dto: RejectUserDto,
   ) {
     return this.usersService.rejectUser(id, dto.reason, user.sub);
+  }
+
+  @Post(":id/impersonate")
+  @Roles(UserRole.ADMIN)
+  async impersonate(
+    @Param("id") id: string,
+    @CurrentUser() admin: JwtPayload,
+  ) {
+    return this.usersService.impersonate(admin.sub, id);
+  }
+
+  @Delete(":id")
+  @Roles(UserRole.ADMIN)
+  async deleteUser(
+    @Param("id") id: string,
+    @CurrentUser() admin: JwtPayload,
+  ) {
+    return this.usersService.deleteUser(admin.sub, id);
+  }
+
+  @Patch(":id/visibility-flags")
+  @Roles(UserRole.ADMIN)
+  async updateVisibilityFlags(
+    @Param("id") id: string,
+    @CurrentUser() admin: JwtPayload,
+    @Body() dto: {
+      canViewUserPhone?: boolean;
+      canViewUserEmail?: boolean;
+      canViewUserBirthDate?: boolean;
+    },
+  ) {
+    return this.usersService.updateVisibilityFlags(admin.sub, id, dto);
   }
 }

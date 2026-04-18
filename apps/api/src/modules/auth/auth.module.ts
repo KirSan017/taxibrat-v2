@@ -30,6 +30,6 @@ import { TelegramProvider } from "./providers/telegram.provider";
     { provide: "EXOLVE_PROVIDER", useExisting: ExolveProvider },
     { provide: "TELEGRAM_PROVIDER", useExisting: TelegramProvider },
   ],
-  exports: ["DATABASE", "REDIS"],
+  exports: ["DATABASE", "REDIS", "EXOLVE_PROVIDER", "TELEGRAM_PROVIDER", ExolveProvider, TelegramProvider],
 })
 export class AuthModule {}

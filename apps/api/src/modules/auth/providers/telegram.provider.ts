@@ -42,4 +42,39 @@ export class TelegramProvider {
       return false;
     }
   }
+
+  /**
+   * Send a plain text message to a Telegram chat via bot API.
+   * Requires TELEGRAM_BOT_TOKEN in env.
+   */
+  async sendMessage(chatId: string | number, text: string): Promise<boolean> {
+    const botToken = this.config.get("TELEGRAM_BOT_TOKEN");
+    if (!botToken) {
+      this.logger.warn(`[DEV] Telegram message to ${chatId}: ${text}`);
+      return true;
+    }
+
+    try {
+      const res = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: "HTML",
+          }),
+        },
+      );
+      if (!res.ok) {
+        this.logger.error(`Telegram bot sendMessage error: ${res.status}`);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      this.logger.error("Telegram bot sendMessage failed:", err);
+      return false;
+    }
+  }
 }
