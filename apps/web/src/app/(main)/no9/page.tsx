@@ -10,10 +10,13 @@ import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/use-auth";
 import { getAccessToken } from "@/lib/auth";
 
-const ORDER_COST = 50;
+interface PointsConfig {
+  orderNo9Cost: number;
+}
 
 export default function No9Page() {
   const { user, loading: authLoading } = useAuth();
+  const [orderCost, setOrderCost] = useState(50);
   const [pointFrom, setPointFrom] = useState("");
   const [pointTo, setPointTo] = useState("");
   const [pointFromCoords, setPointFromCoords] = useState<LatLng | null>(null);
@@ -27,7 +30,7 @@ export default function No9Page() {
 
   const isLoggedIn = !!user;
   const isProfileComplete = user?.status === "ACTIVE";
-  const hasEnoughPoints = (user?.friendshipPoints ?? 0) >= ORDER_COST;
+  const hasEnoughPoints = (user?.friendshipPoints ?? 0) >= orderCost;
 
   // Auto-detect current location — prefill pointA if empty
   useEffect(() => {
@@ -42,6 +45,17 @@ export default function No9Page() {
     );
   }, []);
 
+  // Load dynamic order cost from settings
+  useEffect(() => {
+    api<PointsConfig>("/public/points-config")
+      .then((c) => {
+        if (typeof c?.orderNo9Cost === "number") setOrderCost(c.orderNo9Cost);
+      })
+      .catch(() => {
+        /* keep default */
+      });
+  }, []);
+
   const handleSubmit = async () => {
     setError("");
 
@@ -53,7 +67,7 @@ export default function No9Page() {
       return;
     }
     if (!hasEnoughPoints) {
-      setError(`Недостаточно баллов (нужно ${ORDER_COST}).`);
+      setError(`Недостаточно баллов (нужно ${orderCost}).`);
       return;
     }
 
@@ -181,7 +195,7 @@ export default function No9Page() {
 
               <div className="bg-[#F3F1E7] rounded-xl p-4 mb-6 flex items-center justify-between">
                 <p className="text-sm text-[#303030]">
-                  Стоимость: <span className="font-medium">{ORDER_COST} баллов дружбы</span>
+                  Стоимость: <span className="font-medium">{orderCost} баллов дружбы</span>
                 </p>
                 {isLoggedIn && (
                   <p className="text-xs text-[#A1A1A1]">
@@ -212,7 +226,7 @@ export default function No9Page() {
               {isLoggedIn && isProfileComplete && !hasEnoughPoints && (
                 <div className="bg-[#FA6868]/10 border border-[#FA6868]/20 rounded-xl p-4 mb-6">
                   <p className="text-sm text-[#FA6868]">
-                    Недостаточно баллов дружбы. Нужно {ORDER_COST}.
+                    Недостаточно баллов дружбы. Нужно {orderCost}.
                   </p>
                 </div>
               )}

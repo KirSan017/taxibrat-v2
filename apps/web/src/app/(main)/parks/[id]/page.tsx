@@ -444,9 +444,15 @@ export default function ParkDetailPage() {
             </button>
 
             <h3 className="text-lg font-medium text-[#303030] mb-1">Неверная информация</h3>
-            <p className="text-sm text-[#A1A1A1] mb-6">
+            <p className="text-sm text-[#A1A1A1] mb-3">
               Опишите, что именно требует уточнения. Мы передадим заявку менеджеру.
             </p>
+            <div className="mb-5 rounded-lg bg-[#FFF8D6] border border-[#F8D62E]/60 px-4 py-3">
+              <p className="text-xs text-[#303030] leading-relaxed">
+                За каждую успешную проверку начисляется{" "}
+                <span className="font-medium">150 баллов дружбы</span>.
+              </p>
+            </div>
 
             <textarea
               className="w-full min-h-[120px] p-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] transition-colors resize-y"

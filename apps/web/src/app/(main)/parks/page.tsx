@@ -11,6 +11,7 @@ import { api } from "@/lib/api-client";
 import {
   DRIVER_CLASS_LABELS,
   DRIVER_CLASS_FROM_LABEL,
+  DISTRICT_LABELS,
 } from "@/lib/labels";
 
 interface ApiParkClass {
@@ -56,10 +57,29 @@ interface PublicStats {
 
 const DRIVER_CLASS_OPTIONS = ["Все", ...Object.values(DRIVER_CLASS_LABELS)];
 const YEAR_OPTIONS = ["Все", "2024", "2023", "2022", "2021", "2020"];
+
+// All Moscow districts + Moscow Region cities/districts, per TЗ.
+const MOSCOW_DISTRICT_CODES = [
+  "CAO", "SAO", "SVAO", "VAO", "UVAO", "UAO", "UZAO", "ZAO", "SZAO",
+] as const;
+const MO_DISTRICT_CODES = [
+  "MYTISCHI", "KRASNOGORSK", "DOLGOPRUDNY", "KHIMKI", "ODINTSOVO",
+  "NOVOMOSKOVSKY", "BUTOVO", "VIDNOE", "LUBERTSY", "REUTOV", "BALASHIKHA",
+] as const;
+
 const DISTRICT_OPTIONS: Array<[string, string]> = [
-  ["CAO", "ЦАО"], ["SAO", "САО"], ["SVAO", "СВАО"], ["VAO", "ВАО"],
-  ["UVAO", "ЮВАО"], ["UAO", "ЮАО"], ["UZAO", "ЮЗАО"], ["ZAO", "ЗАО"], ["SZAO", "СЗАО"],
+  ...MOSCOW_DISTRICT_CODES.map((c) => [c, DISTRICT_LABELS[c] ?? c] as [string, string]),
+  ...MO_DISTRICT_CODES.map((c) => [c, DISTRICT_LABELS[c] ?? c] as [string, string]),
 ];
+
+// Pseudo-presets that apply a district bundle.
+const DISTRICT_PRESETS: Array<{ key: string; label: string; districts: string[] }> = [
+  { key: "ALL", label: "Вся база", districts: [] },
+  { key: "MOSCOW_MO", label: "Москва и МО", districts: [...MOSCOW_DISTRICT_CODES, ...MO_DISTRICT_CODES] },
+  { key: "MOSCOW", label: "Москва", districts: [...MOSCOW_DISTRICT_CODES] },
+];
+
+const FILTER_INSTRUCTION_KEY = "parks_filter_instruction_seen";
 
 const LIMIT = 10;
 
@@ -80,6 +100,8 @@ export default function ParksPage() {
   const [parks, setParks] = useState<ApiParkClass[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [instructionOpen, setInstructionOpen] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
   // Load brands once
   useEffect(() => {
@@ -135,10 +157,38 @@ export default function ParksPage() {
       .finally(() => setLoading(false));
   }, [driverClassLabel, brandId, modelId, year, selectedDistricts, page]);
 
+  const maybeShowInstruction = () => {
+    if (typeof window === "undefined") return;
+    try {
+      if (localStorage.getItem(FILTER_INSTRUCTION_KEY) === "1") return;
+    } catch {
+      /* ignore */
+    }
+    setInstructionOpen(true);
+  };
+
+  const dismissInstruction = () => {
+    setInstructionOpen(false);
+    if (dontShowAgain && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(FILTER_INSTRUCTION_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
   const toggleDistrict = (d: string) => {
+    maybeShowInstruction();
     setSelectedDistricts((prev) =>
       prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
     );
+    setPage(1);
+  };
+
+  const applyPreset = (preset: { districts: string[] }) => {
+    maybeShowInstruction();
+    setSelectedDistricts(preset.districts);
     setPage(1);
   };
 
@@ -295,7 +345,7 @@ export default function ParksPage() {
               <label className="block text-xs text-[#A1A1A1] mb-1">Класс водителя</label>
               <select
                 value={driverClassLabel}
-                onChange={(e) => { setDriverClassLabel(e.target.value); setPage(1); }}
+                onChange={(e) => { maybeShowInstruction(); setDriverClassLabel(e.target.value); setPage(1); }}
                 className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none"
               >
                 {DRIVER_CLASS_OPTIONS.map((c) => (
@@ -310,6 +360,7 @@ export default function ParksPage() {
               <select
                 value={brandId}
                 onChange={(e) => {
+                  maybeShowInstruction();
                   setBrandId(e.target.value);
                   setModelId("");
                   setPage(1);
@@ -328,7 +379,7 @@ export default function ParksPage() {
               <label className="block text-xs text-[#A1A1A1] mb-1">Модель</label>
               <select
                 value={modelId}
-                onChange={(e) => { setModelId(e.target.value); setPage(1); }}
+                onChange={(e) => { maybeShowInstruction(); setModelId(e.target.value); setPage(1); }}
                 disabled={!brandId || models.length === 0}
                 className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none disabled:bg-gray-50"
               >
@@ -344,7 +395,7 @@ export default function ParksPage() {
               <label className="block text-xs text-[#A1A1A1] mb-1">Год</label>
               <select
                 value={year}
-                onChange={(e) => { setYear(e.target.value); setPage(1); }}
+                onChange={(e) => { maybeShowInstruction(); setYear(e.target.value); setPage(1); }}
                 className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none"
               >
                 {YEAR_OPTIONS.map((y) => (
@@ -361,8 +412,29 @@ export default function ParksPage() {
             </div>
           </div>
 
-          {/* Districts */}
+          {/* District presets */}
           <div className="mt-4 flex flex-wrap gap-2">
+            {DISTRICT_PRESETS.map((preset) => (
+              <button
+                key={preset.key}
+                onClick={() => applyPreset(preset)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  preset.key === "ALL" && selectedDistricts.length === 0
+                    ? "bg-[#303030] text-white border-[#303030]"
+                    : preset.districts.length > 0 &&
+                      preset.districts.every((d) => selectedDistricts.includes(d)) &&
+                      selectedDistricts.length === preset.districts.length
+                    ? "bg-[#303030] text-white border-[#303030]"
+                    : "bg-[#F3F1E7] text-[#303030] border-[#F3F1E7] hover:border-[#303030]"
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Districts */}
+          <div className="mt-3 flex flex-wrap gap-2">
             {DISTRICT_OPTIONS.map(([code, label]) => (
               <button
                 key={code}
@@ -501,6 +573,39 @@ export default function ParksPage() {
           </div>
         </div>
       </section>
+
+      {/* ══════ FILTER INSTRUCTION MODAL ══════ */}
+      {instructionOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/40"
+            onClick={() => setInstructionOpen(false)}
+          />
+          <div className="relative bg-white rounded-2xl w-full max-w-md p-6 md:p-8">
+            <h3 className="text-lg font-medium text-[#303030] mb-3">
+              Как фильтры влияют на сортировку
+            </h3>
+            <p className="text-sm text-[#A1A1A1] leading-relaxed mb-5">
+              Если ищете лучшие условия по конкретной марке или модели авто —
+              выбирайте соответствующие фильтры. Сортировка покажет сначала
+              таксопарки с лучшими условиями именно по выбранному автомобилю.
+              Иначе отображаются таксопарки с лучшими средними условиями по классу.
+            </p>
+            <label className="flex items-center gap-2 mb-5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={dontShowAgain}
+                onChange={(e) => setDontShowAgain(e.target.checked)}
+                className="w-4 h-4 accent-[#F8D62E]"
+              />
+              <span className="text-xs text-[#A1A1A1]">Больше не показывать</span>
+            </label>
+            <Button className="w-full" onClick={dismissInstruction}>
+              Понятно
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -55,6 +55,7 @@ export default function AddParkPage() {
         token,
         body: {
           topic: "PARK_CHECK",
+          titleHint: name.trim(),
           body:
             `Добавление таксопарка:\n` +
             `Статус: ${STATUS_LABELS[status]}\n` +

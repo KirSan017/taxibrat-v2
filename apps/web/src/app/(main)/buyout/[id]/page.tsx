@@ -53,8 +53,20 @@ export default function BuyoutDetailPage() {
 
   const [showBooking, setShowBooking] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
+  const [bookingFio, setBookingFio] = useState("");
+  const [bookingPhone, setBookingPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<{ title: string; description: string; href?: string } | null>(null);
+
+  // Prefill FIO + phone from user profile when opening the modal
+  useEffect(() => {
+    if (showBooking && user) {
+      const parts = [user.lastName, user.firstName, user.patronymic].filter(Boolean);
+      if (parts.length > 0 && !bookingFio) setBookingFio(parts.join(" "));
+      if (user.phone && !bookingPhone) setBookingPhone(user.phone);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showBooking, user]);
 
   useEffect(() => {
     if (!id) return;
@@ -84,6 +96,14 @@ export default function BuyoutDetailPage() {
 
   const sendBooking = async () => {
     if (!car) return;
+    if (!bookingFio.trim()) {
+      setSuccess({ title: "Заполните ФИО", description: "ФИО обязательно для заявки" });
+      return;
+    }
+    if (!bookingPhone.trim()) {
+      setSuccess({ title: "Заполните телефон", description: "Телефон обязателен для заявки" });
+      return;
+    }
     const token = getAccessToken();
     if (!token) return;
     setSubmitting(true);
@@ -93,13 +113,17 @@ export default function BuyoutDetailPage() {
         method: "POST",
         token,
       });
-      // If user provided a comment, append it as a chat message.
-      if (bookingMessage.trim() && ticket?.id) {
+      // Append contact/comment details as a chat message
+      const contactBody =
+        `ФИО: ${bookingFio.trim()}\n` +
+        `Телефон: ${bookingPhone.trim()}` +
+        (bookingMessage.trim() ? `\n\nКомментарий: ${bookingMessage.trim()}` : "");
+      if (ticket?.id) {
         try {
           await api(`/tickets/${ticket.id}/messages`, {
             method: "POST",
             token,
-            body: { body: bookingMessage.trim() },
+            body: { body: contactBody },
           });
         } catch {
           // non-fatal — the booking itself is created
@@ -351,9 +375,33 @@ export default function BuyoutDetailPage() {
             </button>
 
             <h3 className="text-lg font-medium text-[#303030] mb-1">Забронировать</h3>
-            <p className="text-sm text-[#A1A1A1] mb-6">
+            <p className="text-sm text-[#A1A1A1] mb-5">
               {car.title} — {car.price.toLocaleString("ru-RU")} ₽
             </p>
+
+            <label className="block text-sm font-medium text-[#303030] mb-1.5">
+              ФИО <span className="text-[#FA6868]">*</span>
+            </label>
+            <input
+              type="text"
+              value={bookingFio}
+              onChange={(e) => setBookingFio(e.target.value)}
+              placeholder="Иванов Иван Иванович"
+              className="w-full h-[44px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] transition-colors mb-3"
+              disabled={submitting}
+            />
+
+            <label className="block text-sm font-medium text-[#303030] mb-1.5">
+              Телефон <span className="text-[#FA6868]">*</span>
+            </label>
+            <input
+              type="tel"
+              value={bookingPhone}
+              onChange={(e) => setBookingPhone(e.target.value)}
+              placeholder="+7 (___) ___-__-__"
+              className="w-full h-[44px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] transition-colors mb-3"
+              disabled={submitting}
+            />
 
             <label className="block text-sm font-medium text-[#303030] mb-1.5">
               Комментарий (необязательно)
@@ -362,7 +410,7 @@ export default function BuyoutDetailPage() {
               value={bookingMessage}
               onChange={(e) => setBookingMessage(e.target.value)}
               placeholder="Например: удобное время для звонка"
-              className="w-full min-h-[120px] p-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] transition-colors resize-y"
+              className="w-full min-h-[100px] p-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] transition-colors resize-y"
               disabled={submitting}
             />
 
@@ -370,7 +418,7 @@ export default function BuyoutDetailPage() {
               size="lg"
               className="w-full mt-4"
               onClick={sendBooking}
-              disabled={submitting}
+              disabled={submitting || !bookingFio.trim() || !bookingPhone.trim()}
             >
               {submitting ? "Отправка..." : "Отправить заявку"}
             </Button>

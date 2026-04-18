@@ -73,6 +73,11 @@ export default function HomePage() {
   const [parks, setParks] = useState<ParkClassItem[]>([]);
   const [parksLoading, setParksLoading] = useState(true);
   const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [pointsReview, setPointsReview] = useState<{ enabled: boolean; date: string }>({
+    enabled: false,
+    date: "",
+  });
 
   // Redirect authorized users to /dashboard
   useEffect(() => {
@@ -84,7 +89,7 @@ export default function HomePage() {
   useEffect(() => {
     let cancelled = false;
     setParksLoading(true);
-    api<ParkClassItem[]>("/catalog/classes?limit=8")
+    api<ParkClassItem[]>("/catalog/homepage?limit=8")
       .then((data) => {
         if (!cancelled) setParks(Array.isArray(data) ? data : []);
       })
@@ -97,6 +102,20 @@ export default function HomePage() {
     api<PublicStats>("/public/stats")
       .then((data) => {
         if (!cancelled) setPublicStats(data);
+      })
+      .catch(() => {
+        /* silent */
+      });
+    api<{ url: string | null }>("/public/banner")
+      .then((data) => {
+        if (!cancelled) setBannerUrl(data?.url ?? null);
+      })
+      .catch(() => {
+        /* silent */
+      });
+    api<{ enabled: boolean; date: string }>("/public/points-review")
+      .then((data) => {
+        if (!cancelled) setPointsReview(data ?? { enabled: false, date: "" });
       })
       .catch(() => {
         /* silent */
@@ -159,6 +178,21 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ══════ BANNER (configurable 1400x400) ══════ */}
+      {bannerUrl && (
+        <section className="bg-white">
+          <div className="max-w-[1600px] mx-auto px-6 pt-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={bannerUrl}
+              alt="Баннер"
+              className="w-full h-auto rounded-2xl object-cover"
+              style={{ aspectRatio: "1400/400" }}
+            />
+          </div>
+        </section>
+      )}
 
       {/* ══════ STATS + PARKS SLIDER ══════ */}
       <section className="bg-white">
@@ -284,6 +318,30 @@ export default function HomePage() {
       {/* ══════ CTA ══════ */}
       <section className="bg-[#F3F1E7]">
         <div className="max-w-[1600px] mx-auto px-6 py-12 md:py-16">
+          {pointsReview.enabled && (
+            <div className="mb-6 bg-[#FFF8D6] border border-[#F8D62E] rounded-2xl p-5 md:p-6 flex items-start gap-3">
+              <svg
+                className="w-5 h-5 text-[#B8A033] shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01M12 3a9 9 0 110 18 9 9 0 010-18z"
+                />
+              </svg>
+              <p className="text-sm md:text-base text-[#303030] leading-relaxed">
+                <span className="font-medium">Внимание!</span>{" "}
+                {pointsReview.date
+                  ? `С ${pointsReview.date} `
+                  : "В ближайшее время "}
+                баллы дружбы будут пересмотрены в сторону уменьшения.
+              </p>
+            </div>
+          )}
           <div className="bg-[#F8D62E] rounded-[32px] p-8 md:p-14 flex flex-col md:flex-row md:items-center gap-8 md:gap-12 relative overflow-hidden">
             <div className="max-w-2xl relative z-10">
               <h2 className="text-[28px] md:text-[40px] leading-[1.15] font-medium text-[#303030]">

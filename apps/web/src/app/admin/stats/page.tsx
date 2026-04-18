@@ -45,6 +45,50 @@ interface OrdersPoint {
 
 type GroupBy = "day" | "week" | "month";
 
+const OVERALL_LABELS: Record<string, string> = {
+  totalUsers: "Всего пользователей",
+  activeUsers: "Активных",
+  phoneVerifiedUsers: "Подтверждённых по телефону",
+  pendingReviewUsers: "На проверке",
+  rejectedUsers: "Отклонённых",
+  bannedUsers: "Заблокированных",
+  totalParks: "Всего парков",
+  activeParks: "Активных парков",
+  totalTickets: "Всего тикетов",
+  completedTickets: "Завершённых тикетов",
+  openTickets: "Открытых тикетов",
+  totalOrders: "Всего заказов",
+  activeOrders: "Активных заказов",
+  totalBuyouts: "Объявлений выкупа",
+  activeBuyouts: "Активных объявлений",
+  pointsAwarded: "Начислено баллов",
+  pointsSpent: "Списано баллов",
+  users: "Пользователи",
+  parks: "Парки",
+  tickets: "Тикеты",
+  orders: "Заказы",
+  buyouts: "Выкуп",
+  points: "Баллы",
+  total: "Всего",
+  active: "Активно",
+  completed: "Завершено",
+  pending: "В ожидании",
+  awarded: "Начислено",
+  spent: "Списано",
+};
+
+function formatStatValue(value: unknown): string {
+  if (value == null) return "—";
+  if (typeof value === "number") return value.toLocaleString("ru-RU");
+  if (typeof value === "boolean") return value ? "Да" : "Нет";
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 function formatDateLabel(iso: string, groupBy: GroupBy) {
   const d = new Date(iso);
   if (groupBy === "month") return d.toLocaleDateString("ru-RU", { year: "numeric", month: "short" });
@@ -270,14 +314,35 @@ export default function AdminStatsPage() {
             <section className="mb-8">
               <h2 className="text-sm font-medium text-[#303030] mb-4">Общая статистика</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {Object.entries(overall).map(([key, value]) => (
-                  <div key={key} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
-                    <p className="text-xs text-[#A1A1A1] mb-1">{key}</p>
-                    <p className="text-xl font-medium text-[#303030]">
-                      {typeof value === "object" ? JSON.stringify(value) : String(value ?? "—")}
-                    </p>
-                  </div>
-                ))}
+                {Object.entries(overall).flatMap(([key, value]) => {
+                  const label = OVERALL_LABELS[key] ?? key;
+                  // Nested object: render each numeric/string leaf as its own card
+                  if (value && typeof value === "object" && !Array.isArray(value)) {
+                    return Object.entries(value as Record<string, unknown>).map(
+                      ([innerKey, innerValue]) => (
+                        <div
+                          key={`${key}.${innerKey}`}
+                          className="bg-white border border-[#E5E5E5] rounded-xl p-4"
+                        >
+                          <p className="text-xs text-[#A1A1A1] mb-1">
+                            {label} · {OVERALL_LABELS[innerKey] ?? innerKey}
+                          </p>
+                          <p className="text-xl font-medium text-[#303030]">
+                            {formatStatValue(innerValue)}
+                          </p>
+                        </div>
+                      ),
+                    );
+                  }
+                  return [
+                    <div key={key} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+                      <p className="text-xs text-[#A1A1A1] mb-1">{label}</p>
+                      <p className="text-xl font-medium text-[#303030]">
+                        {formatStatValue(value)}
+                      </p>
+                    </div>,
+                  ];
+                })}
               </div>
             </section>
           )}
