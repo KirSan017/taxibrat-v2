@@ -48,4 +48,43 @@ export class StatsController {
     };
     return this.overallStatsService.getOverall(range);
   }
+
+  @Get("users/chart")
+  @Roles(UserRole.ADMIN)
+  usersChart(
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+    @Query("groupBy") groupBy: "day" | "week" | "month" = "day",
+  ) {
+    const { fromD, toD } = resolveRange(from, to);
+    return this.overallStatsService.getUsersByPeriod(fromD, toD, groupBy);
+  }
+
+  @Get("points/chart")
+  @Roles(UserRole.ADMIN)
+  pointsChart(
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+    @Query("groupBy") groupBy: "day" | "week" | "month" = "day",
+  ) {
+    const { fromD, toD } = resolveRange(from, to);
+    return this.overallStatsService.getPointsByPeriod(fromD, toD, groupBy);
+  }
+
+  @Get("orders/chart")
+  @Roles(UserRole.ADMIN)
+  ordersChart(
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+    @Query("groupBy") groupBy: "day" | "week" | "month" = "day",
+  ) {
+    const { fromD, toD } = resolveRange(from, to);
+    return this.overallStatsService.getOrdersByPeriod(fromD, toD, groupBy);
+  }
+}
+
+function resolveRange(from?: string, to?: string) {
+  const toD = to ? new Date(to) : new Date();
+  const fromD = from ? new Date(from) : new Date(toD.getTime() - 30 * 24 * 60 * 60 * 1000);
+  return { fromD, toD };
 }

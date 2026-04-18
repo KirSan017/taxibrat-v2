@@ -11,6 +11,12 @@ interface DateRange {
   to?: Date;
 }
 
+type GroupBy = "day" | "week" | "month";
+
+function truncUnit(groupBy: GroupBy): string {
+  return groupBy === "week" ? "week" : groupBy === "month" ? "month" : "day";
+}
+
 @Injectable()
 export class OverallStatsService {
   constructor(@Inject("DATABASE") private db: Database) {}
@@ -160,6 +166,67 @@ export class OverallStatsService {
       active: Number(result.active),
       avgCommission: Number(commissionResult.avgCommission ?? 0),
     };
+  }
+
+  async getUsersByPeriod(from: Date, to: Date, groupBy: GroupBy) {
+    const unit = truncUnit(groupBy);
+    const rows = await this.db.execute(sql`
+      SELECT
+        date_trunc(${unit}, created_at) AS bucket,
+        count(*) AS total,
+        count(*) FILTER (WHERE status = 'PHONE_VERIFIED') AS phone_verified,
+        count(*) FILTER (WHERE status = 'ACTIVE') AS active
+      FROM users
+      WHERE created_at >= ${from} AND created_at <= ${to}
+      GROUP BY bucket
+      ORDER BY bucket ASC
+    `);
+    return ((rows as any) ?? []).map((r: any) => ({
+      date: r.bucket,
+      total: Number(r.total ?? 0),
+      phoneVerified: Number(r.phone_verified ?? 0),
+      active: Number(r.active ?? 0),
+    }));
+  }
+
+  async getPointsByPeriod(from: Date, to: Date, groupBy: GroupBy) {
+    const unit = truncUnit(groupBy);
+    const rows = await this.db.execute(sql`
+      SELECT
+        date_trunc(${unit}, created_at) AS bucket,
+        coalesce(sum(amount) FILTER (WHERE amount > 0), 0) AS awarded,
+        coalesce(abs(sum(amount) FILTER (WHERE amount < 0)), 0) AS spent
+      FROM points_transactions
+      WHERE created_at >= ${from} AND created_at <= ${to}
+      GROUP BY bucket
+      ORDER BY bucket ASC
+    `);
+    return ((rows as any) ?? []).map((r: any) => ({
+      date: r.bucket,
+      awarded: Number(r.awarded ?? 0),
+      spent: Number(r.spent ?? 0),
+    }));
+  }
+
+  async getOrdersByPeriod(from: Date, to: Date, groupBy: GroupBy) {
+    const unit = truncUnit(groupBy);
+    const rows = await this.db.execute(sql`
+      SELECT
+        date_trunc(${unit}, created_at) AS bucket,
+        count(*) AS total,
+        count(*) FILTER (WHERE status = 'ORDERED') AS ordered,
+        count(*) FILTER (WHERE status = 'CANCELLED') AS cancelled
+      FROM no9_orders
+      WHERE created_at >= ${from} AND created_at <= ${to}
+      GROUP BY bucket
+      ORDER BY bucket ASC
+    `);
+    return ((rows as any) ?? []).map((r: any) => ({
+      date: r.bucket,
+      total: Number(r.total ?? 0),
+      ordered: Number(r.ordered ?? 0),
+      cancelled: Number(r.cancelled ?? 0),
+    }));
   }
 
   private async getPriceStats() {

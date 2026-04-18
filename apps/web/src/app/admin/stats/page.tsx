@@ -23,6 +23,71 @@ interface OverallStats {
   [key: string]: unknown;
 }
 
+interface UsersPoint {
+  date: string;
+  total: number;
+  phoneVerified: number;
+  active: number;
+}
+
+interface PointsPoint {
+  date: string;
+  awarded: number;
+  spent: number;
+}
+
+interface OrdersPoint {
+  date: string;
+  total: number;
+  ordered: number;
+  cancelled: number;
+}
+
+type GroupBy = "day" | "week" | "month";
+
+function formatDateLabel(iso: string, groupBy: GroupBy) {
+  const d = new Date(iso);
+  if (groupBy === "month") return d.toLocaleDateString("ru-RU", { year: "numeric", month: "short" });
+  if (groupBy === "week") {
+    return `${d.toLocaleDateString("ru-RU", { month: "short", day: "2-digit" })}`;
+  }
+  return d.toLocaleDateString("ru-RU", { month: "short", day: "2-digit" });
+}
+
+function BarChart({
+  data,
+  valueKey,
+  color,
+  groupBy,
+}: {
+  data: Array<{ date: string } & Record<string, number | string>>;
+  valueKey: string;
+  color: string;
+  groupBy: GroupBy;
+}) {
+  if (!data.length) {
+    return <p className="text-xs text-[#A1A1A1] py-6 text-center">Нет данных</p>;
+  }
+  const max = Math.max(...data.map((d) => Number(d[valueKey] ?? 0))) || 1;
+  return (
+    <div className="flex items-end gap-1 h-[140px] mt-3">
+      {data.map((d, i) => {
+        const v = Number(d[valueKey] ?? 0);
+        const h = Math.max(2, Math.round((v / max) * 120));
+        return (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1 min-w-[20px]">
+            <span className="text-[9px] text-[#A1A1A1]">{v}</span>
+            <div className="w-full rounded-t" style={{ height: `${h}px`, backgroundColor: color }} title={`${d.date}: ${v}`} />
+            <span className="text-[9px] text-[#A1A1A1] rotate-[-30deg] whitespace-nowrap origin-left">
+              {formatDateLabel(d.date as string, groupBy)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AdminStatsPage() {
@@ -33,6 +98,10 @@ export default function AdminStatsPage() {
   const [error, setError] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [groupBy, setGroupBy] = useState<GroupBy>("day");
+  const [usersChart, setUsersChart] = useState<UsersPoint[]>([]);
+  const [pointsChart, setPointsChart] = useState<PointsPoint[]>([]);
+  const [ordersChart, setOrdersChart] = useState<OrdersPoint[]>([]);
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -58,6 +127,20 @@ export default function AdminStatsPage() {
           .then(setOverall)
           .catch(() => setOverall(null)),
       );
+
+      const chartParams = new URLSearchParams(range.toString());
+      chartParams.set("groupBy", groupBy);
+      promises.push(
+        api<UsersPoint[]>(`/admin/stats/users/chart?${chartParams.toString()}`, { token })
+          .then((r) => setUsersChart(Array.isArray(r) ? r : []))
+          .catch(() => setUsersChart([])),
+        api<PointsPoint[]>(`/admin/stats/points/chart?${chartParams.toString()}`, { token })
+          .then((r) => setPointsChart(Array.isArray(r) ? r : []))
+          .catch(() => setPointsChart([])),
+        api<OrdersPoint[]>(`/admin/stats/orders/chart?${chartParams.toString()}`, { token })
+          .then((r) => setOrdersChart(Array.isArray(r) ? r : []))
+          .catch(() => setOrdersChart([])),
+      );
     }
 
     Promise.all(promises).finally(() => setLoading(false));
@@ -67,7 +150,7 @@ export default function AdminStatsPage() {
     if (!user) return;
     loadStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, from, to]);
+  }, [user, from, to, groupBy]);
 
   return (
     <div>
@@ -93,6 +176,18 @@ export default function AdminStatsPage() {
             className="h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
           />
         </div>
+        <div>
+          <label className="block text-xs text-[#A1A1A1] mb-1">Группировка</label>
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value as GroupBy)}
+            className="h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
+          >
+            <option value="day">По дням</option>
+            <option value="week">По неделям</option>
+            <option value="month">По месяцам</option>
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -113,9 +208,32 @@ export default function AdminStatsPage() {
                 {Object.entries(overall).map(([key, value]) => (
                   <div key={key} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
                     <p className="text-xs text-[#A1A1A1] mb-1">{key}</p>
-                    <p className="text-xl font-medium text-[#303030]">{String(value ?? "—")}</p>
+                    <p className="text-xl font-medium text-[#303030]">
+                      {typeof value === "object" ? JSON.stringify(value) : String(value ?? "—")}
+                    </p>
                   </div>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {/* Charts */}
+          {isAdmin && (
+            <section className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+                <h3 className="text-sm font-medium text-[#303030] mb-1">Новые пользователи</h3>
+                <p className="text-xs text-[#A1A1A1]">Всего за период</p>
+                <BarChart data={usersChart as any} valueKey="total" color="#F8D62E" groupBy={groupBy} />
+              </div>
+              <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+                <h3 className="text-sm font-medium text-[#303030] mb-1">Баллы дружбы</h3>
+                <p className="text-xs text-[#A1A1A1]">Начислено</p>
+                <BarChart data={pointsChart as any} valueKey="awarded" color="#FA6868" groupBy={groupBy} />
+              </div>
+              <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+                <h3 className="text-sm font-medium text-[#303030] mb-1">Заказы «По делам»</h3>
+                <p className="text-xs text-[#A1A1A1]">Всего</p>
+                <BarChart data={ordersChart as any} valueKey="total" color="#303030" groupBy={groupBy} />
               </div>
             </section>
           )}

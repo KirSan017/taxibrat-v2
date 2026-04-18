@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
@@ -112,12 +113,14 @@ export default function DashboardLayout({
               <HeartIcon className="w-4 h-4 text-[#FA6868]" />
               <span>{displayBalance}</span>
             </Link>
-            <button className="relative p-2">
+            <Link href="/support" className="relative p-2" aria-label="Уведомления">
               <BellIcon className="w-5 h-5 text-[#303030]" />
               {unread > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#FA6868] rounded-full" />
+                <span className="absolute top-0 right-0 min-w-[16px] h-[16px] px-1 rounded-full bg-[#FA6868] text-[9px] font-medium text-white flex items-center justify-center">
+                  {unread > 99 ? "99+" : unread}
+                </span>
               )}
-            </button>
+            </Link>
             <Link href="/profile" className="w-8 h-8 bg-[#E5E5E5] rounded-full overflow-hidden flex items-center justify-center">
               {user.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -131,14 +134,13 @@ export default function DashboardLayout({
             <button
               className="lg:hidden p-2 -mr-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#303030" strokeWidth="2">
-                {mobileMenuOpen ? (
-                  <path d="M18 6L6 18M6 6l12 12" />
-                ) : (
-                  <path d="M3 12h18M3 6h18M3 18h18" />
-                )}
-              </svg>
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6 text-[#303030]" />
+              ) : (
+                <Menu className="w-6 h-6 text-[#303030]" />
+              )}
             </button>
           </div>
         </div>
