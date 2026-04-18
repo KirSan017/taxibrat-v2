@@ -17,6 +17,9 @@ interface SuperManagerDetail {
   status: string;
   role: string;
   createdAt: string;
+  canViewUserPhone?: boolean;
+  canViewUserEmail?: boolean;
+  canViewUserBirthDate?: boolean;
 }
 
 export default function AdminSuperManagerDetailPage() {
@@ -26,6 +29,10 @@ export default function AdminSuperManagerDetailPage() {
   const [manager, setManager] = useState<SuperManagerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [flagSaving, setFlagSaving] = useState<string | null>(null);
+  const [flagMsg, setFlagMsg] = useState("");
+
+  const isAdmin = user?.role === "ADMIN";
 
   useEffect(() => {
     if (!id || !user) return;
@@ -37,6 +44,30 @@ export default function AdminSuperManagerDetailPage() {
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка"))
       .finally(() => setLoading(false));
   }, [id, user]);
+
+  const toggleFlag = async (
+    flag: "canViewUserPhone" | "canViewUserEmail" | "canViewUserBirthDate",
+  ) => {
+    if (!manager) return;
+    const token = getAccessToken();
+    if (!token) return;
+    const nextVal = !manager[flag];
+    setFlagSaving(flag);
+    setFlagMsg("");
+    try {
+      const updated = await api<SuperManagerDetail>(
+        `/admin/users/${manager.id}/visibility-flags`,
+        { method: "PATCH", token, body: { [flag]: nextVal } },
+      );
+      setManager({ ...manager, ...updated });
+      setFlagMsg("Сохранено");
+      setTimeout(() => setFlagMsg(""), 2000);
+    } catch (err: unknown) {
+      setFlagMsg(err instanceof Error ? err.message : "Ошибка");
+    } finally {
+      setFlagSaving(null);
+    }
+  };
 
   if (loading) return <div className="text-sm text-[#A1A1A1]">Загрузка...</div>;
 
@@ -85,6 +116,51 @@ export default function AdminSuperManagerDetailPage() {
           </div>
         </div>
       </section>
+
+      {isAdmin && manager.role === "SUPER_MANAGER" && (
+        <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mt-6">
+          <h2 className="text-base font-medium text-[#303030] mb-1">
+            Видимость персональных данных
+          </h2>
+          <p className="text-xs text-[#A1A1A1] mb-4">
+            По умолчанию супер-менеджер не видит персональные данные пользователей.
+            Включите нужные поля индивидуально.
+          </p>
+
+          <div className="space-y-3">
+            {[
+              { key: "canViewUserPhone" as const, label: "Телефон пользователя" },
+              { key: "canViewUserEmail" as const, label: "Email пользователя" },
+              { key: "canViewUserBirthDate" as const, label: "Дата рождения" },
+            ].map((f) => {
+              const value = !!manager[f.key];
+              return (
+                <label key={f.key} className="flex items-center justify-between gap-3 py-2 cursor-pointer">
+                  <span className="text-sm text-[#303030]">{f.label}</span>
+                  <button
+                    type="button"
+                    disabled={flagSaving === f.key}
+                    onClick={() => toggleFlag(f.key)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${
+                      value ? "bg-green-500" : "bg-gray-300"
+                    } ${flagSaving === f.key ? "opacity-60" : ""}`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform mt-0.5 ${
+                        value ? "translate-x-5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </label>
+              );
+            })}
+          </div>
+
+          {flagMsg && (
+            <p className="mt-3 text-xs text-[#A1A1A1]">{flagMsg}</p>
+          )}
+        </section>
+      )}
     </div>
   );
 }

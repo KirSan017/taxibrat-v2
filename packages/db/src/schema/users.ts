@@ -7,6 +7,7 @@ import {
   integer,
   pgEnum,
   timestamp,
+  boolean,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
@@ -41,6 +42,10 @@ export const users = pgTable("users", {
   referralCode: varchar("referral_code", { length: 20 }).notNull().unique(),
   referredById: uuid("referred_by_id").references((): AnyPgColumn => users.id),
   rejectionReason: text("rejection_reason"),
+  // Per-SM visibility flags (only relevant for SUPER_MANAGER role)
+  canViewUserPhone: boolean("can_view_user_phone").notNull().default(false),
+  canViewUserEmail: boolean("can_view_user_email").notNull().default(false),
+  canViewUserBirthDate: boolean("can_view_user_birth_date").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

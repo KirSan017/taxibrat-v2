@@ -9,6 +9,28 @@ import {
   TICKET_TOPIC_CONFIG, NotificationType, PointsTransactionType,
   AuditAction, AuditEntity,
 } from "@taxibrat/shared";
+
+// SLA hours per ticket topic. Overdue tickets are sorted to the top in manager queue.
+const SLA_HOURS: Record<string, number> = {
+  PARK_CHECK: 48,
+  USER_BASE_CHECK: 24,
+  TAXI_CONNECT: 24,
+  BUYOUT: 72,
+  LEGAL: 48,
+  FRIENDSHIP_POINTS: 24,
+  IDEA: 168, // week
+  OTHER: 48,
+};
+
+function isTicketOverdue(ticket: { topic: string; createdAt: Date | string; status: string }): boolean {
+  // Closed/cancelled/completed tickets are never overdue
+  if (ticket.status === "COMPLETED" || ticket.status === "CANCELLED" || ticket.status === "PENDING_SM_REVIEW") {
+    return false;
+  }
+  const sla = SLA_HOURS[ticket.topic] ?? 48;
+  const created = new Date(ticket.createdAt).getTime();
+  return created + sla * 3600_000 < Date.now();
+}
 import { TicketDistributorService } from "./ticket-distributor.service";
 import { MessagesService } from "./messages.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -114,16 +136,29 @@ export class TicketsService {
     if (dto.topic) conditions.push(eq(tickets.topic, dto.topic as any));
     if (dto.status) conditions.push(eq(tickets.status, dto.status as any));
 
-    const [data, countResult] = await Promise.all([
+    // Fetch a wide window, then sort in JS: overdue first, then createdAt ASC
+    const [rawData, countResult] = await Promise.all([
       this.db.select().from(tickets)
         .where(and(...conditions))
-        .orderBy(desc(tickets.updatedAt))
-        .limit(dto.limit)
-        .offset((dto.page - 1) * dto.limit),
+        .orderBy(tickets.createdAt),
       this.db.select({ count: sql<number>`count(*)` })
         .from(tickets)
         .where(and(...conditions)),
     ]);
+
+    const annotated = rawData.map((t) => ({
+      ...t,
+      isOverdue: isTicketOverdue(t),
+    }));
+
+    annotated.sort((a, b) => {
+      if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+
+    // Paginate in memory
+    const start = (dto.page - 1) * dto.limit;
+    const data = annotated.slice(start, start + dto.limit);
 
     return { data, total: Number(countResult[0].count), page: dto.page, limit: dto.limit };
   }
