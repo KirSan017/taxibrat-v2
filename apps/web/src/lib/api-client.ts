@@ -20,6 +20,12 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     body: body ? JSON.stringify(body) : undefined,
   });
 
+  if (res.status === 401 && typeof window !== "undefined") {
+    // Clear bad tokens and reload so the app resets to anonymous state
+    localStorage.removeItem("tb_access_token");
+    localStorage.removeItem("tb_refresh_token");
+  }
+
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: res.statusText }));
     throw new Error(error.message || `API error ${res.status}`);
