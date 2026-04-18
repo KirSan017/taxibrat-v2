@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -57,7 +58,10 @@ export default function AdminUsersPage() {
   const [rejectUser, setRejectUser] = useState<UserItem | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const LIMIT = 50;
   const [duplicates, setDuplicates] = useState<Array<{ id: string; firstName: string | null; lastName: string | null }>>([]);
+  const [dupsByUser, setDupsByUser] = useState<Record<string, number>>({});
 
   const canSeePhone = currentUser?.role !== "MANAGER";
 
@@ -67,14 +71,29 @@ export default function AdminUsersPage() {
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
-    params.set("page", "1");
-    params.set("limit", "50");
+    params.set("page", String(page));
+    params.set("limit", String(LIMIT));
     if (statusFilter !== "ALL") params.set("status", statusFilter);
     if (search) params.set("search", search);
     api<UsersResponse>(`/admin/users?${params.toString()}`, { token })
-      .then((res) => {
+      .then(async (res) => {
         setUsers(res.data || []);
         setTotal(res.total || 0);
+        // Fetch duplicates count per user (best-effort)
+        const token = getAccessToken();
+        if (!token) return;
+        const map: Record<string, number> = {};
+        await Promise.all(
+          (res.data || []).map(async (u) => {
+            try {
+              const dups = await api<Array<{ id: string }>>(`/admin/users/${u.id}/duplicates`, { token });
+              map[u.id] = Array.isArray(dups) ? dups.length : 0;
+            } catch {
+              map[u.id] = 0;
+            }
+          }),
+        );
+        setDupsByUser(map);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка загрузки"))
       .finally(() => setLoading(false));
@@ -84,7 +103,7 @@ export default function AdminUsersPage() {
     if (!currentUser) return;
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, statusFilter]);
+  }, [currentUser, statusFilter, page]);
 
   useEffect(() => {
     if (!selectedUser) {
@@ -303,7 +322,17 @@ export default function AdminUsersPage() {
                 onClick={() => setSelectedUser(u)}
               >
                 <td className="px-4 py-3 text-[#303030] font-medium">
-                  {formatFullName(u)}
+                  <span className="inline-flex items-center gap-2">
+                    {formatFullName(u)}
+                    {dupsByUser[u.id] > 0 && (
+                      <span
+                        className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-[#FA6868]/10 text-[#FA6868] font-medium cursor-help"
+                        title={`Найдено дублей по ФИО: ${dupsByUser[u.id]}`}
+                      >
+                        Дубли: {dupsByUser[u.id]}
+                      </span>
+                    )}
+                  </span>
                 </td>
                 {canSeePhone && (
                   <td className="px-4 py-3 text-[#A1A1A1] hidden sm:table-cell">{u.phone}</td>
@@ -320,6 +349,14 @@ export default function AdminUsersPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Mobile cards */}

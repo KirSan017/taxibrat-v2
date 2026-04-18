@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -174,18 +175,13 @@ export default function AdminAuditPage() {
         </table>
       </div>
 
-      {/* Pagination */}
-      {total > 50 && (
-        <div className="flex gap-2 mt-4 items-center">
-          <Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-            Назад
-          </Button>
-          <span className="text-sm text-[#A1A1A1]">Стр. {page} из {Math.ceil(total / 50)}</span>
-          <Button size="sm" variant="outline" disabled={page * 50 >= total} onClick={() => setPage((p) => p + 1)}>
-            Далее
-          </Button>
-        </div>
-      )}
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / 50))}
+          onPageChange={setPage}
+        />
+      </div>
     </div>
   );
 }

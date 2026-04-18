@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -55,6 +56,9 @@ export default function AdminBuyoutPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const LIMIT = 50;
 
   const canModerate = user?.role === "ADMIN" || user?.role === "SUPER_MANAGER";
 
@@ -64,11 +68,14 @@ export default function AdminBuyoutPage() {
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
-    params.set("page", "1");
-    params.set("limit", "100");
+    params.set("page", String(page));
+    params.set("limit", String(LIMIT));
     if (statusFilter !== "ALL") params.set("status", statusFilter);
     api<BuyoutResponse>(`/admin/buyout?${params.toString()}`, { token })
-      .then((res) => setListings(res.data || []))
+      .then((res) => {
+        setListings(res.data || []);
+        setTotal(res.total || 0);
+      })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка"))
       .finally(() => setLoading(false));
   };
@@ -77,7 +84,11 @@ export default function AdminBuyoutPage() {
     if (!user) return;
     loadListings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, statusFilter]);
+  }, [user, statusFilter, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   const handleApprove = async (id: string) => {
     const token = getAccessToken();
@@ -195,6 +206,14 @@ export default function AdminBuyoutPage() {
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
+
+      <div className="mb-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
+      </div>
 
       {/* List */}
       {loading ? (

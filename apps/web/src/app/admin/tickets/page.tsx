@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -41,6 +42,7 @@ const TOPIC_LABELS: Record<string, string> = {
   BUYOUT: "Выкуп",
   LEGAL: "Юридический",
   FRIENDSHIP_POINTS: "Баллы",
+  IDEA: "Идея",
   OTHER: "Иное",
 };
 
@@ -54,6 +56,9 @@ export default function AdminTicketsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<TabKey>("mine");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const LIMIT = 50;
 
   const isSuperManager = user?.role === "SUPER_MANAGER" || user?.role === "ADMIN";
 
@@ -74,21 +79,29 @@ export default function AdminTicketsPage() {
     setLoading(true);
     setError("");
 
+    const base = `page=${page}&limit=${LIMIT}`;
     const url =
       activeTab === "review"
-        ? "/admin/tickets/review?page=1&limit=50"
+        ? `/admin/tickets/review?${base}`
         : activeTab === "mine"
-          ? "/admin/tickets?page=1&limit=50"
-          : `/admin/tickets?page=1&limit=50&topic=${activeTab}`;
+          ? `/admin/tickets?${base}`
+          : `/admin/tickets?${base}&topic=${activeTab}`;
 
     api<TicketsResponse>(url, { token })
-      .then((res) => setTickets(res.data || []))
+      .then((res) => {
+        setTickets(res.data || []);
+        setTotal(res.total || 0);
+      })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "Ошибка загрузки");
         setTickets([]);
       })
       .finally(() => setLoading(false));
-  }, [user, activeTab]);
+  }, [user, activeTab, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
 
   return (
     <div>
@@ -160,6 +173,14 @@ export default function AdminTicketsPage() {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Mobile cards */}

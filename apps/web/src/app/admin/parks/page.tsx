@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -41,6 +42,9 @@ export default function AdminParksPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const LIMIT = 50;
 
   useEffect(() => {
     if (!user) return;
@@ -48,11 +52,14 @@ export default function AdminParksPage() {
     if (!token) return;
     setLoading(true);
     setError("");
-    api<ParksResponse>("/admin/parks?page=1&limit=100", { token })
-      .then((res) => setParks(res.data || []))
+    api<ParksResponse>(`/admin/parks?page=${page}&limit=${LIMIT}`, { token })
+      .then((res) => {
+        setParks(res.data || []);
+        setTotal(res.total || 0);
+      })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка загрузки"))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, page]);
 
   const filtered = parks.filter((p) => {
     if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
@@ -156,6 +163,14 @@ export default function AdminParksPage() {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Mobile cards */}

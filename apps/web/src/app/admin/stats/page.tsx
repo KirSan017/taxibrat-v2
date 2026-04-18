@@ -88,6 +88,71 @@ function BarChart({
   );
 }
 
+/**
+ * Grouped bar chart: 2 bars per date (две серии рядом).
+ */
+function GroupedBarChart({
+  data,
+  seriesA,
+  seriesB,
+  groupBy,
+}: {
+  data: Array<{ date: string } & Record<string, number | string>>;
+  seriesA: { key: string; color: string; label: string };
+  seriesB: { key: string; color: string; label: string };
+  groupBy: GroupBy;
+}) {
+  if (!data.length) {
+    return <p className="text-xs text-[#A1A1A1] py-6 text-center">Нет данных</p>;
+  }
+  const max =
+    Math.max(
+      ...data.map((d) => Math.max(Number(d[seriesA.key] ?? 0), Number(d[seriesB.key] ?? 0))),
+    ) || 1;
+
+  return (
+    <>
+      <div className="flex items-center gap-3 text-[11px] text-[#A1A1A1] mt-2">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: seriesA.color }} />
+          {seriesA.label}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: seriesB.color }} />
+          {seriesB.label}
+        </span>
+      </div>
+      <div className="flex items-end gap-2 h-[140px] mt-2">
+        {data.map((d, i) => {
+          const va = Number(d[seriesA.key] ?? 0);
+          const vb = Number(d[seriesB.key] ?? 0);
+          const ha = Math.max(2, Math.round((va / max) * 110));
+          const hb = Math.max(2, Math.round((vb / max) * 110));
+          return (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1 min-w-[30px]">
+              <div className="flex items-end gap-0.5 w-full justify-center h-[120px]">
+                <div
+                  className="w-1/2 rounded-t"
+                  style={{ height: `${ha}px`, backgroundColor: seriesA.color }}
+                  title={`${d.date} · ${seriesA.label}: ${va}`}
+                />
+                <div
+                  className="w-1/2 rounded-t"
+                  style={{ height: `${hb}px`, backgroundColor: seriesB.color }}
+                  title={`${d.date} · ${seriesB.label}: ${vb}`}
+                />
+              </div>
+              <span className="text-[9px] text-[#A1A1A1] rotate-[-30deg] whitespace-nowrap origin-left">
+                {formatDateLabel(d.date as string, groupBy)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AdminStatsPage() {
@@ -221,9 +286,14 @@ export default function AdminStatsPage() {
           {isAdmin && (
             <section className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
-                <h3 className="text-sm font-medium text-[#303030] mb-1">Новые пользователи</h3>
-                <p className="text-xs text-[#A1A1A1]">Всего за период</p>
-                <BarChart data={usersChart as any} valueKey="total" color="#F8D62E" groupBy={groupBy} />
+                <h3 className="text-sm font-medium text-[#303030] mb-1">Пользователи</h3>
+                <p className="text-xs text-[#A1A1A1]">Верифицированы и активны</p>
+                <GroupedBarChart
+                  data={usersChart as any}
+                  seriesA={{ key: "phoneVerified", color: "#F8D62E", label: "Верифиц." }}
+                  seriesB={{ key: "active", color: "#303030", label: "Активные" }}
+                  groupBy={groupBy}
+                />
               </div>
               <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
                 <h3 className="text-sm font-medium text-[#303030] mb-1">Баллы дружбы</h3>

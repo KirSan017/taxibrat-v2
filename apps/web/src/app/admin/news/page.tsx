@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -40,6 +41,10 @@ export default function AdminNewsPage() {
   const [linkUrl, setLinkUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const LIMIT = 20;
+
   const isAdmin = user?.role === "ADMIN";
 
   const loadNews = () => {
@@ -47,8 +52,11 @@ export default function AdminNewsPage() {
     if (!token) return;
     setLoading(true);
     setError("");
-    api<NewsResponse>("/admin/news?page=1&limit=50", { token })
-      .then((res) => setItems(res.data || []))
+    api<NewsResponse>(`/admin/news?page=${page}&limit=${LIMIT}`, { token })
+      .then((res) => {
+        setItems(res.data || []);
+        setTotal(res.total || 0);
+      })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка"))
       .finally(() => setLoading(false));
   };
@@ -57,7 +65,7 @@ export default function AdminNewsPage() {
     if (!user) return;
     loadNews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, page]);
 
   const openCreate = () => {
     setEditing(null);
@@ -179,6 +187,14 @@ export default function AdminNewsPage() {
           ))}
         </div>
       )}
+
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
+      </div>
 
       {/* Form modal */}
       {showForm && (
