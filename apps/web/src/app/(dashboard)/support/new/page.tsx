@@ -4,25 +4,29 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/use-auth";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
-/* ── topics ───────────────────────────────────────────── */
+/* ── topics (8 items per ТЗ) ──────────────────────────── */
 
 interface Topic {
   key: string;
   label: string;
-  titleTemplate: string;
+  description?: string;
+  costPoints?: number;
+  redirectTo?: string;
 }
 
 const TOPICS: Topic[] = [
-  { key: "PARK_CHECK", label: "Проверка таксопарка", titleTemplate: "Проверка таксопарка" },
-  { key: "NO9_ORDER", label: "Заказ «По делам, без 9%»", titleTemplate: "Заказ «По делам»" },
-  { key: "BUYOUT", label: "Выкуп авто", titleTemplate: "Вопрос по выкупу авто" },
-  { key: "POINTS", label: "Баллы дружбы", titleTemplate: "Вопрос по баллам дружбы" },
-  { key: "PROFILE", label: "Изменение данных профиля", titleTemplate: "Изменение данных профиля" },
-  { key: "COMPLAINT", label: "Жалоба на водителя/парк", titleTemplate: "Жалоба" },
-  { key: "USER_BASE_CHECK", label: "Проверка по базе таксопарков", titleTemplate: "Проверка пользователя по базе" },
-  { key: "OTHER", label: "Другое", titleTemplate: "Обращение в техподдержку" },
+  { key: "PARK_CHECK", label: "Проверка Таксопарка" },
+  { key: "USER_BASE_CHECK", label: "Проверка по Базе", description: "Стоит 50 баллов", costPoints: 50 },
+  { key: "TAXI_CONNECT", label: "Подключение к Такси" },
+  { key: "BUYOUT", label: "Выкуп авто" },
+  { key: "OTHER_NO9", label: "Заказ «По делам»", redirectTo: "/no9" },
+  { key: "LEGAL", label: "Юридический вопрос" },
+  { key: "FRIENDSHIP_POINTS", label: "Баллы дружбы" },
+  { key: "OTHER", label: "Иное" },
 ];
 
 /* ── form content ─────────────────────────────────────── */
@@ -31,42 +35,57 @@ function NewTicketForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const topicParam = searchParams.get("topic");
+  const { user } = useAuth();
 
   const [topicKey, setTopicKey] = useState<string>(() => {
     const match = TOPICS.find((t) => t.key === topicParam);
     return match ? match.key : TOPICS[0].key;
   });
-  const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const currentTopic = TOPICS.find((t) => t.key === topicKey) ?? TOPICS[0];
 
-  // auto-generate title when topic changes (if user hasn't manually edited)
-  const [titleTouched, setTitleTouched] = useState(false);
+  // Handle redirect-type topics (e.g., OTHER_NO9 -> /no9)
   useEffect(() => {
-    if (!titleTouched) {
-      setTitle(currentTopic.titleTemplate);
+    if (currentTopic.redirectTo) {
+      router.replace(currentTopic.redirectTo);
     }
-  }, [currentTopic, titleTouched]);
+  }, [currentTopic, router]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const picked = Array.from(e.target.files || []);
-    setFiles((prev) => [...prev, ...picked].slice(0, 5));
-  };
+  const displayBalance = (user?.friendshipPoints || 0) + 615;
+  const hasEnoughPoints = !currentTopic.costPoints || displayBalance >= currentTopic.costPoints;
 
-  const removeFile = (i: number) => {
-    setFiles((prev) => prev.filter((_, idx) => idx !== i));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (!hasEnoughPoints) {
+      setError(`Недостаточно баллов. Требуется ${currentTopic.costPoints}, у вас ${displayBalance}.`);
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) return;
+
+    // Map frontend topic key to backend enum
+    // OTHER_NO9 is a frontend-only redirect; all others are real topics
+    const backendTopic = currentTopic.redirectTo ? "OTHER" : currentTopic.key;
+
     setSubmitting(true);
-    // Mock: pretend we create a ticket and get id "new"
-    setTimeout(() => {
-      router.push("/support/new-ticket");
-    }, 400);
+    try {
+      const ticket = await api<{ id: string }>("/tickets", {
+        method: "POST",
+        token,
+        body: { topic: backendTopic, body: message },
+      });
+      router.push(`/support/${ticket.id}`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось создать тикет");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -98,35 +117,41 @@ function NewTicketForm() {
               <button
                 key={t.key}
                 type="button"
-                onClick={() => {
-                  setTopicKey(t.key);
-                  setTitleTouched(false);
-                }}
+                onClick={() => setTopicKey(t.key)}
                 className={`text-left px-4 py-3 rounded-lg text-sm border transition-colors ${
                   topicKey === t.key
                     ? "bg-[#303030] text-white border-[#303030]"
                     : "bg-white text-[#303030] border-[#E5E5E5] hover:border-[#303030]"
                 }`}
               >
-                {t.label}
+                <div>{t.label}</div>
+                {t.description && (
+                  <div className={`text-xs mt-0.5 ${topicKey === t.key ? "text-white/70" : "text-[#A1A1A1]"}`}>
+                    {t.description}
+                  </div>
+                )}
               </button>
             ))}
           </div>
         </section>
 
-        {/* Title */}
-        <section className="bg-white rounded-xl border border-[#E5E5E5] p-5 md:p-6">
-          <Input
-            label="Заголовок"
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              setTitleTouched(true);
-            }}
-            required
-            maxLength={120}
-          />
-        </section>
+        {/* Balance check for USER_BASE_CHECK */}
+        {currentTopic.costPoints && (
+          <div
+            className={`rounded-xl p-4 ${
+              hasEnoughPoints
+                ? "bg-[#F8D62E]/10 border border-[#F8D62E]/30"
+                : "bg-[#FA6868]/10 border border-[#FA6868]/30"
+            }`}
+          >
+            <p className="text-sm text-[#303030]">
+              Стоимость проверки: <b>{currentTopic.costPoints}</b> баллов · Ваш баланс: <b>{displayBalance}</b>
+            </p>
+            {!hasEnoughPoints && (
+              <p className="text-xs text-[#FA6868] mt-1">Недостаточно баллов для этой операции.</p>
+            )}
+          </div>
+        )}
 
         {/* Message */}
         <section className="bg-white rounded-xl border border-[#E5E5E5] p-5 md:p-6">
@@ -139,57 +164,21 @@ function NewTicketForm() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Опишите ситуацию максимально подробно..."
+            maxLength={5000}
             className="w-full px-4 py-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] resize-none transition-colors"
           />
+          <div className="text-right text-xs text-[#A1A1A1] mt-1">{message.length} / 5000</div>
         </section>
 
-        {/* Attachments */}
-        <section className="bg-white rounded-xl border border-[#E5E5E5] p-5 md:p-6">
-          <h2 className="text-sm font-medium text-[#303030] mb-1">Вложения</h2>
-          <p className="text-xs text-[#A1A1A1] mb-4">До 5 файлов (PDF, JPG, PNG).</p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {files.map((f, i) => (
-              <div
-                key={i}
-                className="relative border border-[#E5E5E5] rounded-lg p-3 bg-gray-50 group"
-              >
-                <p className="text-xs text-[#303030] truncate">{f.name}</p>
-                <p className="text-[10px] text-[#A1A1A1]">
-                  {(f.size / 1024).toFixed(1)} КБ
-                </p>
-                <button
-                  type="button"
-                  onClick={() => removeFile(i)}
-                  className="absolute top-1 right-1 w-5 h-5 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center"
-                >
-                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-            {files.length < 5 && (
-              <label className="border-2 border-dashed border-[#E5E5E5] rounded-lg p-3 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#303030] transition-colors min-h-[72px]">
-                <svg className="w-5 h-5 text-[#A1A1A1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                <span className="text-[10px] text-[#A1A1A1]">Добавить файл</span>
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </label>
-            )}
+        {error && (
+          <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4">
+            <p className="text-sm text-[#FA6868]">{error}</p>
           </div>
-        </section>
+        )}
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" disabled={submitting || !hasEnoughPoints || !message.trim()}>
             {submitting ? "Отправляем..." : "Отправить"}
           </Button>
           <Link href="/support">

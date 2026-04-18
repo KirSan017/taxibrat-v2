@@ -1,62 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/use-auth";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
-/* ── types & mock data ────────────────────────────────── */
+/* ── types ─────────────────────────────────────────── */
 
-type CheckStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "REJECTED";
-
-interface ParkCheck {
+interface Check {
   id: string;
-  parkName: string;
-  status: CheckStatus;
-  date: string;
-  points: number;
-  note?: string;
+  topic: string;
+  status: string;
+  title?: string | null;
+  body?: string | null;
+  relatedEntityId?: string | null;
+  createdAt: string;
 }
 
-const STATUS_CONFIG: Record<CheckStatus, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
-  PENDING: { label: "На рассмотрении", variant: "yellow" },
+interface ChecksResponse {
+  data: Check[];
+  total: number;
+}
+
+const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
+  NEW: { label: "На рассмотрении", variant: "yellow" },
   IN_PROGRESS: { label: "В работе", variant: "gray" },
+  PENDING_SM_REVIEW: { label: "На проверке СМ", variant: "yellow" },
+  SM_REJECTED: { label: "Отклонено", variant: "red" },
   COMPLETED: { label: "Завершена", variant: "green" },
-  REJECTED: { label: "Отклонена", variant: "red" },
+  CANCELLED: { label: "Отменена", variant: "gray" },
 };
 
-const MOCK_CHECKS: ParkCheck[] = [
-  { id: "1", parkName: "Альфа", status: "COMPLETED", date: "05.03.2026", points: 50, note: "Данные подтверждены, парк опубликован" },
-  { id: "2", parkName: "Мега Такси", status: "IN_PROGRESS", date: "10.04.2026", points: 0, note: "Менеджер связывается с парком" },
-  { id: "3", parkName: "Драйв Парк", status: "PENDING", date: "14.04.2026", points: 0 },
-  { id: "4", parkName: "Голд Такси", status: "COMPLETED", date: "20.02.2026", points: 50 },
-  { id: "5", parkName: "Экспресс Парк", status: "REJECTED", date: "03.04.2026", points: 0, note: "Некорректные контактные данные" },
-  { id: "6", parkName: "Премьер Авто", status: "COMPLETED", date: "15.02.2026", points: 50 },
-];
-
-const FILTERS: Array<{ key: CheckStatus | "ALL"; label: string }> = [
+const FILTERS: Array<{ key: string; label: string }> = [
   { key: "ALL", label: "Все" },
-  { key: "PENDING", label: "На рассмотрении" },
+  { key: "NEW", label: "На рассмотрении" },
   { key: "IN_PROGRESS", label: "В работе" },
   { key: "COMPLETED", label: "Завершены" },
-  { key: "REJECTED", label: "Отклонены" },
+  { key: "SM_REJECTED", label: "Отклонены" },
 ];
 
-/* ── page ─────────────────────────────────────────────── */
+/* ── page ─────────────────────────────────────────── */
 
 export default function ChecksPage() {
-  const [filter, setFilter] = useState<CheckStatus | "ALL">("ALL");
+  const { user } = useAuth();
+  const [checks, setChecks] = useState<Check[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<string>("ALL");
 
-  const filtered = filter === "ALL" ? MOCK_CHECKS : MOCK_CHECKS.filter((c) => c.status === filter);
+  useEffect(() => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setLoading(true);
+    api<ChecksResponse>("/tickets?topic=PARK_CHECK&page=1&limit=100", { token })
+      .then((res) => setChecks(res.data || []))
+      .catch(() => setChecks([]))
+      .finally(() => setLoading(false));
+  }, [user]);
 
-  const totalPoints = MOCK_CHECKS.filter((c) => c.status === "COMPLETED").reduce((sum, c) => sum + c.points, 0);
+  const filtered = filter === "ALL" ? checks : checks.filter((c) => c.status === filter);
 
   return (
     <div className="max-w-[900px]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl md:text-3xl font-medium text-[#303030]">Проверки таксопарков</h1>
-        <Link href="/parks/add">
-          <Button size="sm">+ Добавить таксопарк</Button>
+        <Link href="/support/new?topic=PARK_CHECK">
+          <Button size="sm">+ Проверить таксопарк</Button>
         </Link>
       </div>
 
@@ -64,17 +76,19 @@ export default function ChecksPage() {
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
           <p className="text-xs text-[#A1A1A1] mb-1">Всего проверок</p>
-          <p className="text-xl font-medium text-[#303030]">{MOCK_CHECKS.length}</p>
+          <p className="text-xl font-medium text-[#303030]">{checks.length}</p>
         </div>
         <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
           <p className="text-xs text-[#A1A1A1] mb-1">Завершено</p>
           <p className="text-xl font-medium text-[#303030]">
-            {MOCK_CHECKS.filter((c) => c.status === "COMPLETED").length}
+            {checks.filter((c) => c.status === "COMPLETED").length}
           </p>
         </div>
         <div className="bg-[#F8D62E] rounded-xl p-4">
-          <p className="text-xs text-[#303030]/70 mb-1">Заработано баллов</p>
-          <p className="text-xl font-medium text-[#303030]">{totalPoints}</p>
+          <p className="text-xs text-[#303030]/70 mb-1">В работе</p>
+          <p className="text-xl font-medium text-[#303030]">
+            {checks.filter((c) => c.status === "IN_PROGRESS" || c.status === "NEW").length}
+          </p>
         </div>
       </div>
 
@@ -95,76 +109,40 @@ export default function ChecksPage() {
         ))}
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#E5E5E5] bg-gray-50">
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Название парка</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Статус</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Дата</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Баллы</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c) => {
-              const sc = STATUS_CONFIG[c.status];
-              return (
-                <tr key={c.id} className="border-b border-[#E5E5E5] last:border-0 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="text-[#303030] font-medium">{c.parkName}</p>
-                    {c.note && <p className="text-xs text-[#A1A1A1] mt-0.5">{c.note}</p>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={sc.variant}>{sc.label}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-[#A1A1A1]">{c.date}</td>
-                  <td className="px-4 py-3 text-right">
-                    {c.points > 0 ? (
-                      <span className="font-medium text-green-600">+{c.points}</span>
-                    ) : (
-                      <span className="text-[#A1A1A1]">&mdash;</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Проверок не найдено</div>
-        )}
-      </div>
-
-      {/* Mobile cards */}
-      <div className="md:hidden space-y-3">
-        {filtered.length === 0 ? (
-          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
-            Проверок не найдено
-          </div>
-        ) : (
-          filtered.map((c) => {
-            const sc = STATUS_CONFIG[c.status];
+      {/* List */}
+      {loading ? (
+        <p className="text-sm text-[#A1A1A1] text-center py-12">Загрузка...</p>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+          Проверок не найдено
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((c) => {
+            const sc = STATUS_CONFIG[c.status] || { label: c.status, variant: "gray" as const };
             return (
-              <div key={c.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+              <Link
+                key={c.id}
+                href={`/support/${c.id}`}
+                className="block bg-white border border-[#E5E5E5] rounded-xl p-4 hover:shadow-sm transition-shadow"
+              >
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <h3 className="text-sm font-medium text-[#303030]">{c.parkName}</h3>
+                  <h3 className="text-sm font-medium text-[#303030]">
+                    {c.title || "Проверка таксопарка"}
+                  </h3>
                   <Badge variant={sc.variant}>{sc.label}</Badge>
                 </div>
-                {c.note && <p className="text-xs text-[#A1A1A1] mb-2">{c.note}</p>}
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#A1A1A1]">{c.date}</span>
-                  {c.points > 0 ? (
-                    <span className="font-medium text-green-600">+{c.points} баллов</span>
-                  ) : (
-                    <span className="text-[#A1A1A1]">Без баллов</span>
-                  )}
-                </div>
-              </div>
+                {c.body && (
+                  <p className="text-xs text-[#A1A1A1] mb-2 line-clamp-2">{c.body}</p>
+                )}
+                <p className="text-[10px] text-[#A1A1A1]">
+                  {new Date(c.createdAt).toLocaleDateString("ru-RU")}
+                </p>
+              </Link>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 }

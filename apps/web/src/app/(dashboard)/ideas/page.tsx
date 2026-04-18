@@ -1,29 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { useAuth } from "@/lib/use-auth";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
-/* ── types & mock data ────────────────────────────────── */
-
-type IdeaStatus = "PENDING" | "APPROVED" | "REJECTED" | "IMPLEMENTED";
+/* ── types ─────────────────────────────────────────── */
 
 interface Idea {
   id: string;
-  title: string;
-  category: string;
-  description: string;
-  status: IdeaStatus;
-  date: string;
+  topic: string;
+  status: string;
+  title?: string | null;
+  body?: string | null;
+  createdAt: string;
 }
 
-const STATUS_CONFIG: Record<IdeaStatus, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
-  PENDING: { label: "На рассмотрении", variant: "yellow" },
-  APPROVED: { label: "Одобрена", variant: "green" },
-  REJECTED: { label: "Отклонена", variant: "red" },
-  IMPLEMENTED: { label: "Реализована", variant: "gray" },
+interface IdeasResponse {
+  data: Idea[];
+  total: number;
+}
+
+const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
+  NEW: { label: "На рассмотрении", variant: "yellow" },
+  IN_PROGRESS: { label: "В работе", variant: "gray" },
+  PENDING_SM_REVIEW: { label: "На проверке", variant: "yellow" },
+  SM_REJECTED: { label: "Отклонена", variant: "red" },
+  COMPLETED: { label: "Одобрена", variant: "green" },
+  CANCELLED: { label: "Отменена", variant: "gray" },
 };
 
 const CATEGORIES = [
@@ -36,51 +44,44 @@ const CATEGORIES = [
   "Другое",
 ];
 
-const MOCK_IDEAS: Idea[] = [
-  {
-    id: "1",
-    title: "Фильтр таксопарков по часам работы",
-    category: "Таксопарки",
-    description: "Добавить возможность фильтровать парки по времени работы — иногда нужно сменить машину ночью.",
-    status: "IMPLEMENTED",
-    date: "08.03.2026",
-  },
-  {
-    id: "2",
-    title: "Push-уведомления о статусе заказа",
-    category: "Мобильное приложение",
-    description: "Получать push-уведомления при изменении статуса заказа «По делам» — удобнее, чем проверять вручную.",
-    status: "APPROVED",
-    date: "25.03.2026",
-  },
-  {
-    id: "3",
-    title: "Обмен баллов на топливные карты",
-    category: "Баллы дружбы",
-    description: "Хотелось бы иметь возможность менять накопленные баллы дружбы на топливные карты.",
-    status: "PENDING",
-    date: "10.04.2026",
-  },
-  {
-    id: "4",
-    title: "Рейтинг диспетчеров парков",
-    category: "Таксопарки",
-    description: "Дать возможность оценивать не только парк целиком, но и конкретных диспетчеров.",
-    status: "REJECTED",
-    date: "28.03.2026",
-  },
-];
+const IDEA_MARKER = "[ИДЕЯ]";
 
-/* ── page ─────────────────────────────────────────────── */
+/* ── page ─────────────────────────────────────────── */
 
 export default function IdeasPage() {
-  const [ideas, setIdeas] = useState(MOCK_IDEAS);
+  const { user } = useAuth();
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [description, setDescription] = useState("");
+
+  const loadIdeas = () => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setLoading(true);
+    api<IdeasResponse>("/tickets?topic=OTHER&page=1&limit=100", { token })
+      .then((res) => {
+        // Filter only tickets with IDEA_MARKER
+        const ideaTickets = (res.data || []).filter((t) =>
+          (t.title || "").startsWith(IDEA_MARKER) || (t.body || "").startsWith(IDEA_MARKER),
+        );
+        setIdeas(ideaTickets);
+      })
+      .catch(() => setIdeas([]))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadIdeas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const resetForm = () => {
     setTitle("");
@@ -88,20 +89,42 @@ export default function IdeasPage() {
     setDescription("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newIdea: Idea = {
-      id: String(Date.now()),
-      title,
-      category,
-      description,
-      status: "PENDING",
-      date: new Date().toLocaleDateString("ru-RU"),
-    };
-    setIdeas((prev) => [newIdea, ...prev]);
-    setShowForm(false);
-    resetForm();
-    setSuccess(true);
+    const token = getAccessToken();
+    if (!token) return;
+    setError("");
+    setSubmitting(true);
+    try {
+      const body = `${IDEA_MARKER} [${category}] ${title}\n\n${description}`;
+      await api("/tickets", {
+        method: "POST",
+        token,
+        body: { topic: "OTHER", body },
+      });
+      setShowForm(false);
+      resetForm();
+      setSuccess(true);
+      loadIdeas();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось отправить идею");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const parseIdea = (idea: Idea): { category: string; title: string; description: string } => {
+    const raw = idea.body || idea.title || "";
+    const cleaned = raw.replace(new RegExp(`^${IDEA_MARKER.replace(/[[\]]/g, "\\$&")}\\s*`), "");
+    const catMatch = cleaned.match(/^\[([^\]]+)\]\s*(.*)/s);
+    if (catMatch) {
+      const rest = catMatch[2] || "";
+      const nlIdx = rest.indexOf("\n");
+      const titleStr = nlIdx === -1 ? rest : rest.slice(0, nlIdx);
+      const descStr = nlIdx === -1 ? "" : rest.slice(nlIdx + 2);
+      return { category: catMatch[1], title: titleStr.trim(), description: descStr.trim() };
+    }
+    return { category: "", title: cleaned.slice(0, 80), description: cleaned };
   };
 
   return (
@@ -110,7 +133,7 @@ export default function IdeasPage() {
         open={success}
         onClose={() => setSuccess(false)}
         title="Спасибо за идею!"
-        description="Ваше предложение отправлено на рассмотрение. Мы уведомим вас о статусе."
+        description="Ваше предложение отправлено на рассмотрение."
       />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -127,15 +150,24 @@ export default function IdeasPage() {
         </p>
       </div>
 
+      {error && (
+        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+          <p className="text-sm text-[#FA6868]">{error}</p>
+        </div>
+      )}
+
       {/* Ideas list */}
-      <div className="space-y-3">
-        {ideas.length === 0 ? (
-          <div className="bg-white border border-[#E5E5E5] rounded-xl p-10 text-center">
-            <p className="text-sm text-[#A1A1A1]">Вы ещё не предложили ни одной идеи.</p>
-          </div>
-        ) : (
-          ideas.map((idea) => {
-            const sc = STATUS_CONFIG[idea.status];
+      {loading ? (
+        <p className="text-sm text-[#A1A1A1] text-center py-12">Загрузка...</p>
+      ) : ideas.length === 0 ? (
+        <div className="bg-white border border-[#E5E5E5] rounded-xl p-10 text-center">
+          <p className="text-sm text-[#A1A1A1]">Вы ещё не предложили ни одной идеи.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {ideas.map((idea) => {
+            const sc = STATUS_CONFIG[idea.status] || { label: idea.status, variant: "gray" as const };
+            const parsed = parseIdea(idea);
             return (
               <div
                 key={idea.id}
@@ -144,35 +176,39 @@ export default function IdeasPage() {
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="min-w-0">
                     <h3 className="text-sm md:text-base font-medium text-[#303030]">
-                      {idea.title}
+                      {parsed.title || "Идея"}
                     </h3>
                     <p className="text-xs text-[#A1A1A1] mt-0.5">
-                      {idea.category} &middot; {idea.date}
+                      {parsed.category ? `${parsed.category} · ` : ""}
+                      {new Date(idea.createdAt).toLocaleDateString("ru-RU")}
                     </p>
                   </div>
                   <Badge variant={sc.variant} className="shrink-0">
                     {sc.label}
                   </Badge>
                 </div>
-                <p className="text-sm text-[#A1A1A1] leading-relaxed">
-                  {idea.description}
-                </p>
+                {parsed.description && (
+                  <p className="text-sm text-[#A1A1A1] leading-relaxed">
+                    {parsed.description}
+                  </p>
+                )}
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/30"
-            onClick={() => setShowForm(false)}
+            onClick={() => !submitting && setShowForm(false)}
           />
           <div className="relative bg-white rounded-2xl w-full max-w-lg p-6 md:p-8">
             <button
-              onClick={() => setShowForm(false)}
+              type="button"
+              onClick={() => !submitting && setShowForm(false)}
               className="absolute top-4 right-4 text-[#A1A1A1] hover:text-[#303030]"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -192,6 +228,7 @@ export default function IdeasPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                maxLength={120}
               />
 
               <div>
@@ -220,7 +257,7 @@ export default function IdeasPage() {
                   rows={5}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Подробно опишите вашу идею — почему она полезна, как её реализовать..."
+                  placeholder="Подробно опишите вашу идею..."
                   className="w-full px-4 py-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] resize-none transition-colors"
                 />
               </div>
@@ -230,12 +267,13 @@ export default function IdeasPage() {
                   type="button"
                   variant="outline"
                   className="flex-1"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => !submitting && setShowForm(false)}
+                  disabled={submitting}
                 >
                   Отмена
                 </Button>
-                <Button type="submit" className="flex-1">
-                  Отправить
+                <Button type="submit" className="flex-1" disabled={submitting}>
+                  {submitting ? "Отправка..." : "Отправить"}
                 </Button>
               </div>
             </form>
