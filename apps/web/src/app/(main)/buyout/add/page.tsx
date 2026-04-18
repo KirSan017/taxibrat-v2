@@ -1,32 +1,40 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
 /* ── types ─────────────────────────────────────────────── */
 
-type OwnerType = "INDIVIDUAL" | "LEGAL" | "PARK" | "BANK";
+type OwnerType = "INDIVIDUAL" | "LEGAL_ENTITY" | "TAXI_PARK" | "BANK";
 
 const OWNER_OPTIONS: { value: OwnerType; label: string }[] = [
   { value: "INDIVIDUAL", label: "Физическое лицо" },
-  { value: "LEGAL", label: "Юридическое лицо" },
-  { value: "PARK", label: "Таксопарк" },
+  { value: "LEGAL_ENTITY", label: "Юридическое лицо" },
+  { value: "TAXI_PARK", label: "Таксопарк" },
   { value: "BANK", label: "Банк" },
 ];
 
-const BRANDS = ["Kia", "Hyundai", "Skoda", "Toyota", "Volkswagen", "Chevrolet", "Lada"];
+interface Brand { id: string; name: string; }
+interface Model { id: string; name: string; brandId: string; }
 
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AddBuyoutPage() {
   const router = useRouter();
+
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+
   const [photos, setPhotos] = useState<File[]>([]);
-  const [brand, setBrand] = useState("");
-  const [model, setModel] = useState("");
+  const [brandId, setBrandId] = useState("");
+  const [modelId, setModelId] = useState("");
   const [year, setYear] = useState("");
   const [price, setPrice] = useState("");
   const [mileage, setMileage] = useState("");
@@ -34,13 +42,33 @@ export default function AddBuyoutPage() {
   const [description, setDescription] = useState("");
   const [ownerType, setOwnerType] = useState<OwnerType>("INDIVIDUAL");
 
-  /* owner-specific */
   const [ownerName, setOwnerName] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
   const [orgName, setOrgName] = useState("");
   const [orgInn, setOrgInn] = useState("");
 
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api<Brand[]>("/catalog/brands")
+      .then(setBrands)
+      .catch(() => setBrands([]));
+  }, []);
+
+  useEffect(() => {
+    if (!brandId) {
+      setModels([]);
+      setModelId("");
+      return;
+    }
+    setLoadingModels(true);
+    api<Model[]>(`/catalog/models?brandId=${brandId}`)
+      .then(setModels)
+      .catch(() => setModels([]))
+      .finally(() => setLoadingModels(false));
+  }, [brandId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -51,9 +79,47 @@ export default function AddBuyoutPage() {
     setPhotos((cur) => cur.filter((_, idx) => idx !== i));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError(null);
+
+    const token = getAccessToken();
+    if (!token) {
+      setError("Войдите в аккаунт, чтобы разместить объявление");
+      return;
+    }
+    if (!brandId || !modelId) {
+      setError("Выберите марку и модель");
+      return;
+    }
+    if (vin.length !== 7) {
+      setError("VIN должен содержать 7 символов");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await api("/buyout", {
+        method: "POST",
+        token,
+        body: {
+          brandId,
+          modelId,
+          year: Number(year),
+          price: Number(price),
+          mileage: mileage ? Number(mileage) : undefined,
+          vin7: vin,
+          description: description || undefined,
+          photos: [],
+          ownerType,
+        },
+      });
+      setSubmitted(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось создать объявление");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -130,19 +196,31 @@ export default function AddBuyoutPage() {
               <div>
                 <label className="block text-sm font-medium text-[#303030] mb-1.5">Марка</label>
                 <select
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
+                  value={brandId}
+                  onChange={(e) => setBrandId(e.target.value)}
                   required
                   className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none"
                 >
                   <option value="">Выберите марку</option>
-                  {BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+                  {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
-              <Input label="Модель" placeholder="Rio, Solaris..." value={model} onChange={(e) => setModel(e.target.value)} required />
+              <div>
+                <label className="block text-sm font-medium text-[#303030] mb-1.5">Модель</label>
+                <select
+                  value={modelId}
+                  onChange={(e) => setModelId(e.target.value)}
+                  required
+                  disabled={!brandId || loadingModels}
+                  className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none disabled:bg-gray-50"
+                >
+                  <option value="">{loadingModels ? "Загрузка..." : "Выберите модель"}</option>
+                  {models.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
               <Input label="Год выпуска" type="number" placeholder="2022" value={year} onChange={(e) => setYear(e.target.value)} required />
               <Input label="Цена, ₽" type="number" placeholder="1 150 000" value={price} onChange={(e) => setPrice(e.target.value)} required />
-              <Input label="Пробег, км" type="number" placeholder="45 000" value={mileage} onChange={(e) => setMileage(e.target.value)} required />
+              <Input label="Пробег, км" type="number" placeholder="45 000" value={mileage} onChange={(e) => setMileage(e.target.value)} />
               <Input
                 label="VIN (последние 7 символов)"
                 placeholder="ABC1234"
@@ -150,6 +228,7 @@ export default function AddBuyoutPage() {
                 maxLength={7}
                 onChange={(e) => setVin(e.target.value.toUpperCase())}
                 error={vin.length > 0 && vin.length < 7 ? "Должно быть 7 символов" : undefined}
+                required
               />
             </div>
 
@@ -188,33 +267,42 @@ export default function AddBuyoutPage() {
 
             {ownerType === "INDIVIDUAL" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <Input label="ФИО владельца" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required />
-                <Input label="Контактный телефон" type="tel" placeholder="+7 (___) ___-__-__" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} required />
+                <Input label="ФИО владельца" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
+                <Input label="Контактный телефон" type="tel" placeholder="+7 (___) ___-__-__" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
               </div>
             )}
 
-            {(ownerType === "LEGAL" || ownerType === "PARK") && (
+            {(ownerType === "LEGAL_ENTITY" || ownerType === "TAXI_PARK") && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <Input label={ownerType === "PARK" ? "Название парка" : "Название организации"} value={orgName} onChange={(e) => setOrgName(e.target.value)} required />
-                <Input label="ИНН" value={orgInn} onChange={(e) => setOrgInn(e.target.value)} required />
-                <Input label="Контактное лицо" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required />
-                <Input label="Телефон" type="tel" placeholder="+7 (___) ___-__-__" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} required />
+                <Input label={ownerType === "TAXI_PARK" ? "Название парка" : "Название организации"} value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+                <Input label="ИНН" value={orgInn} onChange={(e) => setOrgInn(e.target.value)} />
+                <Input label="Контактное лицо" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
+                <Input label="Телефон" type="tel" placeholder="+7 (___) ___-__-__" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
               </div>
             )}
 
             {ownerType === "BANK" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <Input label="Название банка" value={orgName} onChange={(e) => setOrgName(e.target.value)} required />
-                <Input label="ИНН банка" value={orgInn} onChange={(e) => setOrgInn(e.target.value)} required />
-                <Input label="Залогодатель (ФИО)" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required />
-                <Input label="Телефон банка" type="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} required />
+                <Input label="Название банка" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+                <Input label="ИНН банка" value={orgInn} onChange={(e) => setOrgInn(e.target.value)} />
+                <Input label="Залогодатель (ФИО)" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
+                <Input label="Телефон банка" type="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
               </div>
             )}
+            <p className="text-[11px] text-[#A1A1A1]">Данные владельца видны только супер-менеджеру и администратору.</p>
           </section>
+
+          {error && (
+            <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-lg px-4 py-3">
+              <p className="text-sm text-[#FA6868]">{error}</p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <Button type="submit">Отправить на модерацию</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Отправка..." : "Отправить на модерацию"}
+            </Button>
             <Link href="/buyout">
               <Button type="button" variant="outline">Отмена</Button>
             </Link>

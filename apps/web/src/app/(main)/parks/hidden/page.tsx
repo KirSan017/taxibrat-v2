@@ -6,18 +6,48 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
 function HiddenParkContent() {
   const params = useSearchParams();
   const parkName = params?.get("name") ?? "Этот таксопарк";
+  const parkId = params?.get("id") ?? null;
 
   const [fio, setFio] = useState("");
   const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError(null);
+    const token = getAccessToken();
+    if (!token) {
+      setError("Войдите в аккаунт, чтобы отправить заявку");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api("/tickets", {
+        method: "POST",
+        token,
+        body: {
+          topic: "TAXI_CONNECT",
+          body:
+            `Заявка на подключение парка:\n` +
+            `Парк: ${parkName}${parkId ? ` (id: ${parkId})` : ""}\n` +
+            `ФИО: ${fio}\n` +
+            `Телефон: ${phone}`,
+        },
+      });
+      setSubmitted(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось отправить заявку");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -109,8 +139,13 @@ function HiddenParkContent() {
               onChange={(e) => setPhone(e.target.value)}
               required
             />
-            <Button type="submit" className="w-full">
-              Отправить заявку на подключение
+            {error && (
+              <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-lg px-4 py-2">
+                <p className="text-xs text-[#FA6868]">{error}</p>
+              </div>
+            )}
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? "Отправка..." : "Отправить заявку на подключение"}
             </Button>
           </form>
         </div>

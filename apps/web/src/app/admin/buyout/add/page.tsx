@@ -1,36 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
+import { useAuth } from "@/lib/use-auth";
 
-/* ── role ────────────────────────────────────────────── */
+/* ── types ─────────────────────────────────────────────── */
 
-const MOCK_ROLE = "SUPER_MANAGER" as "MANAGER" | "SUPER_MANAGER" | "ADMIN";
-const canSeeOwner = MOCK_ROLE === "SUPER_MANAGER" || MOCK_ROLE === "ADMIN";
-const canAdvertise = MOCK_ROLE === "ADMIN";
-
-type OwnerType = "INDIVIDUAL" | "LEGAL" | "PARK" | "BANK";
+type OwnerType = "INDIVIDUAL" | "LEGAL_ENTITY" | "TAXI_PARK" | "BANK";
 
 const OWNER_OPTIONS: { value: OwnerType; label: string }[] = [
   { value: "INDIVIDUAL", label: "Физ. лицо" },
-  { value: "LEGAL", label: "Юр. лицо" },
-  { value: "PARK", label: "Таксопарк" },
+  { value: "LEGAL_ENTITY", label: "Юр. лицо" },
+  { value: "TAXI_PARK", label: "Таксопарк" },
   { value: "BANK", label: "Банк" },
 ];
 
-const BRANDS = ["Kia", "Hyundai", "Skoda", "Toyota", "Volkswagen", "Chevrolet", "Lada"];
+interface Brand { id: string; name: string; }
+interface Model { id: string; name: string; brandId: string; }
 
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AdminBuyoutAddPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const role = user?.role;
+  const canSeeOwner = role === "SUPER_MANAGER" || role === "ADMIN";
+  const canAdvertise = role === "ADMIN";
+
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+
   const [photos, setPhotos] = useState<File[]>([]);
-  const [brand, setBrand] = useState("");
-  const [model, setModel] = useState("");
+  const [brandId, setBrandId] = useState("");
+  const [modelId, setModelId] = useState("");
   const [year, setYear] = useState("");
   const [price, setPrice] = useState("");
   const [mileage, setMileage] = useState("");
@@ -44,6 +53,27 @@ export default function AdminBuyoutAddPage() {
 
   const [advertised, setAdvertised] = useState(false);
   const [successAction, setSuccessAction] = useState<"draft" | "review" | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api<Brand[]>("/catalog/brands")
+      .then(setBrands)
+      .catch(() => setBrands([]));
+  }, []);
+
+  useEffect(() => {
+    if (!brandId) {
+      setModels([]);
+      setModelId("");
+      return;
+    }
+    setLoadingModels(true);
+    api<Model[]>(`/catalog/models?brandId=${brandId}`)
+      .then(setModels)
+      .catch(() => setModels([]))
+      .finally(() => setLoadingModels(false));
+  }, [brandId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -54,13 +84,53 @@ export default function AdminBuyoutAddPage() {
     setPhotos((cur) => cur.filter((_, idx) => idx !== i));
   };
 
+  const submit = async (action: "draft" | "review") => {
+    setError(null);
+    const token = getAccessToken();
+    if (!token) {
+      setError("Нет доступа");
+      return;
+    }
+    if (!brandId || !modelId) {
+      setError("Выберите марку и модель");
+      return;
+    }
+    if (vin.length !== 7) {
+      setError("VIN должен содержать 7 символов");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api("/buyout", {
+        method: "POST",
+        token,
+        body: {
+          brandId,
+          modelId,
+          year: Number(year),
+          price: Number(price),
+          mileage: mileage ? Number(mileage) : undefined,
+          vin7: vin,
+          description: description || undefined,
+          photos: [],
+          ownerType,
+        },
+      });
+      setSuccessAction(action);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось создать объявление");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSaveDraft = (e: React.FormEvent) => {
     e.preventDefault();
-    setSuccessAction("draft");
+    submit("draft");
   };
 
   const handleSendToReview = () => {
-    setSuccessAction("review");
+    submit("review");
   };
 
   return (
@@ -143,25 +213,38 @@ export default function AdminBuyoutAddPage() {
             <div>
               <label className="block text-sm font-medium text-[#303030] mb-1.5">Марка</label>
               <select
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
+                value={brandId}
+                onChange={(e) => setBrandId(e.target.value)}
                 required
                 className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none"
               >
                 <option value="">Выберите марку</option>
-                {BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+                {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
-            <Input label="Модель" placeholder="Rio, Solaris..." value={model} onChange={(e) => setModel(e.target.value)} required />
+            <div>
+              <label className="block text-sm font-medium text-[#303030] mb-1.5">Модель</label>
+              <select
+                value={modelId}
+                onChange={(e) => setModelId(e.target.value)}
+                required
+                disabled={!brandId || loadingModels}
+                className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none disabled:bg-gray-50"
+              >
+                <option value="">{loadingModels ? "Загрузка..." : "Выберите модель"}</option>
+                {models.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+            </div>
             <Input label="Год выпуска" type="number" placeholder="2022" value={year} onChange={(e) => setYear(e.target.value)} required />
             <Input label="Цена, ₽" type="number" placeholder="1 150 000" value={price} onChange={(e) => setPrice(e.target.value)} required />
-            <Input label="Пробег, км" type="number" placeholder="45 000" value={mileage} onChange={(e) => setMileage(e.target.value)} required />
+            <Input label="Пробег, км" type="number" placeholder="45 000" value={mileage} onChange={(e) => setMileage(e.target.value)} />
             <Input
               label="VIN (7 символов)"
               placeholder="ABC1234"
               value={vin}
               maxLength={7}
               onChange={(e) => setVin(e.target.value.toUpperCase())}
+              required
             />
           </div>
 
@@ -228,9 +311,9 @@ export default function AdminBuyoutAddPage() {
               </div>
             )}
 
-            {(ownerType === "LEGAL" || ownerType === "PARK") && (
+            {(ownerType === "LEGAL_ENTITY" || ownerType === "TAXI_PARK") && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input label={ownerType === "PARK" ? "Название парка" : "Название организации"} value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+                <Input label={ownerType === "TAXI_PARK" ? "Название парка" : "Название организации"} value={orgName} onChange={(e) => setOrgName(e.target.value)} />
                 <Input label="ИНН" value={orgInn} onChange={(e) => setOrgInn(e.target.value)} />
                 <Input label="Контактное лицо" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
                 <Input label="Телефон" type="tel" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} />
@@ -248,10 +331,18 @@ export default function AdminBuyoutAddPage() {
           </section>
         )}
 
+        {error && (
+          <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-lg px-4 py-3">
+            <p className="text-sm text-[#FA6868]">{error}</p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" variant="outline">Сохранить как черновик</Button>
-          <Button type="button" onClick={handleSendToReview}>Отправить на проверку SM</Button>
+          <Button type="submit" variant="outline" disabled={submitting}>Сохранить как черновик</Button>
+          <Button type="button" onClick={handleSendToReview} disabled={submitting}>
+            {submitting ? "Отправка..." : "Отправить на проверку SM"}
+          </Button>
           <Link href="/admin/buyout">
             <Button type="button" variant="ghost">Отмена</Button>
           </Link>

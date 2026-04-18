@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
 /* ── types ─────────────────────────────────────────────── */
 
@@ -17,6 +19,12 @@ const STATUS_OPTIONS: { value: UserStatus; label: string; hint: string }[] = [
   { value: "REPRESENTATIVE", label: "Представитель парка", hint: "Добавляю свой таксопарк на платформу" },
 ];
 
+const STATUS_LABELS: Record<UserStatus, string> = {
+  RENT: "Арендую",
+  PLAN_RENT: "Планирую арендовать",
+  REPRESENTATIVE: "Представитель парка",
+};
+
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AddParkPage() {
@@ -27,10 +35,41 @@ export default function AddParkPage() {
   const [phone, setPhone] = useState("");
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ticketId, setTicketId] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError(null);
+    const token = getAccessToken();
+    if (!token) {
+      setError("Войдите в аккаунт, чтобы отправить заявку");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const ticket = await api<{ id: string }>("/tickets", {
+        method: "POST",
+        token,
+        body: {
+          topic: "PARK_CHECK",
+          body:
+            `Добавление таксопарка:\n` +
+            `Статус: ${STATUS_LABELS[status]}\n` +
+            `Название: ${name}\n` +
+            `Адрес: ${address}\n` +
+            `Телефон: ${phone}\n\n` +
+            (comment || "—"),
+        },
+      });
+      setTicketId(ticket.id);
+      setSubmitted(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось отправить заявку");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -40,8 +79,8 @@ export default function AddParkPage() {
         onClose={() => setSubmitted(false)}
         title="Заявка отправлена"
         description="Мы проверим информацию о парке и добавим его в рейтинг. Обычно проверка занимает до 3 рабочих дней."
-        ctaLabel="На главную"
-        onCta={() => router.push("/")}
+        ctaLabel={ticketId ? "К тикету" : "На главную"}
+        onCta={() => router.push(ticketId ? `/support?ticketId=${ticketId}` : "/")}
         secondaryLabel="К списку"
         onSecondary={() => router.push("/parks")}
       />
@@ -130,8 +169,16 @@ export default function AddParkPage() {
             />
           </div>
 
+          {error && (
+            <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-lg px-4 py-3">
+              <p className="text-sm text-[#FA6868]">{error}</p>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 pt-2">
-            <Button type="submit" className="flex-1 sm:flex-none">Отправить на проверку</Button>
+            <Button type="submit" className="flex-1 sm:flex-none" disabled={submitting}>
+              {submitting ? "Отправка..." : "Отправить на проверку"}
+            </Button>
             <Link href="/parks">
               <Button type="button" variant="outline">Отмена</Button>
             </Link>
