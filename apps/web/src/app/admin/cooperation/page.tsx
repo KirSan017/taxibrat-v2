@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -29,11 +30,14 @@ interface CooperationListResponse {
 
 /* ── page ─────────────────────────────────────────────── */
 
+const LIMIT = 20;
+
 export default function AdminCooperationPage() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<CooperationRequest[]>([]);
   const [unread, setUnread] = useState(0);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<"ALL" | "UNREAD">("ALL");
@@ -44,8 +48,8 @@ export default function AdminCooperationPage() {
     setLoading(true);
     setError("");
     const params = new URLSearchParams();
-    params.set("page", "1");
-    params.set("limit", "50");
+    params.set("page", String(page));
+    params.set("limit", String(LIMIT));
     if (filter === "UNREAD") params.set("isRead", "false");
     api<CooperationListResponse>(`/admin/cooperation?${params.toString()}`, { token })
       .then((res) => {
@@ -58,10 +62,14 @@ export default function AdminCooperationPage() {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [filter]);
+
+  useEffect(() => {
     if (!user) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, filter]);
+  }, [user, filter, page]);
 
   const markRead = async (id: string) => {
     const token = getAccessToken();
@@ -152,6 +160,14 @@ export default function AdminCooperationPage() {
           ))}
         </div>
       )}
+
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
+      </div>
     </div>
   );
 }

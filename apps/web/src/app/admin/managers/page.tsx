@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -29,12 +29,21 @@ interface UsersResponse {
 
 /* ── page ─────────────────────────────────────────────── */
 
+const LIMIT = 20;
+
 export default function AdminManagersPage() {
   const { user } = useAuth();
   const [managers, setManagers] = useState<ManagerUser[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   useEffect(() => {
     if (!user) return;
@@ -42,15 +51,18 @@ export default function AdminManagersPage() {
     if (!token) return;
     setLoading(true);
     const params = new URLSearchParams();
-    params.set("page", "1");
-    params.set("limit", "100");
+    params.set("page", String(page));
+    params.set("limit", String(LIMIT));
     params.set("role", "MANAGER");
     if (search) params.set("search", search);
     api<UsersResponse>(`/admin/users?${params.toString()}`, { token })
-      .then((res) => setManagers(res.data || []))
+      .then((res) => {
+        setManagers(res.data || []);
+        setTotal(res.total || 0);
+      })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка"))
       .finally(() => setLoading(false));
-  }, [user, search]);
+  }, [user, search, page]);
 
   return (
     <div>
@@ -105,6 +117,14 @@ export default function AdminManagersPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

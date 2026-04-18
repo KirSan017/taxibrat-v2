@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
@@ -17,9 +18,12 @@ interface Park {
   name: string;
   status: string;
   isAdvertised?: boolean;
+  isSuperAdvertised?: boolean;
   city?: string | null;
   createdAt: string;
 }
+
+const LIMIT = 20;
 
 interface ParksResponse {
   data: Park[];
@@ -37,6 +41,8 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "gray" | "green" |
 export default function AdminParksListPage() {
   const { user } = useAuth();
   const [parks, setParks] = useState<Park[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -59,18 +65,30 @@ export default function AdminParksListPage() {
     if (!token) return;
     setLoading(true);
     setError("");
-    api<ParksResponse>("/admin/parks?page=1&limit=100", { token })
-      .then((res) => setParks(res.data || []))
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("limit", String(LIMIT));
+    if (search.trim()) params.set("search", search.trim());
+    api<ParksResponse>(`/admin/parks?${params.toString()}`, { token })
+      .then((res) => {
+        setParks(res.data || []);
+        setTotal(res.total || 0);
+      })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка"))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  useEffect(() => {
     if (!user) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, page, search]);
 
+  // Server-side search not guaranteed — also filter locally as a fallback
   const filtered = parks.filter((p) => !search || p.name.toLowerCase().includes(search.toLowerCase()));
 
   const checkDuplicates = async () => {
@@ -218,9 +236,10 @@ export default function AdminParksListPage() {
                     <Link href={`/admin/parks/${p.id}`} className="text-[#303030] font-medium hover:underline">
                       {p.name}
                     </Link>
-                    {p.isAdvertised && (
-                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F8D62E] text-[#303030]">
-                        AD
+                    {(p.isAdvertised || p.isSuperAdvertised) && (
+                      <span className="ml-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F8D62E] text-[#303030]">
+                        <span aria-hidden>★</span>
+                        {p.isSuperAdvertised ? "Супер реклама" : "Реклама"}
                       </span>
                     )}
                   </td>
@@ -255,6 +274,14 @@ export default function AdminParksListPage() {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Create form */}

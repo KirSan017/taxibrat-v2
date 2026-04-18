@@ -17,6 +17,7 @@ interface Order {
   status: string;
   creatorId?: string;
   assignedManagerId?: string | null;
+  assignedAt?: string | null;
   createdAt: string;
 }
 
@@ -42,6 +43,40 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" 
 
 function minutesSince(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+}
+
+/**
+ * SLA countdown: visual elapsed since order was assigned.
+ * Turns orange at 2 min, red at 3+ min.
+ */
+function ElapsedTime({ assignedAt }: { assignedAt: string }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const update = () => setElapsed(Date.now() - new Date(assignedAt).getTime());
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [assignedAt]);
+
+  const totalSeconds = Math.max(0, Math.floor(elapsed / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const color =
+    minutes >= 3
+      ? "text-[#FA6868]"
+      : minutes >= 2
+        ? "text-orange-500"
+        : "text-[#303030]";
+
+  return (
+    <span
+      className={`font-mono text-sm font-medium tabular-nums ${color}`}
+      title="Время с момента назначения"
+    >
+      {minutes}:{seconds.toString().padStart(2, "0")}
+    </span>
+  );
 }
 
 /* ── page ─────────────────────────────────────────────── */
@@ -147,12 +182,27 @@ export default function AdminOrdersPage() {
               <div key={o.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4 md:p-5">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <Badge variant={sc.variant}>{sc.label}</Badge>
                       <span className="text-xs text-[#A1A1A1]">
                         {new Date(o.createdAt).toLocaleString("ru-RU")}
                       </span>
                       <span className="text-xs text-[#A1A1A1]">· {minsAgo} мин. назад</span>
+                      {canAct && o.assignedAt && (
+                        <span className="inline-flex items-center gap-1 ml-auto px-2 py-0.5 rounded-md bg-gray-50 border border-[#E5E5E5]">
+                          <svg
+                            className="w-3.5 h-3.5 text-[#A1A1A1]"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+                            <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <ElapsedTime assignedAt={o.assignedAt} />
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-start gap-2 mb-1">
                       <svg className="w-4 h-4 text-green-500 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
