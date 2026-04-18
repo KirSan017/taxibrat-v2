@@ -24,7 +24,9 @@ export const rejectTicketSchema = z.object({
 });
 
 export const approveTicketSchema = z.object({
-  pointsAwarded: z.number().int().min(0).default(0),
+  // Optional override: when provided, takes precedence over topic-derived settings value.
+  // When omitted, TicketsService resolves amount from settings based on ticket topic.
+  pointsAwarded: z.number().int().min(0).optional(),
 });
 
 export type CreateTicketDto = z.infer<typeof createTicketSchema>;

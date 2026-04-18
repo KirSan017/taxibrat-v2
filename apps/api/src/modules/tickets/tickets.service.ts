@@ -7,6 +7,7 @@ import { tickets, users } from "@taxibrat/db";
 import {
   CreateTicketDto, ListTicketsDto, TicketStatus, TicketTopic,
   TICKET_TOPIC_CONFIG, NotificationType, PointsTransactionType,
+  AuditAction, AuditEntity,
 } from "@taxibrat/shared";
 import { TicketDistributorService } from "./ticket-distributor.service";
 import { MessagesService } from "./messages.service";
@@ -15,6 +16,7 @@ import { NotificationsGateway } from "../notifications/notifications.gateway";
 import { PointsService } from "../points/points.service";
 import { SettingsService } from "../settings/settings.service";
 import { ReferralsService } from "../referrals/referrals.service";
+import { AuditService } from "../audit/audit.service";
 
 @Injectable()
 export class TicketsService {
@@ -27,6 +29,7 @@ export class TicketsService {
     private pointsService: PointsService,
     private settingsService: SettingsService,
     private referralsService: ReferralsService,
+    private auditService: AuditService,
   ) {}
 
   async create(userId: string, dto: CreateTicketDto) {
@@ -65,6 +68,14 @@ export class TicketsService {
 
     // Distribute to manager
     await this.distributor.assignTicket(ticket.id, dto.topic as TicketTopic, userId);
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.CREATE,
+      entity: AuditEntity.TICKET,
+      entityId: ticket.id,
+      newValue: ticket,
+    });
 
     return ticket;
   }
@@ -144,6 +155,15 @@ export class TicketsService {
       .set({ status: "CANCELLED" as any })
       .where(eq(tickets.id, ticketId));
 
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.TICKET,
+      entityId: ticketId,
+      oldValue: { status: ticket.status },
+      newValue: { status: "CANCELLED" },
+    });
+
     return { success: true };
   }
 
@@ -187,13 +207,60 @@ export class TicketsService {
     });
     this.notificationsGateway.pushToUser(ticket.userId, { type: "ticket-updated", ticketId, status: newStatus });
 
+    await this.auditService.log({
+      actorId: managerId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.TICKET,
+      entityId: ticketId,
+      oldValue: { status: ticket.status },
+      newValue: { status: newStatus },
+    });
+
     return { success: true, status: newStatus };
   }
 
-  async approve(ticketId: string, smId: string, pointsAwarded: number) {
+  /**
+   * Map ticket topic to corresponding points transaction type + settings key.
+   * Topics that should not award points (USER_BASE_CHECK, LEGAL, FRIENDSHIP_POINTS, OTHER) return null.
+   */
+  private getPointsConfigForTopic(
+    topic: string,
+  ): { type: PointsTransactionType; settingsKey: string; defaultAmount: number } | null {
+    switch (topic) {
+      case "PARK_CHECK":
+        return { type: PointsTransactionType.PARK_CHECK, settingsKey: "points_park_check", defaultAmount: 150 };
+      case "TAXI_CONNECT":
+        return { type: PointsTransactionType.TAXI_CONNECT, settingsKey: "points_taxi_connect", defaultAmount: 150 };
+      case "BUYOUT":
+        return { type: PointsTransactionType.BUYOUT, settingsKey: "points_buyout", defaultAmount: 1000 };
+      default:
+        // USER_BASE_CHECK (already charged), LEGAL, FRIENDSHIP_POINTS, OTHER — no points awarded
+        return null;
+    }
+  }
+
+  async approve(ticketId: string, smId: string, pointsAwardedOverride?: number) {
     const ticket = await this.getById(ticketId);
     if (ticket.status !== "PENDING_SM_REVIEW") {
       throw new BadRequestException("Ticket must be PENDING_SM_REVIEW");
+    }
+
+    // Resolve points amount + type based on topic
+    const topicConfig = this.getPointsConfigForTopic(ticket.topic);
+    let pointsAwarded = 0;
+    let pointsType: PointsTransactionType | null = null;
+
+    if (topicConfig) {
+      pointsType = topicConfig.type;
+      // Prefer explicit override from SM if provided, otherwise use settings value
+      if (typeof pointsAwardedOverride === "number" && pointsAwardedOverride >= 0) {
+        pointsAwarded = pointsAwardedOverride;
+      } else {
+        pointsAwarded = await this.settingsService.getNumber(
+          topicConfig.settingsKey,
+          topicConfig.defaultAmount,
+        );
+      }
     }
 
     await this.db.update(tickets)
@@ -204,12 +271,12 @@ export class TicketsService {
       })
       .where(eq(tickets.id, ticketId));
 
-    // Award points to user
-    if (pointsAwarded > 0) {
+    // Award points to user only if topic supports points and amount > 0
+    if (pointsType && pointsAwarded > 0) {
       await this.pointsService.award(
         ticket.userId,
         pointsAwarded,
-        PointsTransactionType.PARK_CHECK,
+        pointsType,
         "Тикет подтверждён",
         ticketId,
         smId,
@@ -237,6 +304,15 @@ export class TicketsService {
     } else if (ticket.topic === "BUYOUT") {
       await this.referralsService.awardBuyoutBonus(ticket.userId, ticketId);
     }
+
+    await this.auditService.log({
+      actorId: smId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.TICKET,
+      entityId: ticketId,
+      oldValue: { status: ticket.status },
+      newValue: { status: "COMPLETED", pointsAwarded, pointsType },
+    });
 
     return { success: true };
   }
@@ -271,6 +347,15 @@ export class TicketsService {
       });
       this.notificationsGateway.pushToUser(ticket.assignedToId, { type: "ticket-updated", ticketId, status: "SM_REJECTED" });
     }
+
+    await this.auditService.log({
+      actorId: smId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.TICKET,
+      entityId: ticketId,
+      oldValue: { status: ticket.status },
+      newValue: { status: "SM_REJECTED", rejectionReason: reason },
+    });
 
     return { success: true };
   }
