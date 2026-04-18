@@ -23,7 +23,7 @@ export class AuthController {
   @Post("verify")
   @UsePipes(new ZodValidationPipe(verifyCodeSchema))
   verify(@Body() dto: VerifyCodeDto) {
-    return this.authService.verifyCode(dto.phone, dto.code);
+    return this.authService.verifyCode(dto.phone, dto.code, dto.referralCode);
   }
 
   @Post("refresh")

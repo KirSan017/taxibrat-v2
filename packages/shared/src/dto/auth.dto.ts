@@ -4,11 +4,13 @@ import { VerificationMethod } from "../enums";
 export const sendCodeSchema = z.object({
   phone: z.string().regex(/^\+7\d{10}$/, "Phone must be in format +7XXXXXXXXXX"),
   method: z.nativeEnum(VerificationMethod),
+  referralCode: z.string().optional(),
 });
 
 export const verifyCodeSchema = z.object({
   phone: z.string().regex(/^\+7\d{10}$/, "Phone must be in format +7XXXXXXXXXX"),
   code: z.string().length(6, "Code must be 6 digits"),
+  referralCode: z.string().optional(),
 });
 
 export const refreshTokenSchema = z.object({

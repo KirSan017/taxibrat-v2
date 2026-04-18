@@ -64,7 +64,7 @@ export class AuthService {
     return { codeSent: true };
   }
 
-  async verifyCode(phone: string, code: string) {
+  async verifyCode(phone: string, code: string, referralCode?: string) {
     const [record] = await this.db
       .select()
       .from(verificationCodes)
@@ -103,11 +103,23 @@ export class AuthService {
 
     let isNewUser = false;
     if (!user) {
+      // Resolve inviter by referral code (if provided and valid)
+      let referredById: string | undefined;
+      if (referralCode) {
+        const [inviter] = await this.db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.referralCode, referralCode))
+          .limit(1);
+        if (inviter) referredById = inviter.id;
+      }
+
       [user] = await this.db
         .insert(users)
         .values({
           phone,
           referralCode: this.generateReferralCode(),
+          referredById,
         })
         .returning();
       isNewUser = true;
