@@ -28,33 +28,117 @@ interface ParkClassItem {
   isSuperAdvertised?: boolean;
 }
 
-const FEATURES = [
+interface FeatureCard {
+  bg: string;
+  heading: React.ReactNode;
+  textColor: string;
+  steps: string[];
+  stepTextColor: string;
+  footer?: React.ReactNode;
+  button: { text: string; href?: string; onClick?: boolean; bg: string; color: string };
+  image: string;
+}
+
+const DEFAULT_FEATURES = (onAuth: () => void): FeatureCard[] => [
   {
-    title: "Получите заказ «По делам»\nв любом месте за 2 мин,\nбез 9%",
-    description: "Сервис подачи заказов для водителей такси без комиссии агрегатора. Экономьте на каждой поездке.",
-    color: "bg-[#F8D62E]",
-    textColor: "text-[#303030]",
+    bg: "bg-[#1A1A1A]",
+    heading: (
+      <>
+        Получите заказ «По делам»<br />
+        в любом месте <span className="text-[#F8D62E]">за 2 мин, без 9%</span>
+      </>
+    ),
+    textColor: "text-white",
+    stepTextColor: "text-white/70",
+    steps: [
+      "Укажите точки А и Б, класс такси",
+      "Вызовем ваше такси за 2 мин",
+      "Выполните заказ или повысьте спрос",
+    ],
+    footer: (
+      <p className="text-xs text-[#F8D62E] leading-relaxed max-w-[320px]">
+        Выполни заказ — получи 5 звезд и промокод на 6 часов без комиссии!
+      </p>
+    ),
+    button: {
+      text: "Вызвать такси",
+      href: "/no9",
+      bg: "bg-white",
+      color: "text-[#1A1A1A]",
+    },
     image: "/figma/feature-no9.png",
   },
   {
-    title: "Выкуп\nавтомобилей",
-    description: "Подберём автомобиль для работы в такси с выгодными условиями выкупа от проверенных парков.",
-    color: "bg-[#303030]",
+    bg: "bg-[#2F9E4D]",
+    heading: (
+      <>
+        Выкуп<br />автомобилей
+      </>
+    ),
     textColor: "text-white",
+    stepTextColor: "text-white/80",
+    steps: [
+      "Выберите авто по параметрам",
+      "Найдите лучшую цену и условия в городе",
+      "Оставьте заявку",
+      "Наш менеджер сопроводит вас до полного выкупа авто",
+    ],
+    button: {
+      text: "Посмотреть авто",
+      href: "/buyout",
+      bg: "bg-white",
+      color: "text-[#1A1A1A]",
+    },
     image: "/figma/feature-buyout.png",
   },
   {
-    title: "Проверка по базе\nтаксопарков",
-    description: "Узнайте реальные условия парка до подключения. Независимый рейтинг от водителей.",
-    color: "bg-white border border-[#E5E5E5]",
-    textColor: "text-[#303030]",
+    bg: "bg-[#F8D62E]",
+    heading: (
+      <>
+        Проверка по базе<br />таксопарков
+      </>
+    ),
+    textColor: "text-[#1A1A1A]",
+    stepTextColor: "text-[#1A1A1A]/70",
+    steps: [
+      "Отправьте запрос на проверку (10 секунд)",
+      "Дадим ответ в течении 1 часа",
+      "Проконсультируем в непростых ситуациях",
+    ],
+    button: {
+      text: "Проверить по базе",
+      onClick: true,
+      bg: "bg-[#1A1A1A]",
+      color: "text-white",
+    },
     image: "/figma/feature-check.png",
   },
   {
-    title: "Подключим\nвас к такси",
-    description: "Поможем выбрать лучший таксопарк под ваши параметры: класс, район, автомобиль.",
-    color: "bg-[#303030]",
-    textColor: "text-white",
+    bg: "bg-[#EDEDED]",
+    heading: (
+      <>
+        Подключим<br />вас к такси
+      </>
+    ),
+    textColor: "text-[#1A1A1A]",
+    stepTextColor: "text-[#1A1A1A]/70",
+    steps: [],
+    footer: (
+      <div className="flex flex-col gap-2 items-start">
+        <span className="inline-flex px-3 py-1.5 bg-[#2F9E4D] text-white text-xs font-medium rounded-md">
+          Комиссия — 1,5%
+        </span>
+        <span className="inline-flex px-3 py-1.5 bg-[#F8D62E] text-[#1A1A1A] text-xs font-medium rounded-md">
+          Вывод — моментальный
+        </span>
+      </div>
+    ),
+    button: {
+      text: "Подключиться",
+      onClick: true,
+      bg: "bg-white",
+      color: "text-[#1A1A1A]",
+    },
     image: "/figma/feature-connect.png",
   },
 ];
@@ -292,85 +376,128 @@ export default function HomePage() {
 
       {/* ══════ FEATURES GRID ══════ */}
       <section className="bg-white">
-        <div className="max-w-[1600px] mx-auto px-6 pb-12 md:pb-16">
+        <div className="max-w-[1600px] mx-auto px-6 pb-8 md:pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {FEATURES.map((f, i) => (
-              <div
-                key={i}
-                className={`${f.color} ${f.textColor} rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[260px] relative overflow-hidden`}
-              >
-                <div className="relative z-10 max-w-[60%]">
-                  <h3 className="text-xl md:text-2xl font-medium whitespace-pre-line leading-snug">
-                    {f.title}
-                  </h3>
-                  <p className={`mt-4 text-sm leading-relaxed ${f.textColor === "text-white" ? "text-white/70" : "text-[#A1A1A1]"}`}>
-                    {f.description}
-                  </p>
+            {DEFAULT_FEATURES(() => setAuthOpen(true)).map((f, i) => {
+              const btnContent = (
+                <button
+                  type="button"
+                  onClick={f.button.onClick ? () => setAuthOpen(true) : undefined}
+                  className={`inline-flex items-center justify-center h-11 px-6 rounded-lg text-sm font-medium ${f.button.bg} ${f.button.color} hover:opacity-90 transition-opacity`}
+                >
+                  {f.button.text}
+                </button>
+              );
+              return (
+                <div
+                  key={i}
+                  className={`${f.bg} ${f.textColor} rounded-[24px] p-7 md:p-10 flex flex-col justify-between min-h-[320px] relative overflow-hidden`}
+                >
+                  <div className="relative z-10 max-w-[60%]">
+                    <h3 className="text-[22px] md:text-[28px] font-medium leading-[1.15]">
+                      {f.heading}
+                    </h3>
+                    {f.steps.length > 0 && (
+                      <ol className={`mt-5 space-y-1.5 text-[13px] leading-relaxed ${f.stepTextColor}`}>
+                        {f.steps.map((s, idx) => (
+                          <li key={idx}>{idx + 1} — {s}</li>
+                        ))}
+                      </ol>
+                    )}
+                    {f.footer && <div className="mt-5">{f.footer}</div>}
+                  </div>
+                  <div className="relative z-10 mt-6">
+                    {f.button.href ? (
+                      <Link href={f.button.href}>{btnContent}</Link>
+                    ) : (
+                      btnContent
+                    )}
+                  </div>
+                  <Image
+                    src={f.image}
+                    alt=""
+                    width={320}
+                    height={320}
+                    className="absolute bottom-0 right-0 w-[140px] md:w-[200px] h-auto object-contain pointer-events-none select-none"
+                  />
                 </div>
-                <Image
-                  src={f.image}
-                  alt=""
-                  width={320}
-                  height={320}
-                  className="absolute bottom-0 right-0 w-[140px] md:w-[180px] h-auto object-contain pointer-events-none select-none"
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ══════ CTA ══════ */}
-      <section className="bg-[#F3F1E7]">
-        <div className="max-w-[1600px] mx-auto px-6 py-12 md:py-16">
-          {pointsReview.enabled && (
-            <div className="mb-6 bg-[#FFF8D6] border border-[#F8D62E] rounded-2xl p-5 md:p-6 flex items-start gap-3">
-              <svg
-                className="w-5 h-5 text-[#B8A033] shrink-0 mt-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v2m0 4h.01M12 3a9 9 0 110 18 9 9 0 010-18z"
-                />
+      <section className="bg-white">
+        <div className="max-w-[1600px] mx-auto px-6 pb-12 md:pb-16">
+          <div className="bg-[#F8D62E] rounded-[24px] p-8 md:p-12 grid md:grid-cols-[1.3fr_1fr] gap-8 md:gap-10">
+            {/* Left side */}
+            <div>
+              <h2 className="text-[24px] md:text-[36px] leading-[1.2] font-medium text-[#1A1A1A]">
+                Зарегистрируйтесь сейчас и получите{" "}
+                <span className="text-[#1A1A1A]">100 баллов дружбы</span> на заказ{" "}
+                «По&nbsp;делам, без 9%» и проверку в базе таксопарков
+              </h2>
+              <p className="mt-5 text-xs md:text-sm text-[#1A1A1A]/70 leading-relaxed max-w-lg">
+                Со временем количество баллов для новых участников будет уменьшаться.
+              </p>
+              {pointsReview.enabled && pointsReview.date && (
+                <div className="mt-3 inline-flex items-center gap-2 text-xs text-[#1A1A1A]">
+                  <span>Следующее уменьшение</span>
+                  <span className="px-3 py-1 bg-[#FA6868] text-white rounded-full font-medium">
+                    {pointsReview.date}
+                  </span>
+                </div>
+              )}
+              <div className="mt-8 flex gap-3">
+                <Button
+                  size="lg"
+                  onClick={() => setAuthOpen(true)}
+                  className="!bg-[#1A1A1A] !text-white hover:!bg-[#1A1A1A]/90"
+                >
+                  Зарегистрироваться
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setAuthOpen(true)}
+                  className="!bg-white !border-white !text-[#1A1A1A] hover:!bg-white/90"
+                >
+                  Войти
+                </Button>
+              </div>
+            </div>
+            {/* Right side — dark card with points list */}
+            <div className="bg-[#1A1A1A] rounded-[20px] p-6 md:p-8 text-white">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-7 h-7 rounded-full bg-[#F8D62E]/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#F8D62E]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </div>
+                <p className="text-sm font-medium">Как получить «баллы дружбы»?</p>
+              </div>
+              <ul className="space-y-3 text-xs md:text-[13px] text-white/80">
+                <li>Зарегистрируйтесь — <span className="text-white">100 б</span></li>
+                <li>Приведите друга — <span className="text-white">200 б</span> вам и <span className="text-white">100 б</span> другу</li>
+                <li>Отправили на проверку таксопарка — <span className="text-white">200 баллов</span></li>
+                <li>Подключились к такси — <span className="text-white">150 баллов</span></li>
+                <li>Взяли такси в аренду себе или другу — <span className="text-white">300 баллов</span></li>
+                <li>Взяли авто в выкуп себе или другу — <span className="text-white">1000 баллов</span></li>
+              </ul>
+            </div>
+          </div>
+
+          {pointsReview.enabled && !pointsReview.date && (
+            <div className="mt-4 bg-[#FFF8D6] border border-[#F8D62E] rounded-xl p-4 flex items-start gap-3">
+              <svg className="w-5 h-5 text-[#B8A033] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M12 3a9 9 0 110 18 9 9 0 010-18z" />
               </svg>
-              <p className="text-sm md:text-base text-[#303030] leading-relaxed">
-                <span className="font-medium">Внимание!</span>{" "}
-                {pointsReview.date
-                  ? `С ${pointsReview.date} `
-                  : "В ближайшее время "}
-                баллы дружбы будут пересмотрены в сторону уменьшения.
+              <p className="text-sm text-[#303030]">
+                <span className="font-medium">Внимание!</span> В ближайшее время баллы дружбы будут пересмотрены в сторону уменьшения.
               </p>
             </div>
           )}
-          <div className="bg-[#F8D62E] rounded-[32px] p-8 md:p-14 flex flex-col md:flex-row md:items-center gap-8 md:gap-12 relative overflow-hidden">
-            <div className="max-w-2xl relative z-10">
-              <h2 className="text-[28px] md:text-[40px] leading-[1.15] font-medium text-[#303030]">
-                Зарегистрируйтесь сейчас и получите{" "}
-                <span className="whitespace-nowrap">100 баллов дружбы</span>
-              </h2>
-              <p className="mt-4 text-sm md:text-base text-[#303030]/70 max-w-lg leading-relaxed">
-                Баллы можно потратить на сервис «По делам, без 9%» и проверку в базе таксопарков. 2 простых шага — и доступ ко всем инструментам платформы.
-              </p>
-              <Button size="lg" className="mt-8" onClick={() => setAuthOpen(true)}>
-                Зарегистрироваться
-              </Button>
-            </div>
-            {/* Friendship points illustration */}
-            <div className="shrink-0 hidden md:block relative z-10">
-              <Image
-                src="/figma/cta-banner.png"
-                alt=""
-                width={280}
-                height={280}
-                className="w-[200px] lg:w-[260px] h-auto"
-              />
-            </div>
-          </div>
         </div>
       </section>
 
