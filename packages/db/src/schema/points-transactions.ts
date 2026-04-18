@@ -5,7 +5,8 @@ import { users } from "./users";
 import { tickets } from "./tickets";
 
 export const pointsTransactionTypeEnum = pgEnum("points_transaction_type", [
-  "REGISTRATION", "PARK_CHECK", "TAXI_CONNECT", "BUYOUT", "REFERRAL",
+  "REGISTRATION", "PARK_CHECK", "TAXI_CONNECT", "RENTAL_CONFIRMED",
+  "BUYOUT", "REFERRAL",
   "ORDER_NO9", "ORDER_CANCEL", "BASE_CHECK", "MANUAL_ADMIN", "IDEA",
 ]);
 

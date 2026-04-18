@@ -1,4 +1,4 @@
-import { pgTable, uuid, integer, decimal, boolean, pgEnum, timestamp, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, integer, decimal, boolean, pgEnum, timestamp, uniqueIndex, index, jsonb } from "drizzle-orm/pg-core";
 import { taxiParks } from "./taxi-parks";
 import { users } from "./users";
 
@@ -36,6 +36,9 @@ export const parkClasses = pgTable(
     paramsRating: decimal("params_rating", { precision: 3, scale: 2 }).default("0"),
     rating: decimal("rating", { precision: 3, scale: 2 }).default("0"),
     hasAvailableCars: boolean("has_available_cars").notNull().default(false),
+    // ТЗ: reserved for future rating parameters (21st+). Stored as JSONB
+    // so new params can be added without schema migrations.
+    extraParams: jsonb("extra_params").$type<Record<string, number>>().default({}),
     lastUpdatedBy: uuid("last_updated_by").references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

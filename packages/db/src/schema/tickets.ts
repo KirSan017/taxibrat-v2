@@ -31,6 +31,8 @@ export const tickets = pgTable(
     smReviewedById: uuid("sm_reviewed_by_id").references(() => users.id),
     smRejectionReason: text("sm_rejection_reason"),
     pointsAwarded: integer("points_awarded").notNull().default(0),
+    rentalConfirmedAt: timestamp("rental_confirmed_at", { withTimezone: true }),
+    rentalConfirmedById: uuid("rental_confirmed_by_id").references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
