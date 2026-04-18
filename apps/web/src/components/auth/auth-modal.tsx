@@ -1,5 +1,9 @@
 "use client";
 
+// TODO: integrate Yandex SmartCaptcha before phone verification.
+// Requires user-provided captcha keys (client + server) in env. Skipped
+// until those secrets are available — see ТЗ.
+
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";

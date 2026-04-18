@@ -77,7 +77,7 @@ export default function DashboardLayout({
     );
   }
 
-  const displayBalance = (user.friendshipPoints || 0) + 615;
+  const displayBalance = user.friendshipPoints || 0;
   const displayName = formatDisplayName(user.firstName, user.lastName, user.phone);
   const initials = getInitials(user.firstName, user.lastName);
 

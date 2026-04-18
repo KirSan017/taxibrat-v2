@@ -10,31 +10,24 @@ import { getAccessToken } from "@/lib/auth";
 
 /* ── constants ─────────────────────────────────────────── */
 
-const CAR_CLASSES = ["Эконом", "Комфорт", "Комфорт+", "Бизнес", "Премьер", "Элит"];
+const CAR_CLASS_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "ECONOMY", label: "Эконом" },
+  { value: "COMFORT", label: "Комфорт" },
+  { value: "COMFORT_PLUS", label: "Комфорт+" },
+  { value: "BUSINESS", label: "Бизнес" },
+  { value: "PREMIER", label: "Премьер" },
+  { value: "ELITE", label: "Элит" },
+];
 
 const CITIES = [
   "Москва", "Санкт-Петербург", "Казань", "Екатеринбург", "Новосибирск",
   "Нижний Новгород", "Челябинск", "Самара", "Омск", "Ростов-на-Дону",
 ];
 
-const CAR_BRANDS = [
-  "Audi", "BMW", "Chery", "Chevrolet", "Ford", "Geely", "Genesis",
-  "Haval", "Honda", "Hyundai", "Kia", "Lada", "Mazda", "Mercedes-Benz",
-  "Mitsubishi", "Nissan", "Opel", "Peugeot", "Renault", "Skoda",
-  "Toyota", "Volkswagen", "Volvo",
-];
-
-const CAR_MODELS: Record<string, string[]> = {
-  Hyundai: ["Solaris", "Creta", "Tucson", "Santa Fe", "Sonata"],
-  Kia: ["Rio", "Ceed", "K5", "Sportage", "Sorento"],
-  Toyota: ["Camry", "Corolla", "RAV4", "Land Cruiser"],
-  Volkswagen: ["Polo", "Tiguan", "Passat", "Jetta"],
-  Skoda: ["Octavia", "Rapid", "Kodiaq", "Superb"],
-  BMW: ["3 Series", "5 Series", "X3", "X5"],
-  "Mercedes-Benz": ["E-Class", "S-Class", "C-Class", "GLC"],
-};
-
 /* ── types ─────────────────────────────────────────── */
+
+interface ApiBrand { id: string; name: string }
+interface ApiModel { id: string; name: string; brandId: string }
 
 interface ProfileForm {
   lastName: string;
@@ -44,9 +37,9 @@ interface ProfileForm {
   birthDate: string;
   city: string;
   carYear: string;
-  carNumber: string;
-  carBrand: string;
-  carModel: string;
+  carPlate: string;
+  carBrandId: string;
+  carModelId: string;
   carClass: string;
 }
 
@@ -58,9 +51,9 @@ const EMPTY_FORM: ProfileForm = {
   birthDate: "",
   city: "",
   carYear: "",
-  carNumber: "",
-  carBrand: "",
-  carModel: "",
+  carPlate: "",
+  carBrandId: "",
+  carModelId: "",
   carClass: "",
 };
 
@@ -75,6 +68,8 @@ export default function ProfilePage() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [brands, setBrands] = useState<ApiBrand[]>([]);
+  const [models, setModels] = useState<ApiModel[]>([]);
 
   const isFirstTime = user?.status === "PHONE_VERIFIED";
 
@@ -187,6 +182,23 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    // Load brands once
+    api<ApiBrand[]>("/catalog/brands")
+      .then((data) => setBrands(Array.isArray(data) ? data : []))
+      .catch(() => setBrands([]));
+  }, []);
+
+  useEffect(() => {
+    if (!form.carBrandId) {
+      setModels([]);
+      return;
+    }
+    api<ApiModel[]>(`/catalog/models?brandId=${form.carBrandId}`)
+      .then((data) => setModels(Array.isArray(data) ? data : []))
+      .catch(() => setModels([]));
+  }, [form.carBrandId]);
+
+  useEffect(() => {
     if (!user) return;
     const token = getAccessToken();
     if (!token) {
@@ -199,6 +211,12 @@ export default function ProfilePage() {
       patronymic: string | null;
       email: string | null;
       birthDate: string | null;
+      city: string | null;
+      carClass: string | null;
+      carBrandId: string | null;
+      carModelId: string | null;
+      carYear: number | null;
+      carPlate: string | null;
     }>("/users/me", { token })
       .then((me) => {
         setForm({
@@ -208,6 +226,12 @@ export default function ProfilePage() {
           patronymic: me.patronymic || "",
           email: me.email || "",
           birthDate: me.birthDate || "",
+          city: me.city || "",
+          carClass: me.carClass || "",
+          carBrandId: me.carBrandId || "",
+          carModelId: me.carModelId || "",
+          carYear: me.carYear != null ? String(me.carYear) : "",
+          carPlate: me.carPlate || "",
         });
       })
       .catch(() => {
@@ -231,13 +255,19 @@ export default function ProfilePage() {
     if (!token) return;
     setSubmitting(true);
     try {
-      const payload: Record<string, string> = {
+      const payload: Record<string, string | number> = {
         firstName: form.firstName,
         lastName: form.lastName,
         birthDate: form.birthDate,
       };
       if (form.patronymic) payload.patronymic = form.patronymic;
       if (form.email) payload.email = form.email;
+      if (form.city) payload.city = form.city;
+      if (form.carClass) payload.carClass = form.carClass;
+      if (form.carBrandId) payload.carBrandId = form.carBrandId;
+      if (form.carModelId) payload.carModelId = form.carModelId;
+      if (form.carYear) payload.carYear = Number(form.carYear);
+      if (form.carPlate) payload.carPlate = form.carPlate;
 
       await api("/users/me", {
         method: "PATCH",
@@ -255,8 +285,6 @@ export default function ProfilePage() {
       setSubmitting(false);
     }
   };
-
-  const availableModels = CAR_MODELS[form.carBrand] || [];
 
   if (loading) {
     return <div className="max-w-[700px] text-sm text-[#A1A1A1]">Загрузка...</div>;
@@ -544,28 +572,28 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        {/* Car number */}
+        {/* Car plate */}
         <Input
           label="Гос номер авто"
           placeholder="А123АА 777"
-          value={form.carNumber}
-          onChange={(e) => update("carNumber", e.target.value)}
+          value={form.carPlate}
+          onChange={(e) => update("carPlate", e.target.value)}
         />
 
         {/* Car brand select */}
         <div className="w-full">
           <label className="block text-sm font-medium text-[#303030] mb-1.5">Марка авто</label>
           <select
-            value={form.carBrand}
+            value={form.carBrandId}
             onChange={(e) => {
-              update("carBrand", e.target.value);
-              update("carModel", "");
+              update("carBrandId", e.target.value);
+              update("carModelId", "");
             }}
             className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] outline-none focus:border-[#303030] transition-colors bg-white appearance-none cursor-pointer"
           >
             <option value="">Марка авто</option>
-            {CAR_BRANDS.map((b) => (
-              <option key={b} value={b}>{b}</option>
+            {brands.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
         </div>
@@ -574,14 +602,14 @@ export default function ProfilePage() {
         <div className="w-full">
           <label className="block text-sm font-medium text-[#303030] mb-1.5">Модель авто</label>
           <select
-            value={form.carModel}
-            onChange={(e) => update("carModel", e.target.value)}
+            value={form.carModelId}
+            onChange={(e) => update("carModelId", e.target.value)}
             className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] outline-none focus:border-[#303030] transition-colors bg-white appearance-none cursor-pointer"
-            disabled={!form.carBrand}
+            disabled={!form.carBrandId || models.length === 0}
           >
             <option value="">Модель авто</option>
-            {availableModels.map((m) => (
-              <option key={m} value={m}>{m}</option>
+            {models.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
             ))}
           </select>
         </div>
@@ -604,8 +632,8 @@ export default function ProfilePage() {
             className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] outline-none focus:border-[#303030] transition-colors bg-white appearance-none cursor-pointer"
           >
             <option value="">Класс авто</option>
-            {CAR_CLASSES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+            {CAR_CLASS_OPTIONS.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
         </div>

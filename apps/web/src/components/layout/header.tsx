@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { AuthModal } from "../auth/auth-modal";
@@ -12,7 +12,9 @@ import { useAuth } from "@/lib/use-auth";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 
-const FRIENDSHIP_POINTS_OFFSET = 615;
+interface PointsConfig {
+  baseCheckCost: number;
+}
 
 export function Header() {
   const { user, loading, logout } = useAuth();
@@ -22,6 +24,37 @@ export function Header() {
   const [baseCheckOpen, setBaseCheckOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState<{ title: string; description?: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [pendingTickets, setPendingTickets] = useState(0);
+  const [baseCheckCost, setBaseCheckCost] = useState<number>(50);
+
+  useEffect(() => {
+    if (!user) {
+      setUnread(0);
+      setPendingTickets(0);
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) return;
+    api<{ unread: number }>("/notifications?page=1&limit=1", { token })
+      .then((res) => setUnread(res.unread || 0))
+      .catch(() => setUnread(0));
+    // Count pending (NEW + IN_PROGRESS) user tickets
+    Promise.all([
+      api<{ total: number }>("/tickets?page=1&limit=1&status=NEW", { token }).catch(() => ({ total: 0 })),
+      api<{ total: number }>("/tickets?page=1&limit=1&status=IN_PROGRESS", { token }).catch(() => ({ total: 0 })),
+    ]).then(([a, b]) => setPendingTickets((a?.total || 0) + (b?.total || 0)));
+  }, [user]);
+
+  useEffect(() => {
+    api<PointsConfig>("/public/points-config")
+      .then((c) => {
+        if (typeof c?.baseCheckCost === "number") setBaseCheckCost(c.baseCheckCost);
+      })
+      .catch(() => {
+        /* keep default */
+      });
+  }, []);
 
   const openAuth = () => {
     setMobileMenuOpen(false);
@@ -54,7 +87,7 @@ export function Header() {
         description:
           topic === "TAXI_CONNECT"
             ? "Менеджер свяжется с вами в ближайшее время."
-            : "Проверка начата. 50 баллов списаны. Результат появится в чате заявки.",
+            : `Проверка начата. ${baseCheckCost} баллов списаны. Результат появится в чате заявки.`,
       });
     } catch (e: unknown) {
       setResultOpen({
@@ -66,9 +99,7 @@ export function Header() {
     }
   };
 
-  const balance = user
-    ? (user.friendshipPoints ?? 0) + FRIENDSHIP_POINTS_OFFSET
-    : 0;
+  const balance = user ? user.friendshipPoints ?? 0 : 0;
 
   return (
     <>
@@ -120,9 +151,25 @@ export function Header() {
                 <Link
                   href="/notifications"
                   aria-label="Уведомления"
-                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#E5E5E5] hover:bg-gray-50 transition-colors"
+                  className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-[#E5E5E5] hover:bg-gray-50 transition-colors"
                 >
                   <Bell className="w-4 h-4 text-[#303030]" />
+                  {unread > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-[#FA6868] text-[9px] font-medium text-white flex items-center justify-center">
+                      {unread > 99 ? "99+" : unread}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  href="/support"
+                  aria-label="Мои заявки"
+                  className="relative hidden md:flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#E5E5E5] hover:bg-gray-50 transition-colors"
+                  title="Активные заявки"
+                >
+                  <svg className="w-4 h-4 text-[#303030]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  </svg>
+                  <span className="text-xs text-[#303030]">{pendingTickets}</span>
                 </Link>
                 <Link href="/dashboard">
                   <Button variant="outline" size="sm">ЛК</Button>
@@ -220,8 +267,8 @@ export function Header() {
         open={baseCheckOpen}
         onClose={() => setBaseCheckOpen(false)}
         variant="warning"
-        title="Проверка по базе — 50 баллов"
-        description="Проверим вашу историю работы в такси и внесём в базу проверенных водителей. С баланса будет списано 50 баллов дружбы."
+        title={`Проверка по базе — ${baseCheckCost} баллов`}
+        description={`Проверим вашу историю работы в такси и внесём в базу проверенных водителей. С баланса будет списано ${baseCheckCost} баллов дружбы.`}
         confirmLabel={submitting ? "Отправка..." : "Подтвердить"}
         cancelLabel="Отмена"
         onConfirm={() => createTicket("USER_BASE_CHECK", "Проверка по базе водителей")}
