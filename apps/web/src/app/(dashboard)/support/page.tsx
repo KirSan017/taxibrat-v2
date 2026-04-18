@@ -1,68 +1,84 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/use-auth";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
-/* ── mock data ─────────────────────────────────────────── */
-
-type TicketStatus = "NEW" | "IN_PROGRESS" | "COMPLETED" | "REJECTED";
-type TicketCategory = "check" | "order" | "buyout" | "support";
+/* ── types ────────────────────────────────────────────── */
 
 interface Ticket {
   id: string;
-  title: string;
-  status: TicketStatus;
-  category: TicketCategory;
-  date: string;
-  preview: string;
+  topic: string;
+  status: string;
+  body?: string | null;
+  title?: string | null;
+  createdAt: string;
 }
 
-const MOCK_TICKETS: Ticket[] = [
-  { id: "1", title: "Проверка таксопарка «Альфа»", status: "IN_PROGRESS", category: "check", date: "14.04.2025", preview: "Менеджер запросил дополнительные документы..." },
-  { id: "2", title: "Заказ «По делам» #1204", status: "COMPLETED", category: "order", date: "12.04.2025", preview: "Заказ выполнен успешно. Спасибо за обращение!" },
-  { id: "3", title: "Проверка таксопарка «Мега Такси»", status: "NEW", category: "check", date: "10.04.2025", preview: "Ожидает назначения менеджера" },
-  { id: "4", title: "Выкуп авто Hyundai Solaris", status: "IN_PROGRESS", category: "buyout", date: "08.04.2025", preview: "Документы на проверке у менеджера" },
-  { id: "5", title: "Заказ «По делам» #1198", status: "COMPLETED", category: "order", date: "05.04.2025", preview: "Заказ выполнен. Начислено 50 баллов." },
-  { id: "6", title: "Проверка таксопарка «Драйв Парк»", status: "REJECTED", category: "check", date: "03.04.2025", preview: "Отклонено: некорректные данные парка" },
-  { id: "7", title: "Обращение в техподдержку", status: "COMPLETED", category: "support", date: "01.04.2025", preview: "Проблема решена. Спасибо за обращение!" },
-];
+interface TicketsResponse {
+  data: Ticket[];
+  total: number;
+}
 
-const STATUS_MAP: Record<TicketStatus, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
+const STATUS_MAP: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
   NEW: { label: "Новый", variant: "yellow" },
   IN_PROGRESS: { label: "В работе", variant: "gray" },
+  PENDING_SM_REVIEW: { label: "На проверке СМ", variant: "yellow" },
+  SM_REJECTED: { label: "Отклонён", variant: "red" },
   COMPLETED: { label: "Завершён", variant: "green" },
-  REJECTED: { label: "Отклонён", variant: "red" },
+  CANCELLED: { label: "Отменён", variant: "gray" },
 };
 
-const TABS = [
-  { key: "all", label: "Все" },
-  { key: "check", label: "Проверки" },
-  { key: "order", label: "По делам" },
-  { key: "buyout", label: "Выкуп" },
-] as const;
+const TOPIC_LABELS: Record<string, string> = {
+  PARK_CHECK: "Проверка таксопарка",
+  USER_BASE_CHECK: "Проверка по базе",
+  TAXI_CONNECT: "Подключение к такси",
+  BUYOUT: "Выкуп авто",
+  LEGAL: "Юридический вопрос",
+  FRIENDSHIP_POINTS: "Баллы дружбы",
+  OTHER: "Иное",
+};
 
-const SUPPORT_TOPICS = [
-  "Проблема с проверкой таксопарка",
-  "Вопрос по заказу «По делам»",
-  "Проблема с выкупом авто",
-  "Вопрос по баллам дружбы",
-  "Изменение данных профиля",
-  "Жалоба на водителя/парк",
-  "Технические проблемы",
-  "Другое",
+const TABS: { key: string; label: string; topic?: string }[] = [
+  { key: "all", label: "Все" },
+  { key: "PARK_CHECK", label: "Проверки парков", topic: "PARK_CHECK" },
+  { key: "USER_BASE_CHECK", label: "Проверка по базе", topic: "USER_BASE_CHECK" },
+  { key: "TAXI_CONNECT", label: "Подключение", topic: "TAXI_CONNECT" },
+  { key: "BUYOUT", label: "Выкуп", topic: "BUYOUT" },
+  { key: "LEGAL", label: "Юридический", topic: "LEGAL" },
+  { key: "FRIENDSHIP_POINTS", label: "Баллы", topic: "FRIENDSHIP_POINTS" },
+  { key: "OTHER", label: "Иное", topic: "OTHER" },
 ];
 
 /* ── component ─────────────────────────────────────────── */
 
 export default function SupportPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("all");
-  const [topicModalOpen, setTopicModalOpen] = useState(false);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filtered = activeTab === "all"
-    ? MOCK_TICKETS
-    : MOCK_TICKETS.filter((t) => t.category === activeTab);
+  useEffect(() => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setLoading(true);
+    setError("");
+    const currentTab = TABS.find((t) => t.key === activeTab);
+    const topicParam = currentTab?.topic ? `&topic=${currentTab.topic}` : "";
+    api<TicketsResponse>(`/tickets?page=1&limit=50${topicParam}`, { token })
+      .then((res) => setTickets(res.data || []))
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : "Не удалось загрузить тикеты");
+        setTickets([]);
+      })
+      .finally(() => setLoading(false));
+  }, [user, activeTab]);
 
   return (
     <div className="max-w-[700px]">
@@ -70,21 +86,21 @@ export default function SupportPage() {
         <h1 className="text-2xl md:text-3xl font-medium text-[#303030]">
           Техподдержка
         </h1>
-        <Button size="sm" onClick={() => setTopicModalOpen(true)}>
-          Написать в техподдержку
-        </Button>
+        <Link href="/support/new">
+          <Button size="sm">Написать в техподдержку</Button>
+        </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-50 rounded-lg p-1 mb-6">
+      <div className="flex gap-1 mb-6 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 py-2 text-xs font-medium rounded-md transition-colors ${
+            className={`px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
               activeTab === tab.key
-                ? "bg-white text-[#303030] shadow-sm"
-                : "text-[#A1A1A1] hover:text-[#303030]"
+                ? "bg-[#303030] text-white"
+                : "bg-gray-100 text-[#A1A1A1] hover:bg-gray-200"
             }`}
           >
             {tab.label}
@@ -93,67 +109,42 @@ export default function SupportPage() {
       </div>
 
       {/* Tickets list */}
-      <div className="space-y-3">
-        {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-sm text-[#A1A1A1]">Нет тикетов в этой категории</p>
-          </div>
-        ) : (
-          filtered.map((ticket) => (
-            <Link
-              key={ticket.id}
-              href={`/support/${ticket.id}`}
-              className="block border border-[#E5E5E5] rounded-xl p-4 hover:shadow-sm transition-shadow bg-white"
-            >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <h3 className="text-sm font-medium text-[#303030]">{ticket.title}</h3>
-                <Badge variant={STATUS_MAP[ticket.status].variant}>
-                  {STATUS_MAP[ticket.status].label}
-                </Badge>
-              </div>
-              <p className="text-xs text-[#A1A1A1] mb-1">{ticket.preview}</p>
-              <p className="text-[10px] text-[#A1A1A1]">{ticket.date}</p>
-            </Link>
-          ))
-        )}
-      </div>
-
-      {/* Topic selector modal */}
-      {topicModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setTopicModalOpen(false)}
-          />
-          {/* Modal */}
-          <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-medium text-[#303030]">Выберите тему обращения</h2>
-              <button
-                onClick={() => setTopicModalOpen(false)}
-                className="text-[#A1A1A1] hover:text-[#303030] transition-colors"
+      {loading ? (
+        <p className="text-sm text-[#A1A1A1] text-center py-12">Загрузка...</p>
+      ) : error ? (
+        <p className="text-sm text-[#FA6868] text-center py-12">{error}</p>
+      ) : tickets.length === 0 ? (
+        <div className="text-center py-12 border border-[#E5E5E5] rounded-xl">
+          <p className="text-sm text-[#A1A1A1] mb-3">Нет обращений</p>
+          <Link href="/support/new">
+            <Button size="sm">Создать обращение</Button>
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {tickets.map((ticket) => {
+            const status = STATUS_MAP[ticket.status] || { label: ticket.status, variant: "gray" as const };
+            return (
+              <Link
+                key={ticket.id}
+                href={`/support/${ticket.id}`}
+                className="block border border-[#E5E5E5] rounded-xl p-4 hover:shadow-sm transition-shadow bg-white"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-2">
-              {SUPPORT_TOPICS.map((topic, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setTopicModalOpen(false);
-                    // In production, this would create a new ticket
-                  }}
-                  className="w-full text-left px-4 py-3 rounded-lg border border-[#E5E5E5] text-sm text-[#303030] hover:bg-gray-50 hover:border-[#A1A1A1] transition-colors"
-                >
-                  {topic}
-                </button>
-              ))}
-            </div>
-          </div>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h3 className="text-sm font-medium text-[#303030]">
+                    {ticket.title || TOPIC_LABELS[ticket.topic] || ticket.topic}
+                  </h3>
+                  <Badge variant={status.variant}>{status.label}</Badge>
+                </div>
+                {ticket.body && (
+                  <p className="text-xs text-[#A1A1A1] mb-1 line-clamp-2">{ticket.body}</p>
+                )}
+                <p className="text-[10px] text-[#A1A1A1]">
+                  {new Date(ticket.createdAt).toLocaleDateString("ru-RU")}
+                </p>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
