@@ -1,181 +1,130 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
+import { useAuth } from "@/lib/use-auth";
 
-/* ── types ─────────────────────────────────────────────── */
+/* ── types ────────────────────────────────────────────── */
 
-type Section = "CHAT" | "TAXI_CHECK" | "NO_9_PERCENT" | "USERS" | "BUYOUT";
+interface ManagerDetail {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string;
+  email: string | null;
+  status: string;
+  role: string;
+  createdAt: string;
+}
 
-const SECTION_LABELS: Record<Section, string> = {
-  CHAT: "Чат",
-  TAXI_CHECK: "Проверки таксопарков",
-  NO_9_PERCENT: "Без 9%",
-  USERS: "Пользователи",
-  BUYOUT: "Выкуп авто",
-};
-
-const MOCK_ROLE = "ADMIN" as "SUPER_MANAGER" | "ADMIN";
+interface ManagerStatsDetail {
+  ticketsTotal?: number;
+  ticketsCompleted?: number;
+  ticketsInProgress?: number;
+  pointsAwarded?: number;
+  [key: string]: unknown;
+}
 
 /* ── page ─────────────────────────────────────────────── */
 
-export default function ManagerDetailPage() {
+export default function AdminManagerDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const managerId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const { user } = useAuth();
+  const [manager, setManager] = useState<ManagerDetail | null>(null);
+  const [stats, setStats] = useState<ManagerStatsDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [lastName, setLastName] = useState("Козлова");
-  const [firstName, setFirstName] = useState("Мария");
-  const [patronymic, setPatronymic] = useState("Игоревна");
-  const [phone, setPhone] = useState("+7 (999) 111-11-11");
-  const [email, setEmail] = useState("m.kozlova@taxibrat.ru");
-  const [sections, setSections] = useState<Section[]>(["CHAT", "USERS"]);
-  const [workingSections, setWorkingSections] = useState<Section[]>(["CHAT"]);
-  const [canSeePhones, setCanSeePhones] = useState(true);
-  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    if (!managerId || !user) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setLoading(true);
+    Promise.all([
+      api<ManagerDetail>(`/admin/users/${managerId}`, { token })
+        .then(setManager)
+        .catch(() => {}),
+      api<ManagerStatsDetail>(`/admin/stats/managers/${managerId}`, { token })
+        .then(setStats)
+        .catch(() => {}),
+    ])
+      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка"))
+      .finally(() => setLoading(false));
+  }, [managerId, user]);
 
-  const toggleSection = (s: Section) => {
-    setSections((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
-    setWorkingSections((cur) => cur.filter((x) => x !== s || sections.includes(s)));
-  };
+  if (loading) return <div className="text-sm text-[#A1A1A1]">Загрузка...</div>;
 
-  const toggleWorking = (s: Section) => {
-    setWorkingSections((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
-  };
-
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  return (
-    <div className="max-w-3xl">
-      <div className="mb-6">
-        <Link href="/admin/managers" className="text-xs text-[#A1A1A1] hover:text-[#303030] inline-flex items-center gap-1">
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
+  if (error || !manager) {
+    return (
+      <div>
+        <p className="text-sm text-[#FA6868]">{error || "Менеджер не найден"}</p>
+        <Link href="/admin/managers" className="text-xs text-[#303030] underline mt-2 inline-block">
           К списку менеджеров
         </Link>
-        <h1 className="text-xl font-medium text-[#303030] mt-2">Менеджер #{id}</h1>
       </div>
+    );
+  }
 
-      {/* Basic info */}
-      <section className="bg-white rounded-xl border border-[#E5E5E5] p-6 mb-6">
-        <h2 className="text-sm font-medium text-[#303030] mb-4">Основная информация</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Input label="Фамилия" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-          <Input label="Имя" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-          <Input label="Отчество" value={patronymic} onChange={(e) => setPatronymic(e.target.value)} />
-          <Input label="Телефон" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          <Input label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+  const name = [manager.firstName, manager.lastName].filter(Boolean).join(" ") || "—";
+
+  return (
+    <div className="max-w-[900px]">
+      <Link href="/admin/managers" className="text-xs text-[#A1A1A1] inline-flex items-center gap-1 hover:text-[#303030]">
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        К списку менеджеров
+      </Link>
+      <h1 className="text-2xl font-medium text-[#303030] mt-2 mb-6">{name}</h1>
+
+      <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mb-4">
+        <h2 className="text-sm font-medium text-[#303030] mb-4">Данные</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
-            <label className="block text-sm font-medium text-[#303030] mb-1.5">Дата создания</label>
-            <div className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#A1A1A1] flex items-center">
-              10.01.2026
-            </div>
+            <p className="text-xs text-[#A1A1A1]">Телефон</p>
+            <p className="text-[#303030]">{manager.phone}</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#A1A1A1]">Email</p>
+            <p className="text-[#303030]">{manager.email || "—"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#A1A1A1]">Роль</p>
+            <p className="text-[#303030]">{manager.role}</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#A1A1A1]">Статус</p>
+            <Badge variant={manager.status === "ACTIVE" ? "green" : "gray"}>
+              {manager.status === "ACTIVE" ? "Активен" : manager.status}
+            </Badge>
+          </div>
+          <div>
+            <p className="text-xs text-[#A1A1A1]">Дата регистрации</p>
+            <p className="text-[#303030]">
+              {new Date(manager.createdAt).toLocaleDateString("ru-RU")}
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Sections assignment */}
-      <section className="bg-white rounded-xl border border-[#E5E5E5] p-6 mb-6">
-        <h2 className="text-sm font-medium text-[#303030] mb-4">Секции работы</h2>
-        <div className="space-y-3">
-          {(Object.keys(SECTION_LABELS) as Section[]).map((s) => (
-            <div key={s} className="flex items-center justify-between gap-4 pb-3 border-b border-[#F3F3F3] last:border-0 last:pb-0">
-              <label className="flex items-center gap-2 text-sm text-[#303030] cursor-pointer flex-1">
-                <input
-                  type="checkbox"
-                  checked={sections.includes(s)}
-                  onChange={() => toggleSection(s)}
-                  className="w-4 h-4 accent-[#F8D62E]"
-                />
-                {SECTION_LABELS[s]}
-              </label>
-              {sections.includes(s) && (
-                <label className="flex items-center gap-2 text-xs text-[#A1A1A1] cursor-pointer whitespace-nowrap">
-                  <span>Сейчас работает</span>
-                  <button
-                    type="button"
-                    onClick={() => toggleWorking(s)}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                      workingSections.includes(s) ? "bg-[#F8D62E]" : "bg-gray-200"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        workingSections.includes(s) ? "translate-x-4" : "translate-x-0.5"
-                      }`}
-                    />
-                  </button>
-                </label>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Permissions (admin only) */}
-      {MOCK_ROLE === "ADMIN" && (
-        <section className="bg-white rounded-xl border border-[#E5E5E5] p-6 mb-6">
-          <h2 className="text-sm font-medium text-[#303030] mb-4">Права доступа</h2>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-[#303030]">Может видеть телефоны пользователей</p>
-              <p className="text-xs text-[#A1A1A1] mt-0.5">Доступ к персональным данным при работе с тикетами</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setCanSeePhones(!canSeePhones)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                canSeePhones ? "bg-[#F8D62E]" : "bg-gray-200"
-              }`}
-            >
-              <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                  canSeePhones ? "translate-x-5" : "translate-x-1"
-                }`}
-              />
-            </button>
+      {stats && (
+        <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
+          <h2 className="text-sm font-medium text-[#303030] mb-4">Статистика</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Object.entries(stats).map(([k, v]) => (
+              <div key={k} className="border border-[#E5E5E5] rounded-xl p-3">
+                <p className="text-xs text-[#A1A1A1]">{k}</p>
+                <p className="text-lg font-medium text-[#303030]">{String(v ?? "—")}</p>
+              </div>
+            ))}
           </div>
         </section>
       )}
-
-      {/* Stats */}
-      <section className="bg-white rounded-xl border border-[#E5E5E5] p-6 mb-6">
-        <h2 className="text-sm font-medium text-[#303030] mb-4">Статистика</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-xs text-[#A1A1A1]">За неделю</p>
-            <p className="text-2xl font-medium text-[#303030] mt-1">12</p>
-          </div>
-          <div>
-            <p className="text-xs text-[#A1A1A1]">За месяц</p>
-            <p className="text-2xl font-medium text-[#303030] mt-1">42</p>
-          </div>
-          <div>
-            <p className="text-xs text-[#A1A1A1]">Всего</p>
-            <p className="text-2xl font-medium text-[#303030] mt-1">218</p>
-          </div>
-          <div>
-            <p className="text-xs text-[#A1A1A1]">Рейтинг</p>
-            <p className="text-2xl font-medium text-[#303030] mt-1">4.8</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Actions */}
-      <div className="flex items-center gap-3">
-        <Button onClick={handleSave}>Сохранить</Button>
-        <Link href="/admin/managers">
-          <Button variant="outline">Отмена</Button>
-        </Link>
-        {saved && <Badge variant="green">Сохранено</Badge>}
-      </div>
     </div>
   );
 }
