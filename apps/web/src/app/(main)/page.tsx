@@ -54,12 +54,20 @@ const FEATURES = [
   },
 ];
 
+interface PublicStats {
+  users: number;
+  parks: number;
+  no9Orders: number;
+  buyoutCars: number;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [parks, setParks] = useState<ParkClassItem[]>([]);
   const [parksLoading, setParksLoading] = useState(true);
+  const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
 
   // Redirect authorized users to /dashboard
   useEffect(() => {
@@ -80,6 +88,13 @@ export default function HomePage() {
       })
       .finally(() => {
         if (!cancelled) setParksLoading(false);
+      });
+    api<PublicStats>("/public/stats")
+      .then((data) => {
+        if (!cancelled) setPublicStats(data);
+      })
+      .catch(() => {
+        /* silent */
       });
     return () => {
       cancelled = true;
@@ -119,7 +134,7 @@ export default function HomePage() {
             {/* Right side — counter */}
             <div className="bg-[#F8D62E] rounded-2xl px-8 py-6 text-center shrink-0">
               <p className="text-[48px] md:text-[64px] font-medium leading-none text-[#303030]">
-                615+
+                {publicStats ? `${publicStats.users}+` : "615+"}
               </p>
               <p className="mt-1 text-xs text-[#303030]/70">Зарегистрированных пользователей</p>
             </div>
@@ -133,7 +148,7 @@ export default function HomePage() {
           {/* Stats row */}
           <div className="flex items-start gap-6 mb-12">
             <span className="text-[64px] md:text-[78px] font-medium leading-none text-[#F8D62E]">
-              148
+              {publicStats?.parks ?? 148}
             </span>
             <p className="mt-3 text-base md:text-lg font-medium text-[#303030] max-w-xs">
               Таксопарков проверено

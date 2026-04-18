@@ -283,6 +283,14 @@ export class TicketsService {
       );
     }
 
+    // Increment successful park checks counter for honor board
+    if (ticket.topic === "PARK_CHECK") {
+      await this.db
+        .update(users)
+        .set({ successfulParkChecks: sql`${users.successfulParkChecks} + 1` })
+        .where(eq(users.id, ticket.userId));
+    }
+
     const pointsMsg = pointsAwarded > 0 ? ` Начислено ${pointsAwarded} баллов дружбы.` : "";
     await this.messagesService.createSystem(
       ticketId, smId,

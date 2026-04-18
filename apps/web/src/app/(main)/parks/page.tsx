@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -38,16 +39,19 @@ interface ApiModel {
   brandId: string;
 }
 
-const HONOR_BOARD = [
-  { id: 1, name: "Алексей М.", checks: 48, avatar: "А" },
-  { id: 2, name: "Дмитрий К.", checks: 35, avatar: "Д" },
-  { id: 3, name: "Сергей В.", checks: 29, avatar: "С" },
-  { id: 4, name: "Игорь Л.", checks: 24, avatar: "И" },
-  { id: 5, name: "Андрей П.", checks: 21, avatar: "А" },
-  { id: 6, name: "Максим Р.", checks: 18, avatar: "М" },
-  { id: 7, name: "Николай Б.", checks: 15, avatar: "Н" },
-  { id: 8, name: "Олег Т.", checks: 12, avatar: "О" },
-];
+interface HonorBoardItem {
+  id: string;
+  name: string;
+  checks: number;
+  avatar: string;
+}
+
+interface PublicStats {
+  users: number;
+  parks: number;
+  no9Orders: number;
+  buyoutCars: number;
+}
 
 const DRIVER_CLASS_OPTIONS = ["Все", ...Object.values(DRIVER_CLASS_LABELS)];
 const YEAR_OPTIONS = ["Все", "2024", "2023", "2022", "2021", "2020"];
@@ -59,7 +63,10 @@ const DISTRICT_OPTIONS: Array<[string, string]> = [
 const LIMIT = 10;
 
 export default function ParksPage() {
+  const router = useRouter();
   const [driverClassLabel, setDriverClassLabel] = useState("Все");
+  const [honorBoard, setHonorBoard] = useState<HonorBoardItem[]>([]);
+  const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
   const [brandId, setBrandId] = useState("");
   const [modelId, setModelId] = useState("");
   const [year, setYear] = useState("Все");
@@ -78,6 +85,16 @@ export default function ParksPage() {
     api<ApiBrand[]>("/catalog/brands")
       .then((data) => setBrands(Array.isArray(data) ? data : []))
       .catch(() => setBrands([]));
+  }, []);
+
+  // Load honor board and public stats
+  useEffect(() => {
+    api<HonorBoardItem[]>("/public/honor-board")
+      .then((data) => setHonorBoard(Array.isArray(data) ? data : []))
+      .catch(() => setHonorBoard([]));
+    api<PublicStats>("/public/stats")
+      .then((data) => setPublicStats(data))
+      .catch(() => setPublicStats(null));
   }, []);
 
   // Load models when brand changes
@@ -133,9 +150,21 @@ export default function ParksPage() {
     setPage(1);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Local filter by query on current page
+    const q = searchQuery.trim();
+    if (q.length < 2) return;
+    try {
+      const res = await api<{
+        found: { id: string; name: string } | null;
+        hiddenAboveAverage?: boolean;
+      }>(`/public/parks/search?name=${encodeURIComponent(q)}`);
+      if (res.found && res.hiddenAboveAverage) {
+        router.push(`/parks/hidden?name=${encodeURIComponent(res.found.name)}`);
+      }
+    } catch {
+      // Fall back to local filter
+    }
   };
 
   const filteredBySearch = searchQuery.trim()
@@ -178,12 +207,16 @@ export default function ParksPage() {
                 №1 в Москве
               </h1>
               <div className="mt-4 bg-[#F8D62E] rounded-xl px-6 py-3 inline-block">
-                <span className="text-2xl md:text-3xl font-medium text-[#303030]">615+</span>
+                <span className="text-2xl md:text-3xl font-medium text-[#303030]">
+                  {publicStats ? `${publicStats.users}+` : "615+"}
+                </span>
                 <span className="ml-2 text-xs text-[#303030]/70">пользователей</span>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <span className="text-[48px] md:text-[64px] font-medium leading-none text-[#F8D62E]">148</span>
+              <span className="text-[48px] md:text-[64px] font-medium leading-none text-[#F8D62E]">
+                {publicStats?.parks ?? 148}
+              </span>
               <p className="mt-2 text-sm font-medium text-[#303030]">
                 Таксопарков
                 <br />
@@ -196,30 +229,32 @@ export default function ParksPage() {
 
       <div className="max-w-[1600px] mx-auto px-6 py-8 md:py-12">
         {/* ══════ HONOR BOARD ══════ */}
-        <section className="mb-10">
-          <h2 className="text-lg font-medium text-[#303030] mb-4">Доска почёта</h2>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {HONOR_BOARD.map((user, idx) => (
-              <div
-                key={user.id}
-                className="flex-none flex items-center gap-3 bg-white border border-[#E5E5E5] rounded-xl px-4 py-3 min-w-[200px]"
-              >
-                <div className="w-9 h-9 rounded-full bg-[#F3F1E7] flex items-center justify-center text-sm font-medium text-[#303030] shrink-0">
-                  {user.avatar}
+        {honorBoard.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-lg font-medium text-[#303030] mb-4">Доска почёта</h2>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {honorBoard.map((hb, idx) => (
+                <div
+                  key={hb.id}
+                  className="flex-none flex items-center gap-3 bg-white border border-[#E5E5E5] rounded-xl px-4 py-3 min-w-[200px]"
+                >
+                  <div className="w-9 h-9 rounded-full bg-[#F3F1E7] flex items-center justify-center text-sm font-medium text-[#303030] shrink-0">
+                    {hb.avatar}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#303030] truncate">{hb.name}</p>
+                    <p className="text-xs text-[#A1A1A1]">{hb.checks} проверок</p>
+                  </div>
+                  {idx < 3 && (
+                    <Badge variant="yellow" className="ml-auto shrink-0">
+                      #{idx + 1}
+                    </Badge>
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#303030] truncate">{user.name}</p>
-                  <p className="text-xs text-[#A1A1A1]">{user.checks} проверок</p>
-                </div>
-                {idx < 3 && (
-                  <Badge variant="yellow" className="ml-auto shrink-0">
-                    #{idx + 1}
-                  </Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ══════ FILTERS ══════ */}
         <section className="mb-8">

@@ -7,6 +7,7 @@ import {
   parkVehicles,
   carBrands,
   carModels,
+  users,
 } from "@taxibrat/db";
 import { CatalogQueryDto } from "@taxibrat/shared";
 
@@ -141,6 +142,25 @@ export class CatalogService {
       .where(eq(taxiParks.id, cls.parkId))
       .limit(1);
 
+    // Resolve last updater display name (ТАКСИБРАТ when no user)
+    let lastUpdatedByName = "ТАКСИБРАТ";
+    if (cls.lastUpdatedBy) {
+      const [updater] = await this.db
+        .select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, cls.lastUpdatedBy))
+        .limit(1);
+      if (updater) {
+        const first = updater.firstName ?? "";
+        const last = updater.lastName ?? "";
+        if (first || last) {
+          lastUpdatedByName = last
+            ? `${first} ${last.charAt(0)}.`.trim()
+            : first;
+        }
+      }
+    }
+
     const vehicles = await this.db
       .select({
         id: parkVehicles.id,
@@ -158,6 +178,6 @@ export class CatalogService {
       .where(eq(parkVehicles.classId, classId))
       .orderBy(desc(parkVehicles.totalRating));
 
-    return { ...cls, park, vehicles };
+    return { ...cls, park, vehicles, lastUpdatedByName };
   }
 }

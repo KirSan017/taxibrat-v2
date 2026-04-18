@@ -37,6 +37,7 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("USER"),
   status: userStatusEnum("status").notNull().default("PHONE_VERIFIED"),
   friendshipPoints: integer("friendship_points").notNull().default(0),
+  successfulParkChecks: integer("successful_park_checks").notNull().default(0),
   referralCode: varchar("referral_code", { length: 20 }).notNull().unique(),
   referredById: uuid("referred_by_id").references((): AnyPgColumn => users.id),
   rejectionReason: text("rejection_reason"),
