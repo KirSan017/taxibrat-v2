@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bell, Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
@@ -18,6 +19,7 @@ interface PointsConfig {
 
 export function Header() {
   const { user, loading, logout } = useAuth();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [taxiConnectOpen, setTaxiConnectOpen] = useState(false);
@@ -100,37 +102,43 @@ export function Header() {
   };
 
   const balance = user ? user.friendshipPoints ?? 0 : 0;
+  // Dark hero on home page → transparent header with white text
+  const isHome = pathname === "/";
+  const headerBg = isHome ? "bg-[#1A1A1A]" : "bg-white border-b border-[#E5E5E5]";
+  const navTextColor = isHome
+    ? "text-white hover:text-[#F8D62E]"
+    : "text-[#303030] hover:text-[#A1A1A1]";
 
   return (
     <>
-      <header className="w-full border-b border-[#E5E5E5]">
+      <header className={`w-full ${headerBg}`}>
         <div className="max-w-[1600px] mx-auto px-6 h-[72px] flex items-center justify-between">
           {/* Logo */}
           <Logo href={user ? "/dashboard" : "/"} size="md" />
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-            <Link href={user ? "/dashboard" : "/"} className="text-sm font-medium text-[#303030] hover:text-[#A1A1A1] transition-colors">
+            <Link href={user ? "/dashboard" : "/"} className={`text-sm font-medium transition-colors ${navTextColor}`}>
               Главная
             </Link>
-            <Link href="/parks" className="text-sm font-medium text-[#303030] hover:text-[#A1A1A1] transition-colors">
+            <Link href="/parks" className={`text-sm font-medium transition-colors ${navTextColor}`}>
               Таксопарки
             </Link>
-            <Link href="/no9" className="text-sm font-medium text-[#303030] hover:text-[#A1A1A1] transition-colors">
+            <Link href="/no9" className={`text-sm font-medium transition-colors ${navTextColor}`}>
               По делам без 9%
             </Link>
             <button
               onClick={handleMenuClick("taxi-connect")}
-              className="text-sm font-medium text-[#303030] hover:text-[#A1A1A1] transition-colors"
+              className={`text-sm font-medium transition-colors ${navTextColor}`}
             >
               Подключение к такси
             </button>
-            <Link href="/buyout" className="text-sm font-medium text-[#303030] hover:text-[#A1A1A1] transition-colors">
+            <Link href="/buyout" className={`text-sm font-medium transition-colors ${navTextColor}`}>
               Выкуп
             </Link>
             <button
               onClick={handleMenuClick("base-check")}
-              className="text-sm font-medium text-[#303030] hover:text-[#A1A1A1] transition-colors"
+              className={`text-sm font-medium transition-colors ${navTextColor}`}
             >
               Проверка по базе
             </button>

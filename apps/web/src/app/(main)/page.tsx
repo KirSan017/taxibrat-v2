@@ -129,53 +129,48 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ══════ HERO ══════ */}
-      <section className="bg-white relative overflow-hidden">
-        {/* Decorative yellow dots pattern */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 opacity-[0.08] pointer-events-none"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #F8D62E 2px, transparent 2px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
+      {/* ══════ HERO — dark bg per Figma ══════ */}
+      <section className="bg-[#1A1A1A] relative overflow-hidden">
         <div className="relative max-w-[1600px] mx-auto px-6 py-12 md:py-20">
-          <div className="grid md:grid-cols-[1.1fr_1fr] gap-10 md:gap-16 items-center">
+          <div className="grid md:grid-cols-[1fr_1.1fr] gap-10 md:gap-12 items-center">
             {/* Left side */}
             <div className="max-w-2xl">
-              <p className="text-sm text-[#A1A1A1] mb-4">Сервис для водителей таксистов</p>
-              <h1 className="text-[36px] md:text-[56px] leading-[1.08] font-medium text-[#303030] tracking-tight">
+              <p className="text-xs md:text-sm text-[#F8D62E] mb-5 font-medium">
+                Сервис для каждого таксиста
+              </p>
+              <h1 className="text-[36px] md:text-[56px] leading-[1.08] font-medium text-white tracking-tight">
                 Выбери лучший таксопарк у себя на районе{" "}
                 <span className="text-[#F8D62E]">за 2 минуты</span>
               </h1>
-              <p className="mt-6 text-sm md:text-base text-[#A1A1A1] max-w-md leading-relaxed">
-                Первый независимый рейтинг таксопарков Москвы и МО. Узнай реальные условия, сравни парки и начни работать на лучших условиях.
+              <p className="mt-6 text-sm md:text-base text-white/60 max-w-md leading-relaxed">
+                Мы вам верный спутник помощи работы в такси, проведем проверку на баны, влияете на рейтинг таксопарка. А так же зарабатывайте «баллы дружбы» и тратьте их на платные финансовые сервисы.
               </p>
-              <div className="mt-10 flex flex-col sm:flex-row gap-3">
-                <Button size="lg" onClick={() => setAuthOpen(true)}>
+              <div className="mt-10 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                <Button
+                  size="lg"
+                  onClick={() => setAuthOpen(true)}
+                  className="!bg-white !text-[#1A1A1A] hover:!bg-white/90"
+                >
                   Зарегистрироваться
                 </Button>
-                <Link href="/parks">
-                  <Button variant="outline" size="lg">
-                    Смотреть таксопарки
-                  </Button>
-                </Link>
-              </div>
-              {/* Users counter — white card with shadow (per Figma) */}
-              <div className="mt-10 inline-flex items-center gap-5 bg-white rounded-2xl px-7 py-5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-[#F1F1F1]">
-                <span className="text-[56px] md:text-[64px] font-medium leading-none text-[#F8D62E] tracking-tight">
-                  {publicStats ? publicStats.users.toLocaleString("ru-RU") : "615"}
-                </span>
-                <span className="text-xs md:text-sm text-[#A1A1A1] max-w-[160px] leading-tight">
-                  Зарегистрированных пользователей
-                </span>
+                <div className="flex flex-col text-[10px] text-[#F8D62E] leading-tight ml-2">
+                  <span>нужно</span>
+                  <span>30 сек</span>
+                </div>
               </div>
             </div>
 
-            {/* Right side — hero illustration */}
+            {/* Right side — hero illustration with overlays */}
             <div className="relative w-full">
+              {/* Users counter overlay on hero */}
+              <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10 bg-[#F8D62E] rounded-2xl px-5 md:px-6 py-3 md:py-4 shadow-lg">
+                <div className="text-[32px] md:text-[44px] font-medium leading-none text-[#1A1A1A] tracking-tight">
+                  {publicStats ? publicStats.users.toLocaleString("ru-RU") : "615"}
+                </div>
+                <div className="text-[10px] md:text-xs text-[#1A1A1A]/80 mt-1 font-medium">
+                  пользователей с нами
+                </div>
+              </div>
               <Image
                 src="/figma/hero.png"
                 alt=""

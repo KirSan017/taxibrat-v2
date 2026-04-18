@@ -5,38 +5,32 @@ interface LogoProps {
   className?: string;
   href?: string;
   size?: "sm" | "md" | "lg";
-  showText?: boolean;
+  variant?: "light" | "dark";
 }
 
 const SIZE_MAP = {
-  sm: { icon: 32, textClass: "text-lg" },
-  md: { icon: 40, textClass: "text-xl md:text-2xl" },
-  lg: { icon: 48, textClass: "text-2xl md:text-3xl" },
+  sm: { width: 120, height: 40 },
+  md: { width: 150, height: 50 },
+  lg: { width: 180, height: 60 },
 };
 
 export function Logo({
   className = "",
   href = "/",
   size = "md",
-  showText = true,
 }: LogoProps) {
-  const { icon, textClass } = SIZE_MAP[size];
+  const { width, height } = SIZE_MAP[size];
   return (
-    <Link href={href} className={`flex items-center gap-2 ${className}`}>
+    <Link href={href} className={`inline-flex items-center ${className}`}>
       <Image
-        src="/figma/logo.svg"
+        src="/figma/logo.png"
         alt="Таксибрат"
-        width={icon}
-        height={icon}
+        width={width}
+        height={height}
         priority
+        style={{ width: "auto", height: height }}
         className="shrink-0"
-        style={{ width: icon, height: icon }}
       />
-      {showText && (
-        <span className={`${textClass} font-medium text-[#303030] leading-none`}>
-          Таксибрат
-        </span>
-      )}
     </Link>
   );
 }
