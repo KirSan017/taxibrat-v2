@@ -6,6 +6,8 @@ import { api } from "@/lib/api-client";
 interface AddressSuggestion {
   value: string;
   unrestricted_value?: string;
+  geoLat?: number | null;
+  geoLon?: number | null;
 }
 
 interface AddressInputProps {
@@ -13,6 +15,7 @@ interface AddressInputProps {
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
+  onPick?: (suggestion: AddressSuggestion) => void;
   required?: boolean;
   className?: string;
   error?: string;
@@ -24,6 +27,7 @@ export function AddressInput({
   placeholder = "Город, улица, дом",
   value,
   onChange,
+  onPick,
   required,
   className = "",
   error,
@@ -72,6 +76,7 @@ export function AddressInput({
 
   const pick = (s: AddressSuggestion) => {
     onChange(s.value);
+    onPick?.(s);
     setSuggestions([]);
     setOpen(false);
   };

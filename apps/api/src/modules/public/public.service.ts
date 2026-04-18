@@ -152,11 +152,25 @@ export class PublicService {
       );
 
       if (!res.ok) return { suggestions: [], query };
-      const data = (await res.json()) as { suggestions?: Array<{ value: string; unrestricted_value?: string; data?: unknown }> };
-      const suggestions = (data.suggestions ?? []).map((s) => ({
-        value: s.value,
-        unrestricted_value: s.unrestricted_value ?? s.value,
-      }));
+      const data = (await res.json()) as {
+        suggestions?: Array<{
+          value: string;
+          unrestricted_value?: string;
+          data?: { geo_lat?: string | null; geo_lon?: string | null } | null;
+        }>;
+      };
+      const suggestions = (data.suggestions ?? []).map((s) => {
+        const latRaw = s.data?.geo_lat ?? null;
+        const lonRaw = s.data?.geo_lon ?? null;
+        const lat = latRaw != null && latRaw !== "" ? Number(latRaw) : null;
+        const lon = lonRaw != null && lonRaw !== "" ? Number(lonRaw) : null;
+        return {
+          value: s.value,
+          unrestricted_value: s.unrestricted_value ?? s.value,
+          geoLat: Number.isFinite(lat as number) ? lat : null,
+          geoLon: Number.isFinite(lon as number) ? lon : null,
+        };
+      });
       return { suggestions, query };
     } catch {
       return { suggestions: [], query };
