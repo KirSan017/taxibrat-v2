@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -33,24 +34,28 @@ const FEATURES = [
     description: "Сервис подачи заказов для водителей такси без комиссии агрегатора. Экономьте на каждой поездке.",
     color: "bg-[#F8D62E]",
     textColor: "text-[#303030]",
+    image: "/figma/feature-no9.png",
   },
   {
     title: "Выкуп\nавтомобилей",
     description: "Подберём автомобиль для работы в такси с выгодными условиями выкупа от проверенных парков.",
     color: "bg-[#303030]",
     textColor: "text-white",
+    image: "/figma/feature-buyout.png",
   },
   {
     title: "Проверка по базе\nтаксопарков",
     description: "Узнайте реальные условия парка до подключения. Независимый рейтинг от водителей.",
     color: "bg-white border border-[#E5E5E5]",
     textColor: "text-[#303030]",
+    image: "/figma/feature-check.png",
   },
   {
     title: "Подключим\nвас к такси",
     description: "Поможем выбрать лучший таксопарк под ваши параметры: класс, район, автомобиль.",
     color: "bg-white border border-[#E5E5E5]",
     textColor: "text-[#303030]",
+    image: "/figma/feature-connect.png",
   },
 ];
 
@@ -108,7 +113,7 @@ export default function HomePage() {
       {/* ══════ HERO ══════ */}
       <section className="bg-[#F3F1E7]">
         <div className="max-w-[1600px] mx-auto px-6 py-12 md:py-20">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10">
+          <div className="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
             {/* Left side */}
             <div className="max-w-2xl">
               <p className="text-sm text-[#A1A1A1] mb-3">Сервис для водителей таксистов</p>
@@ -129,14 +134,27 @@ export default function HomePage() {
                   </Button>
                 </Link>
               </div>
+              {/* Users counter */}
+              <div className="mt-8 inline-flex items-center gap-3 bg-[#F8D62E] rounded-2xl px-6 py-4">
+                <span className="text-[40px] md:text-[48px] font-medium leading-none text-[#303030]">
+                  {publicStats ? `${publicStats.users}+` : "615+"}
+                </span>
+                <span className="text-xs text-[#303030]/70 max-w-[140px] leading-tight">
+                  Зарегистрированных пользователей
+                </span>
+              </div>
             </div>
 
-            {/* Right side — counter */}
-            <div className="bg-[#F8D62E] rounded-2xl px-8 py-6 text-center shrink-0">
-              <p className="text-[48px] md:text-[64px] font-medium leading-none text-[#303030]">
-                {publicStats ? `${publicStats.users}+` : "615+"}
-              </p>
-              <p className="mt-1 text-xs text-[#303030]/70">Зарегистрированных пользователей</p>
+            {/* Right side — hero illustration */}
+            <div className="relative w-full">
+              <Image
+                src="/figma/hero.png"
+                alt=""
+                width={1718}
+                height={1038}
+                priority
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </div>
@@ -229,14 +247,23 @@ export default function HomePage() {
             {FEATURES.map((f, i) => (
               <div
                 key={i}
-                className={`${f.color} ${f.textColor} rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[220px]`}
+                className={`${f.color} ${f.textColor} rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[260px] relative overflow-hidden`}
               >
-                <h3 className="text-xl md:text-2xl font-medium whitespace-pre-line leading-snug">
-                  {f.title}
-                </h3>
-                <p className={`mt-4 text-sm leading-relaxed ${f.textColor === "text-white" ? "text-white/70" : "text-[#A1A1A1]"}`}>
-                  {f.description}
-                </p>
+                <div className="relative z-10 max-w-[60%]">
+                  <h3 className="text-xl md:text-2xl font-medium whitespace-pre-line leading-snug">
+                    {f.title}
+                  </h3>
+                  <p className={`mt-4 text-sm leading-relaxed ${f.textColor === "text-white" ? "text-white/70" : "text-[#A1A1A1]"}`}>
+                    {f.description}
+                  </p>
+                </div>
+                <Image
+                  src={f.image}
+                  alt=""
+                  width={320}
+                  height={320}
+                  className="absolute bottom-0 right-0 w-[140px] md:w-[180px] h-auto object-contain pointer-events-none select-none"
+                />
               </div>
             ))}
           </div>

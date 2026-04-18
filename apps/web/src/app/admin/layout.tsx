@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
+import { Logo } from "@/components/layout/logo";
 
 /* ── roles ────────────────────────────────────────────── */
 
@@ -106,14 +107,7 @@ export default function AdminLayout({
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 h-[64px] flex items-center justify-between">
           {/* Left: logo + admin badge */}
           <div className="flex items-center gap-3">
-            <Link href="/admin" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#F8D62E] rounded-lg flex items-center justify-center">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#303030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <span className="text-lg font-medium text-[#303030]">Таксибрат</span>
-            </Link>
+            <Logo href="/admin" size="sm" />
             <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-[#F8D62E] text-[#303030]">
               {ROLE_LABELS[role]}
             </span>

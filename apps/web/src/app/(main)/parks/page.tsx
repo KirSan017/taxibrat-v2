@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -199,29 +200,45 @@ export default function ParksPage() {
       {/* ══════ BANNER ══════ */}
       <section className="bg-[#F3F1E7]">
         <div className="max-w-[1600px] mx-auto px-6 py-10 md:py-16">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+          <div className="grid md:grid-cols-[1fr_auto] gap-8 items-center">
+            {/* Left — headline + stats */}
             <div>
-              <h1 className="text-3xl md:text-[40px] font-medium text-[#303030] leading-tight">
+              <h1 className="text-3xl md:text-[48px] font-medium text-[#303030] leading-tight">
                 Рейтинг таксопарков
                 <br />
-                №1 в Москве
+                <span className="text-[#F8D62E]">№1</span> в Москве
               </h1>
-              <div className="mt-4 bg-[#F8D62E] rounded-xl px-6 py-3 inline-block">
-                <span className="text-2xl md:text-3xl font-medium text-[#303030]">
-                  {publicStats ? `${publicStats.users}+` : "615+"}
-                </span>
-                <span className="ml-2 text-xs text-[#303030]/70">пользователей</span>
+
+              <div className="mt-6 flex flex-wrap items-start gap-8">
+                <div className="flex items-start gap-4">
+                  <span className="text-[56px] md:text-[78px] font-medium leading-none text-[#F8D62E]">
+                    {publicStats?.parks ?? 148}
+                  </span>
+                  <p className="mt-2 text-sm font-medium text-[#303030]">
+                    Таксопарков
+                    <br />
+                    проверено
+                  </p>
+                </div>
+
+                <div className="bg-[#F8D62E] rounded-xl px-6 py-3">
+                  <span className="text-2xl md:text-3xl font-medium text-[#303030]">
+                    {publicStats ? `${publicStats.users}+` : "615+"}
+                  </span>
+                  <span className="ml-2 text-xs text-[#303030]/70">пользователей</span>
+                </div>
               </div>
             </div>
-            <div className="flex items-start gap-4">
-              <span className="text-[48px] md:text-[64px] font-medium leading-none text-[#F8D62E]">
-                {publicStats?.parks ?? 148}
-              </span>
-              <p className="mt-2 text-sm font-medium text-[#303030]">
-                Таксопарков
-                <br />
-                проверено
-              </p>
+
+            {/* Right — illustration */}
+            <div className="hidden md:block w-[320px] lg:w-[420px]">
+              <Image
+                src="/figma/check-taxis.png"
+                alt=""
+                width={691}
+                height={604}
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </div>
@@ -437,37 +454,49 @@ export default function ParksPage() {
       <section className="bg-white">
         <div className="max-w-[1600px] mx-auto px-6 pb-12 md:pb-16">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#F8D62E] text-[#303030] rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[220px]">
-              <h3 className="text-xl md:text-2xl font-medium leading-snug">
-                Получите заказ «По делам»<br />в любом месте за 2 мин,<br />без 9%
-              </h3>
-              <p className="mt-4 text-sm leading-relaxed text-[#303030]/70">
-                Сервис подачи заказов для водителей такси без комиссии агрегатора.
-              </p>
+            <div className="bg-[#F8D62E] text-[#303030] rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[260px] relative overflow-hidden">
+              <div className="relative z-10 max-w-[60%]">
+                <h3 className="text-xl md:text-2xl font-medium leading-snug">
+                  Получите заказ «По делам»<br />в любом месте за 2 мин,<br />без 9%
+                </h3>
+                <p className="mt-4 text-sm leading-relaxed text-[#303030]/70">
+                  Сервис подачи заказов для водителей такси без комиссии агрегатора.
+                </p>
+              </div>
+              <Image src="/figma/feature-no9.png" alt="" width={320} height={320} className="absolute bottom-0 right-0 w-[140px] md:w-[180px] h-auto object-contain pointer-events-none select-none" />
             </div>
-            <div className="bg-[#303030] text-white rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[220px]">
-              <h3 className="text-xl md:text-2xl font-medium leading-snug">
-                Выкуп<br />автомобилей
-              </h3>
-              <p className="mt-4 text-sm leading-relaxed text-white/70">
-                Подберём автомобиль для работы в такси с выгодными условиями выкупа.
-              </p>
+            <div className="bg-[#303030] text-white rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[260px] relative overflow-hidden">
+              <div className="relative z-10 max-w-[60%]">
+                <h3 className="text-xl md:text-2xl font-medium leading-snug">
+                  Выкуп<br />автомобилей
+                </h3>
+                <p className="mt-4 text-sm leading-relaxed text-white/70">
+                  Подберём автомобиль для работы в такси с выгодными условиями выкупа.
+                </p>
+              </div>
+              <Image src="/figma/feature-buyout.png" alt="" width={320} height={320} className="absolute bottom-0 right-0 w-[140px] md:w-[180px] h-auto object-contain pointer-events-none select-none" />
             </div>
-            <div className="bg-white border border-[#E5E5E5] text-[#303030] rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[220px]">
-              <h3 className="text-xl md:text-2xl font-medium leading-snug">
-                Проверка по базе<br />таксопарков
-              </h3>
-              <p className="mt-4 text-sm leading-relaxed text-[#A1A1A1]">
-                Узнайте реальные условия парка до подключения.
-              </p>
+            <div className="bg-white border border-[#E5E5E5] text-[#303030] rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[260px] relative overflow-hidden">
+              <div className="relative z-10 max-w-[60%]">
+                <h3 className="text-xl md:text-2xl font-medium leading-snug">
+                  Проверка по базе<br />таксопарков
+                </h3>
+                <p className="mt-4 text-sm leading-relaxed text-[#A1A1A1]">
+                  Узнайте реальные условия парка до подключения.
+                </p>
+              </div>
+              <Image src="/figma/feature-check.png" alt="" width={320} height={320} className="absolute bottom-0 right-0 w-[140px] md:w-[180px] h-auto object-contain pointer-events-none select-none" />
             </div>
-            <div className="bg-white border border-[#E5E5E5] text-[#303030] rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[220px]">
-              <h3 className="text-xl md:text-2xl font-medium leading-snug">
-                Подключим<br />вас к такси
-              </h3>
-              <p className="mt-4 text-sm leading-relaxed text-[#A1A1A1]">
-                Поможем выбрать лучший таксопарк под ваши параметры.
-              </p>
+            <div className="bg-white border border-[#E5E5E5] text-[#303030] rounded-2xl p-8 md:p-10 flex flex-col justify-between min-h-[260px] relative overflow-hidden">
+              <div className="relative z-10 max-w-[60%]">
+                <h3 className="text-xl md:text-2xl font-medium leading-snug">
+                  Подключим<br />вас к такси
+                </h3>
+                <p className="mt-4 text-sm leading-relaxed text-[#A1A1A1]">
+                  Поможем выбрать лучший таксопарк под ваши параметры.
+                </p>
+              </div>
+              <Image src="/figma/feature-connect.png" alt="" width={320} height={320} className="absolute bottom-0 right-0 w-[140px] md:w-[180px] h-auto object-contain pointer-events-none select-none" />
             </div>
           </div>
         </div>

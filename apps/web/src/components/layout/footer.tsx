@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "./logo";
 
 export function Footer() {
   return (
@@ -6,8 +7,8 @@ export function Footer() {
       <div className="max-w-[1600px] mx-auto px-6 py-10">
         <div className="flex flex-col md:flex-row justify-between gap-8">
           <div>
-            <span className="text-xl font-medium text-[#303030]">Таксибрат</span>
-            <p className="mt-2 text-sm text-[#A1A1A1] max-w-sm">
+            <Logo size="md" />
+            <p className="mt-3 text-sm text-[#A1A1A1] max-w-sm">
               Честный рейтинг таксопарков Москвы и МО
             </p>
           </div>

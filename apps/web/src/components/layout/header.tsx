@@ -7,6 +7,7 @@ import { Button } from "../ui/button";
 import { AuthModal } from "../auth/auth-modal";
 import { ConfirmModal } from "../ui/confirm-modal";
 import { SuccessModal } from "../ui/success-modal";
+import { Logo } from "./logo";
 import { useAuth } from "@/lib/use-auth";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
@@ -74,9 +75,7 @@ export function Header() {
       <header className="w-full border-b border-[#E5E5E5]">
         <div className="max-w-[1600px] mx-auto px-6 h-[72px] flex items-center justify-between">
           {/* Logo */}
-          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
-            <span className="text-2xl font-medium text-[#303030]">Таксибрат</span>
-          </Link>
+          <Logo href={user ? "/dashboard" : "/"} size="md" />
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6 lg:gap-8">

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Таксибрат">
+  <rect width="64" height="64" rx="12" fill="#F8D62E"/>
+  <g fill="#303030">
+    <rect x="14" y="22" width="6" height="6"/>
+    <rect x="26" y="22" width="6" height="6"/>
+    <rect x="38" y="22" width="6" height="6"/>
+    <rect x="20" y="28" width="6" height="6"/>
+    <rect x="32" y="28" width="6" height="6"/>
+    <rect x="44" y="28" width="6" height="6"/>
+    <rect x="14" y="34" width="6" height="6"/>
+    <rect x="26" y="34" width="6" height="6"/>
+    <rect x="38" y="34" width="6" height="6"/>
+  </g>
+  <g fill="#303030">
+    <path d="M18.5 44.2l.9-1.8.9 1.8 2 .3-1.45 1.4.34 2-1.79-.94-1.79.94.34-2L16.5 44.5z"/>
+    <path d="M26.5 44.2l.9-1.8.9 1.8 2 .3-1.45 1.4.34 2-1.79-.94-1.79.94.34-2-1.45-1.4z"/>
+    <path d="M34.5 44.2l.9-1.8.9 1.8 2 .3-1.45 1.4.34 2-1.79-.94-1.79.94.34-2-1.45-1.4z"/>
+    <path d="M42.5 44.2l.9-1.8.9 1.8 2 .3-1.45 1.4.34 2-1.79-.94-1.79.94.34-2-1.45-1.4z"/>
+  </g>
+</svg>
