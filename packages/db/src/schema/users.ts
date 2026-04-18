@@ -10,6 +10,8 @@ import {
   boolean,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+import { carBrands } from "./car-brands";
+import { carModels } from "./car-models";
 
 export const userRoleEnum = pgEnum("user_role", [
   "USER",
@@ -46,6 +48,13 @@ export const users = pgTable("users", {
   canViewUserPhone: boolean("can_view_user_phone").notNull().default(false),
   canViewUserEmail: boolean("can_view_user_email").notNull().default(false),
   canViewUserBirthDate: boolean("can_view_user_birth_date").notNull().default(false),
+  // Vehicle / city fields
+  city: varchar("city", { length: 100 }),
+  carClass: varchar("car_class", { length: 20 }),
+  carBrandId: uuid("car_brand_id").references(() => carBrands.id),
+  carModelId: uuid("car_model_id").references(() => carModels.id),
+  carYear: integer("car_year"),
+  carPlate: varchar("car_plate", { length: 20 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

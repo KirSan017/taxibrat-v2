@@ -6,6 +6,8 @@ export const createTicketSchema = z.object({
   relatedEntityType: z.nativeEnum(RelatedEntityType).optional(),
   relatedEntityId: z.string().uuid().optional(),
   body: z.string().min(1).max(5000),
+  // Optional context hint used to enrich generated title (e.g. park name for PARK_CHECK).
+  titleHint: z.string().max(200).optional(),
 });
 
 export const listTicketsSchema = z.object({

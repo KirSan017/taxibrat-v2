@@ -7,6 +7,12 @@ export const updateProfileSchema = z.object({
   patronymic: z.string().max(100).optional(),
   email: z.string().email().optional(),
   birthDate: z.string().date().optional(),
+  city: z.string().max(100).optional(),
+  carClass: z.string().max(20).optional(),
+  carBrandId: z.string().uuid().optional(),
+  carModelId: z.string().uuid().optional(),
+  carYear: z.coerce.number().int().min(1990).max(2099).optional(),
+  carPlate: z.string().max(20).optional(),
 });
 
 export const rejectUserSchema = z.object({
@@ -39,4 +45,10 @@ export interface UserResponse {
   friendshipPoints: number;
   referralCode: string;
   createdAt: string;
+  city?: string | null;
+  carClass?: string | null;
+  carBrandId?: string | null;
+  carModelId?: string | null;
+  carYear?: number | null;
+  carPlate?: string | null;
 }
