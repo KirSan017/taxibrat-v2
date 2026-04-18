@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
@@ -30,11 +31,19 @@ interface ParksResponse {
   total: number;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "gray" | "green" | "red" }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: "gray" | "green" | "red" | "yellow" }> = {
   DRAFT: { label: "Черновик", variant: "gray" },
+  PENDING_REVIEW: { label: "На проверке СМ", variant: "yellow" },
   ACTIVE: { label: "Активен", variant: "green" },
   ARCHIVED: { label: "Архив", variant: "red" },
 };
+
+type AdState = "NONE" | "ADVERTISED" | "SUPER";
+function parkAdState(p: { isAdvertised?: boolean; isSuperAdvertised?: boolean }): AdState {
+  if (p.isSuperAdvertised) return "SUPER";
+  if (p.isAdvertised) return "ADVERTISED";
+  return "NONE";
+}
 
 /* ── page ─────────────────────────────────────────────── */
 
@@ -57,6 +66,7 @@ export default function AdminParksListPage() {
   const [submitting, setSubmitting] = useState(false);
   const [duplicates, setDuplicates] = useState<Array<{ id: string; name: string; address: string | null; phone: string | null }>>([]);
   const [checkingDups, setCheckingDups] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Park | null>(null);
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -138,18 +148,35 @@ export default function AdminParksListPage() {
     }
   };
 
-  const toggleAd = async (park: Park) => {
+  const setAdState = async (park: Park, state: AdState) => {
     const token = getAccessToken();
     if (!token) return;
     try {
       await api(`/admin/parks/${park.id}`, {
         method: "PATCH",
         token,
-        body: { isAdvertised: !park.isAdvertised },
+        body: {
+          isAdvertised: state === "ADVERTISED" || state === "SUPER",
+          isSuperAdvertised: state === "SUPER",
+        },
       });
       load();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Не удалось изменить");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      await api(`/admin/parks/${deleteTarget.id}`, { method: "DELETE", token });
+      setDeleteTarget(null);
+      setSuccessMsg("Таксопарк удалён");
+      load();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось удалить");
     }
   };
 
@@ -190,6 +217,15 @@ export default function AdminParksListPage() {
         onClose={() => setSuccessMsg("")}
         title="Готово"
         description={successMsg}
+      />
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Удалить таксопарк?"
+        description={`Парк «${deleteTarget?.name ?? ""}» будет удалён. Это действие необратимо.`}
+        confirmLabel="Удалить"
+        variant="warning"
       />
 
       <div className="flex items-center justify-between mb-6">
@@ -248,14 +284,18 @@ export default function AdminParksListPage() {
                     <Badge variant={sc.variant}>{sc.label}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {isAdmin && (
-                        <button
-                          onClick={() => toggleAd(p)}
-                          className="text-xs text-[#303030] hover:underline"
+                        <select
+                          value={parkAdState(p)}
+                          onChange={(e) => setAdState(p, e.target.value as AdState)}
+                          className="text-xs h-[28px] px-2 border border-[#E5E5E5] rounded bg-white"
+                          title="Реклама"
                         >
-                          {p.isAdvertised ? "Снять с рекламы" : "В рекламу"}
-                        </button>
+                          <option value="NONE">Без рекламы</option>
+                          <option value="ADVERTISED">Реклама</option>
+                          <option value="SUPER">Супер реклама</option>
+                        </select>
                       )}
                       {p.status === "ACTIVE" && (
                         <button onClick={() => archive(p)} className="text-xs text-[#FA6868] hover:underline">
@@ -265,6 +305,14 @@ export default function AdminParksListPage() {
                       {p.status === "ARCHIVED" && (
                         <button onClick={() => restore(p)} className="text-xs text-green-600 hover:underline">
                           Восстановить
+                        </button>
+                      )}
+                      {isAdmin && (
+                        <button
+                          onClick={() => setDeleteTarget(p)}
+                          className="text-xs text-[#FA6868] hover:underline"
+                        >
+                          Удалить
                         </button>
                       )}
                     </div>

@@ -74,6 +74,10 @@ export class ManagersService {
     return updated;
   }
 
+  async getAllSettings() {
+    return this.db.select().from(managerSettings);
+  }
+
   async getActiveManagers(section: ManagerSection) {
     return this.db
       .select()

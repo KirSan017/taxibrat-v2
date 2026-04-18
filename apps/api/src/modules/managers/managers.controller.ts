@@ -23,6 +23,12 @@ export class ManagersController {
     return this.managersService.getSettings(user.sub);
   }
 
+  @Get("settings/all")
+  @Roles(UserRole.SUPER_MANAGER, UserRole.ADMIN)
+  getAllSettings() {
+    return this.managersService.getAllSettings();
+  }
+
   @Patch("settings/:section")
   toggleStatus(
     @CurrentUser() user: JwtPayload,

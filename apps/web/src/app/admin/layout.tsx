@@ -24,7 +24,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin/parks", label: "Проверка парков", icon: CheckIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
+  { href: "/admin/parks", label: "Модерация парков", icon: CheckIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/users", label: "Пользователи", icon: UsersIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/tickets", label: "Чат (тикеты)", icon: ChatIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/orders", label: "По делам, без 9%", icon: OrdersIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
@@ -82,7 +82,13 @@ interface ManagerSetting {
 // NO_9_PERCENT covers the "По делам" order queue. We expose a single global
 // toggle that flips all sections in lock-step — ТЗ only requires one
 // "В работе / Отдыхаю" switch for managers.
-const TOGGLE_SECTIONS: ManagerSection[] = ["CHAT", "NO_9_PERCENT"];
+const TOGGLE_SECTIONS: ManagerSection[] = [
+  "CHAT",
+  "TAXI_CHECK",
+  "NO_9_PERCENT",
+  "USERS",
+  "BUYOUT",
+];
 
 function WorkStatusToggle() {
   const [settings, setSettings] = useState<ManagerSetting[] | null>(null);
@@ -164,6 +170,53 @@ function WorkStatusToggle() {
   );
 }
 
+function AdminNotificationBell() {
+  const [unread, setUnread] = useState<number>(0);
+
+  const load = useCallback(() => {
+    const token = getAccessToken();
+    if (!token) return;
+    api<{ data?: Array<{ readAt: string | null }>; unread?: number } | Array<{ readAt: string | null }>>(
+      "/notifications?page=1&limit=50",
+      { token },
+    )
+      .then((res: any) => {
+        if (typeof res?.unread === "number") {
+          setUnread(res.unread);
+          return;
+        }
+        const list: Array<{ readAt: string | null }> = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.data)
+            ? res.data
+            : [];
+        setUnread(list.filter((n) => !n.readAt).length);
+      })
+      .catch(() => setUnread(0));
+  }, []);
+
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, [load]);
+
+  return (
+    <Link
+      href="/admin/archive"
+      className="relative p-2 hover:bg-gray-50 rounded-full transition-colors"
+      title="Уведомления"
+    >
+      <BellIcon className="w-5 h-5 text-[#303030]" />
+      {unread > 0 && (
+        <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#FA6868] text-white text-[10px] font-semibold flex items-center justify-center">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 /* ── layout ───────────────────────────────────────────── */
 
 export default function AdminLayout({
@@ -228,9 +281,7 @@ export default function AdminLayout({
           {/* Right: work-status toggle + notifications + avatar */}
           <div className="flex items-center gap-3">
             <WorkStatusToggle />
-            <button className="relative p-2">
-              <BellIcon className="w-5 h-5 text-[#303030]" />
-            </button>
+            <AdminNotificationBell />
             <div className="w-8 h-8 bg-[#E5E5E5] rounded-full overflow-hidden flex items-center justify-center">
               {user.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -492,8 +543,7 @@ function BellIcon({ className = "" }: { className?: string }) {
 function HandshakeIcon({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 17l-5-5 2-2 3 3 7-7 2 2-9 9z" />
-      <path d="M3 3h18v18H3z" opacity="0.2" />
+      <path d="M11 17a1 1 0 001.447.894l4.553-2.276V6l-5 3-5-3v9.618l4 2zM7 9v10M17 15.618V19M21 11l-4 2M3 11l4 2" />
     </svg>
   );
 }

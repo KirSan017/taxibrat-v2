@@ -31,9 +31,10 @@ export class OrdersService {
   ) {}
 
   async create(userId: string, dto: CreateNo9OrderDto) {
-    // Check feature enabled
+    // Check feature enabled (effective = admin-on AND not auto-disabled)
     const enabled = await this.settingsService.getBoolean("no9_enabled");
-    if (!enabled) {
+    const autoDisabled = await this.settingsService.getBoolean("no9_auto_disabled");
+    if (!enabled || autoDisabled) {
       throw new BadRequestException("Функция временно недоступна. Попробуйте через 20 минут.");
     }
 
@@ -293,8 +294,8 @@ export class OrdersService {
       // Check if ALL managers in NO_9_PERCENT are blocked
       const availableManagers = await this.distributor.pickManager();
       if (!availableManagers) {
-        // All managers blocked — disable feature
-        await this.settingsService.set("no9_enabled", "false");
+        // All managers blocked — auto-disable feature (keep admin flag intact)
+        await this.settingsService.set("no9_auto_disabled", "true");
         this.logger.warn("All NO_9_PERCENT managers blocked — feature auto-disabled");
       }
     }
@@ -346,7 +347,9 @@ export class OrdersService {
   }
 
   async getFeatureStatus() {
-    const enabled = await this.settingsService.getBoolean("no9_enabled");
+    const adminEnabled = await this.settingsService.getBoolean("no9_enabled");
+    const autoDisabled = await this.settingsService.getBoolean("no9_auto_disabled");
+    const enabled = adminEnabled && !autoDisabled;
 
     // Count managers with fiveMinCount >= 3
     const [blockedResult] = await this.db
@@ -366,6 +369,8 @@ export class OrdersService {
 
     return {
       enabled,
+      adminEnabled,
+      autoDisabled,
       blockedManagers: Number(blockedResult.count),
       totalManagers: Number(totalResult.count),
     };
@@ -419,11 +424,11 @@ export class OrdersService {
           ),
         );
 
-      // Re-enable feature if it was auto-disabled
-      const enabled = await this.settingsService.getBoolean("no9_enabled");
-      if (!enabled) {
-        await this.settingsService.set("no9_enabled", "true");
-        this.logger.log("NO_9_PERCENT feature re-enabled (manager cleared queue)");
+      // Re-enable feature only if it was auto-disabled (do not touch admin flag)
+      const autoDisabled = await this.settingsService.getBoolean("no9_auto_disabled");
+      if (autoDisabled) {
+        await this.settingsService.set("no9_auto_disabled", "false");
+        this.logger.log("NO_9_PERCENT auto-disabled flag cleared (manager cleared queue)");
       }
 
       this.logger.log(`Manager ${managerId} fiveMinCount reset to 0`);
