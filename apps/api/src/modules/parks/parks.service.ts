@@ -1,5 +1,10 @@
-import { Injectable, Inject, NotFoundException } from "@nestjs/common";
-import { eq, sql } from "drizzle-orm";
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { eq, sql, ilike, and, ne } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import { taxiParks, parkClasses } from "@taxibrat/db";
 import { CreateParkDto, UpdateParkDto, AuditAction, AuditEntity } from "@taxibrat/shared";
@@ -13,10 +18,22 @@ export class ParksService {
   ) {}
 
   async create(dto: CreateParkDto, userId: string) {
-    const [park] = await this.db
-      .insert(taxiParks)
-      .values({ ...dto, createdById: userId })
-      .returning();
+    let park;
+    try {
+      [park] = await this.db
+        .insert(taxiParks)
+        .values({ ...dto, createdById: userId })
+        .returning();
+    } catch (e: any) {
+      // Postgres unique violation (23505) — phone already exists
+      if (e?.code === "23505") {
+        throw new ConflictException({
+          message: "Таксопарк с таким телефоном уже существует",
+          code: "DUPLICATE_PHONE",
+        });
+      }
+      throw e;
+    }
 
     await this.auditService.log({
       actorId: userId,
@@ -27,6 +44,71 @@ export class ParksService {
     });
 
     return park;
+  }
+
+  async findDuplicatesByPhone(phone: string, excludeId?: string) {
+    const conditions = [eq(taxiParks.phone, phone)];
+    if (excludeId) conditions.push(ne(taxiParks.id, excludeId));
+    return this.db
+      .select({
+        id: taxiParks.id,
+        name: taxiParks.name,
+        address: taxiParks.address,
+        phone: taxiParks.phone,
+      })
+      .from(taxiParks)
+      .where(and(...conditions))
+      .limit(20);
+  }
+
+  async findDuplicatesByName(name: string, excludeId?: string) {
+    const q = name.trim();
+    if (q.length < 2) return [];
+    const conditions = [ilike(taxiParks.name, `%${q}%`)];
+    if (excludeId) conditions.push(ne(taxiParks.id, excludeId));
+    return this.db
+      .select({
+        id: taxiParks.id,
+        name: taxiParks.name,
+        address: taxiParks.address,
+        phone: taxiParks.phone,
+      })
+      .from(taxiParks)
+      .where(and(...conditions))
+      .limit(20);
+  }
+
+  async findDuplicatesByAddress(address: string, excludeId?: string) {
+    const q = address.trim();
+    if (q.length < 3) return [];
+    const conditions = [ilike(taxiParks.address, `%${q}%`)];
+    if (excludeId) conditions.push(ne(taxiParks.id, excludeId));
+    return this.db
+      .select({
+        id: taxiParks.id,
+        name: taxiParks.name,
+        address: taxiParks.address,
+        phone: taxiParks.phone,
+      })
+      .from(taxiParks)
+      .where(and(...conditions))
+      .limit(20);
+  }
+
+  async findDuplicates(filters: {
+    phone?: string;
+    name?: string;
+    address?: string;
+    excludeId?: string;
+  }) {
+    const map = new Map<string, any>();
+    const pushAll = (list: any[]) => {
+      for (const item of list) if (!map.has(item.id)) map.set(item.id, item);
+    };
+    if (filters.phone) pushAll(await this.findDuplicatesByPhone(filters.phone, filters.excludeId));
+    if (filters.name) pushAll(await this.findDuplicatesByName(filters.name, filters.excludeId));
+    if (filters.address) pushAll(await this.findDuplicatesByAddress(filters.address, filters.excludeId));
+    return Array.from(map.values());
   }
 
   async getById(id: string) {

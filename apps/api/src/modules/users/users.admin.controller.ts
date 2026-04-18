@@ -33,6 +33,14 @@ export class UsersAdminController {
     return this.usersService.listUsers(dto);
   }
 
+  @Get(":id/duplicates")
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPER_MANAGER)
+  async getDuplicates(@Param("id") id: string) {
+    const user = await this.usersService.getById(id);
+    if (!user.firstName || !user.lastName) return [];
+    return this.usersService.findDuplicatesByName(user.firstName, user.lastName, id);
+  }
+
   @Post(":id/approve")
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPER_MANAGER)
   approveUser(@Param("id") id: string, @CurrentUser() user: JwtPayload) {

@@ -49,6 +49,8 @@ export default function AdminParksListPage() {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("moscow");
   const [submitting, setSubmitting] = useState(false);
+  const [duplicates, setDuplicates] = useState<Array<{ id: string; name: string; address: string | null; phone: string | null }>>([]);
+  const [checkingDups, setCheckingDups] = useState(false);
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -71,6 +73,27 @@ export default function AdminParksListPage() {
 
   const filtered = parks.filter((p) => !search || p.name.toLowerCase().includes(search.toLowerCase()));
 
+  const checkDuplicates = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+    setCheckingDups(true);
+    try {
+      const params = new URLSearchParams();
+      if (phone.trim()) params.set("phone", phone.trim());
+      if (name.trim()) params.set("name", name.trim());
+      if (address.trim()) params.set("address", address.trim());
+      const res = await api<Array<{ id: string; name: string; address: string | null; phone: string | null }>>(
+        `/admin/parks/duplicates?${params.toString()}`,
+        { token },
+      );
+      setDuplicates(Array.isArray(res) ? res : []);
+    } catch {
+      setDuplicates([]);
+    } finally {
+      setCheckingDups(false);
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = getAccessToken();
@@ -87,6 +110,7 @@ export default function AdminParksListPage() {
       setName("");
       setAddress("");
       setPhone("");
+      setDuplicates([]);
       setSuccessMsg("Таксопарк создан");
       load();
     } catch (err: unknown) {
@@ -263,9 +287,40 @@ export default function AdminParksListPage() {
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
               />
+
+              {duplicates.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+                  <p className="text-xs font-medium text-[#303030] mb-2">
+                    Найдены возможные дубли ({duplicates.length}):
+                  </p>
+                  <ul className="space-y-1 text-xs">
+                    {duplicates.slice(0, 5).map((d) => (
+                      <li key={d.id}>
+                        <Link
+                          href={`/admin/parks/${d.id}`}
+                          className="text-[#303030] hover:underline"
+                          target="_blank"
+                        >
+                          {d.name}
+                        </Link>
+                        <span className="text-[#A1A1A1]"> — {d.address || "—"} {d.phone ? `— ${d.phone}` : ""}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={() => !submitting && setShowCreate(false)} disabled={submitting}>
                   Отмена
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={checkDuplicates}
+                  disabled={checkingDups || submitting || (!phone.trim() && !name.trim() && !address.trim())}
+                >
+                  {checkingDups ? "Поиск..." : "Проверить дубли"}
                 </Button>
                 <Button type="submit" disabled={submitting}>
                   {submitting ? "Создание..." : "Создать"}

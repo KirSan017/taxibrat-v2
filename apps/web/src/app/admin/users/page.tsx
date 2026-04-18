@@ -57,6 +57,7 @@ export default function AdminUsersPage() {
   const [rejectUser, setRejectUser] = useState<UserItem | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
   const [total, setTotal] = useState(0);
+  const [duplicates, setDuplicates] = useState<Array<{ id: string; firstName: string | null; lastName: string | null }>>([]);
 
   const canSeePhone = currentUser?.role !== "MANAGER";
 
@@ -84,6 +85,21 @@ export default function AdminUsersPage() {
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, statusFilter]);
+
+  useEffect(() => {
+    if (!selectedUser) {
+      setDuplicates([]);
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) return;
+    api<Array<{ id: string; firstName: string | null; lastName: string | null }>>(
+      `/admin/users/${selectedUser.id}/duplicates`,
+      { token },
+    )
+      .then((res) => setDuplicates(Array.isArray(res) ? res : []))
+      .catch(() => setDuplicates([]));
+  }, [selectedUser]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,6 +204,14 @@ export default function AdminUsersPage() {
                 <div>
                   <span className="text-xs text-[#A1A1A1]">Причина отклонения</span>
                   <p className="text-sm text-[#FA6868]">{selectedUser.rejectionReason}</p>
+                </div>
+              )}
+              {duplicates.length > 0 && (
+                <div>
+                  <span className="text-xs text-[#A1A1A1]">Дубли по ФИО</span>
+                  <p className="text-sm text-[#F8A828] font-medium">
+                    Найдено: {duplicates.length}
+                  </p>
                 </div>
               )}
             </div>

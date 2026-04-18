@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, boolean, decimal, text, pgEnum, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, boolean, decimal, text, pgEnum, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
 export const districtEnum = pgEnum("district", [
@@ -27,5 +27,8 @@ export const taxiParks = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
-  (table) => [index("parks_status_idx").on(table.status)]
+  (table) => [
+    index("parks_status_idx").on(table.status),
+    uniqueIndex("parks_phone_unique_idx").on(table.phone),
+  ]
 );

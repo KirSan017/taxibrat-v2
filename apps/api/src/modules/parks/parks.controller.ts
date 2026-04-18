@@ -29,6 +29,22 @@ export class ParksController {
     return this.parksService.list(parseInt(page), Math.min(parseInt(limit), 100));
   }
 
+  @Get("duplicates")
+  @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER, UserRole.MANAGER)
+  duplicates(
+    @Query("phone") phone?: string,
+    @Query("name") name?: string,
+    @Query("address") address?: string,
+    @Query("excludeId") excludeId?: string,
+  ) {
+    return this.parksService.findDuplicates({
+      phone: phone?.trim() || undefined,
+      name: name?.trim() || undefined,
+      address: address?.trim() || undefined,
+      excludeId: excludeId || undefined,
+    });
+  }
+
   @Get(":id")
   @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER, UserRole.MANAGER)
   getById(@Param("id") id: string) {
