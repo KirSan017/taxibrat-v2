@@ -368,6 +368,49 @@ export class UsersService {
     return { success: true };
   }
 
+  async changeRole(adminId: string, userId: string, newRole: UserRole) {
+    if (adminId === userId) {
+      throw new BadRequestException("Нельзя изменить свою роль");
+    }
+    if (!Object.values(UserRole).includes(newRole)) {
+      throw new BadRequestException("Некорректная роль");
+    }
+    const user = await this.getById(userId);
+    if (user.role === newRole) return user;
+
+    const roleLabel = (r: string) =>
+      (({
+        USER: "Пользователь",
+        MANAGER: "Менеджер",
+        SUPER_MANAGER: "Супер-менеджер",
+        ADMIN: "Администратор",
+      } as Record<string, string>)[r] || r);
+
+    const [updated] = await this.db
+      .update(users)
+      .set({ role: newRole })
+      .where(eq(users.id, userId))
+      .returning();
+
+    await this.auditService.log({
+      actorId: adminId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.USER,
+      entityId: userId,
+      oldValue: { role: user.role },
+      newValue: { role: newRole },
+    });
+
+    await this.db.insert(notifications).values({
+      userId,
+      type: NotificationType.SYSTEM,
+      title: "Роль изменена",
+      body: `Ваша роль обновлена: ${roleLabel(newRole)}`,
+    });
+
+    return updated;
+  }
+
   async updateVisibilityFlags(
     adminId: string,
     userId: string,

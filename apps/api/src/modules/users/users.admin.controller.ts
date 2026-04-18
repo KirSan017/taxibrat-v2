@@ -99,4 +99,14 @@ export class UsersAdminController {
   ) {
     return this.usersService.updateVisibilityFlags(admin.sub, id, dto);
   }
+
+  @Patch(":id/role")
+  @Roles(UserRole.ADMIN)
+  async changeRole(
+    @Param("id") id: string,
+    @Body() dto: { role: UserRole },
+    @CurrentUser() admin: JwtPayload,
+  ) {
+    return this.usersService.changeRole(admin.sub, id, dto.role);
+  }
 }

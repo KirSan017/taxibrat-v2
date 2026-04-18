@@ -68,6 +68,15 @@ export default function AdminUsersPage() {
   const [impersonateOpen, setImpersonateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [newRole, setNewRole] = useState<string>("");
+  const [roleConfirmOpen, setRoleConfirmOpen] = useState(false);
+
+  const ROLE_LABELS: Record<string, string> = {
+    USER: "Пользователь",
+    MANAGER: "Менеджер",
+    SUPER_MANAGER: "Супер-менеджер",
+    ADMIN: "Администратор",
+  };
 
   const isAdmin = currentUser?.role === "ADMIN";
   const canSeePhone = currentUser?.role !== "MANAGER";
@@ -111,6 +120,14 @@ export default function AdminUsersPage() {
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, statusFilter, page]);
+
+  useEffect(() => {
+    if (selectedUser) {
+      setNewRole(selectedUser.role);
+    } else {
+      setNewRole("");
+    }
+  }, [selectedUser]);
 
   useEffect(() => {
     if (!selectedUser) {
@@ -181,6 +198,30 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleChangeRole = async () => {
+    if (!selectedUser || !newRole || newRole === selectedUser.role) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setActionLoading(true);
+    try {
+      await api(`/admin/users/${selectedUser.id}/role`, {
+        method: "PATCH",
+        token,
+        body: { role: newRole },
+      });
+      setSuccessMsg(
+        `Роль пользователя ${formatFullName(selectedUser)} изменена на «${ROLE_LABELS[newRole] || newRole}»`,
+      );
+      setRoleConfirmOpen(false);
+      setSelectedUser(null);
+      loadUsers();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось изменить роль");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!selectedUser) return;
     const token = getAccessToken();
@@ -232,6 +273,18 @@ export default function AdminUsersPage() {
         variant="warning"
         onConfirm={handleDelete}
       />
+      <ConfirmModal
+        open={roleConfirmOpen}
+        onClose={() => setRoleConfirmOpen(false)}
+        title="Изменить роль?"
+        description={
+          selectedUser
+            ? `Изменить роль пользователя ${formatFullName(selectedUser)} с «${ROLE_LABELS[selectedUser.role] || selectedUser.role}» на «${ROLE_LABELS[newRole] || newRole}»?`
+            : ""
+        }
+        confirmLabel="Изменить"
+        onConfirm={handleChangeRole}
+      />
 
       {/* User detail modal */}
       {selectedUser && (
@@ -276,7 +329,33 @@ export default function AdminUsersPage() {
               </div>
               <div>
                 <span className="text-xs text-[#A1A1A1]">Роль</span>
-                <p className="text-sm text-[#303030]">{selectedUser.role}</p>
+                {isAdmin && selectedUser.id !== currentUser?.id ? (
+                  <div className="mt-1 flex gap-2 items-center">
+                    <select
+                      value={newRole}
+                      onChange={(e) => setNewRole(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-lg border border-[#E5E5E5] bg-white text-sm text-[#303030] focus:outline-none focus:border-[#303030]"
+                      disabled={actionLoading}
+                    >
+                      <option value="USER">Пользователь</option>
+                      <option value="MANAGER">Менеджер</option>
+                      <option value="SUPER_MANAGER">Супер-менеджер</option>
+                      <option value="ADMIN">Администратор</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={actionLoading || newRole === selectedUser.role}
+                      onClick={() => setRoleConfirmOpen(true)}
+                    >
+                      Изменить роль
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-[#303030]">
+                    {ROLE_LABELS[selectedUser.role] || selectedUser.role}
+                  </p>
+                )}
               </div>
               <div>
                 <span className="text-xs text-[#A1A1A1]">Дата регистрации</span>
