@@ -1,26 +1,31 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AuthModal } from "@/components/auth/auth-modal";
+import { api } from "@/lib/api-client";
+import { useAuth } from "@/lib/use-auth";
+import { DRIVER_CLASS_LABELS } from "@/lib/labels";
 
-/* ── mock data ──────────────────────────────────────────── */
+/* ── API types ──────────────────────────────────────────── */
 
-const STATS = [
-  { value: "143 125", label: "Зарегистрированных\nпользователей" },
-  { value: "148", label: "Таксопарков проверено\nв Москве и МО" },
-  { value: "1 200+", label: "Заказов «По делам»\nвыполнено" },
-  { value: "86", label: "Автомобилей\nна выкуп" },
-];
-
-const PARKS = [
-  { id: 1, name: "СитиМобил Парк", class: "Эконом", rating: 4.25, rent: 2000, deposit: 5000, commission: 2 },
-  { id: 2, name: "Альфа", class: "Комфорт", rating: 4.55, rent: 2500, deposit: 3000, commission: 3 },
-  { id: 3, name: "Название скрыто", class: "Эконом", rating: 4.05, rent: 1800, deposit: 5000, commission: 2, hidden: true },
-  { id: 4, name: "Драйв Парк", class: "Бизнес", rating: 4.84, rent: 3500, deposit: 10000, commission: 1 },
-  { id: 5, name: "Мега Такси", class: "Эконом", rating: 3.92, rent: 1700, deposit: 3000, commission: 3 },
-  { id: 6, name: "Премьер Авто", class: "Комфорт+", rating: 4.65, rent: 3000, deposit: 7000, commission: 2 },
-  { id: 7, name: "Экспресс Парк", class: "Эконом", rating: 4.12, rent: 1900, deposit: 4000, commission: 2 },
-  { id: 8, name: "Голд Такси", class: "Бизнес", rating: 4.78, rent: 4000, deposit: 12000, commission: 1 },
-];
+interface ParkClassItem {
+  id: string;
+  parkName: string | null;
+  parkAddress: string | null;
+  driverClass: string;
+  rating: string | number;
+  deposit: number;
+  parkCommission: string | number;
+  nameHidden?: boolean;
+  addressHidden?: boolean;
+  detailsBlurred?: boolean;
+  isAdvertised?: boolean;
+  isSuperAdvertised?: boolean;
+}
 
 const FEATURES = [
   {
@@ -49,9 +54,40 @@ const FEATURES = [
   },
 ];
 
-/* ── component ──────────────────────────────────────────── */
-
 export default function HomePage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [parks, setParks] = useState<ParkClassItem[]>([]);
+  const [parksLoading, setParksLoading] = useState(true);
+
+  // Redirect authorized users to /dashboard
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setParksLoading(true);
+    api<ParkClassItem[]>("/catalog/classes?limit=8")
+      .then((data) => {
+        if (!cancelled) setParks(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setParks([]);
+      })
+      .finally(() => {
+        if (!cancelled) setParksLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const classLabel = (cls: string) => DRIVER_CLASS_LABELS[cls] ?? cls;
+
   return (
     <>
       {/* ══════ HERO ══════ */}
@@ -69,17 +105,21 @@ export default function HomePage() {
                 Первый независимый рейтинг таксопарков Москвы и МО. Узнай реальные условия, сравни парки и начни работать на лучших условиях.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                <Button size="lg">Зарегистрироваться</Button>
-                <Button variant="outline" size="lg">
-                  Смотреть таксопарки
+                <Button size="lg" onClick={() => setAuthOpen(true)}>
+                  Зарегистрироваться
                 </Button>
+                <Link href="/parks">
+                  <Button variant="outline" size="lg">
+                    Смотреть таксопарки
+                  </Button>
+                </Link>
               </div>
             </div>
 
             {/* Right side — counter */}
             <div className="bg-[#F8D62E] rounded-2xl px-8 py-6 text-center shrink-0">
               <p className="text-[48px] md:text-[64px] font-medium leading-none text-[#303030]">
-                143 125
+                615+
               </p>
               <p className="mt-1 text-xs text-[#303030]/70">Зарегистрированных пользователей</p>
             </div>
@@ -102,51 +142,68 @@ export default function HomePage() {
           </div>
 
           {/* Park cards horizontal scroll */}
-          <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide">
-            {PARKS.map((park) => (
-              <Link
-                key={park.id}
-                href={`/parks/${park.id}`}
-                className="flex-none w-[280px] snap-start border border-[#E5E5E5] rounded-xl p-5 hover:shadow-md transition-shadow bg-white"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex items-center gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <svg
-                        key={i}
-                        className={`w-4 h-4 ${i < Math.round(park.rating) ? "text-[#F8D62E]" : "text-[#E5E5E5]"}`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <span className="text-sm font-medium text-[#303030]">{park.rating.toFixed(2)}</span>
-                </div>
-                <h3 className="text-sm font-medium text-[#303030] mb-1">
-                  {park.hidden ? "Название скрыто" : park.name}
-                </h3>
-                <Badge variant={park.class === "Бизнес" || park.class === "Комфорт+" ? "yellow" : "gray"}>
-                  {park.class}
-                </Badge>
-                <div className="mt-4 space-y-1.5 text-xs text-[#A1A1A1]">
-                  <div className="flex justify-between">
-                    <span>Аренда</span>
-                    <span className="text-[#303030] font-medium">{park.rent.toLocaleString("ru-RU")} руб.</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Залог</span>
-                    <span className="text-[#303030] font-medium">{park.deposit.toLocaleString("ru-RU")} руб.</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Комиссия</span>
-                    <span className="text-[#303030] font-medium">{park.commission}%</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {parksLoading ? (
+            <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-none w-[280px] h-[220px] rounded-xl bg-gray-100 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : parks.length === 0 ? (
+            <div className="text-center py-8 text-sm text-[#A1A1A1]">
+              Пока нет парков в каталоге
+            </div>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide">
+              {parks.map((park) => {
+                const rating = typeof park.rating === "string" ? parseFloat(park.rating) : park.rating;
+                const commission = typeof park.parkCommission === "string" ? parseFloat(park.parkCommission) : park.parkCommission;
+                const displayName = park.nameHidden || !park.parkName ? "Название скрыто" : park.parkName;
+                const isBusinessClass = park.driverClass === "BUSINESS" || park.driverClass === "COMFORT_PLUS" || park.driverClass === "PREMIER" || park.driverClass === "ELITE";
+                return (
+                  <Link
+                    key={park.id}
+                    href={`/parks/${park.id}`}
+                    className="flex-none w-[280px] snap-start border border-[#E5E5E5] rounded-xl p-5 hover:shadow-md transition-shadow bg-white"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-4 h-4 ${i < Math.round(rating) ? "text-[#F8D62E]" : "text-[#E5E5E5]"}`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="text-sm font-medium text-[#303030]">{rating.toFixed(2)}</span>
+                    </div>
+                    <h3 className="text-sm font-medium text-[#303030] mb-1 truncate">{displayName}</h3>
+                    <Badge variant={isBusinessClass ? "yellow" : "gray"}>
+                      {classLabel(park.driverClass)}
+                    </Badge>
+                    <div className="mt-4 space-y-1.5 text-xs text-[#A1A1A1]">
+                      <div className="flex justify-between">
+                        <span>Залог</span>
+                        <span className="text-[#303030] font-medium">
+                          {park.deposit.toLocaleString("ru-RU")} руб.
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Комиссия</span>
+                        <span className="text-[#303030] font-medium">{commission}%</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -183,14 +240,14 @@ export default function HomePage() {
               <p className="mt-3 text-sm text-[#303030]/60">
                 2 простых шага — и вы получаете доступ ко всем инструментам сервиса.
               </p>
-              <Button size="lg" className="mt-6">
+              <Button size="lg" className="mt-6" onClick={() => setAuthOpen(true)}>
                 Зарегистрироваться
               </Button>
             </div>
             {/* Decorative aside — friendship points */}
             <div className="bg-white rounded-xl p-6 text-center shrink-0 w-full md:w-auto md:min-w-[240px]">
               <p className="text-3xl">💛</p>
-              <p className="mt-2 text-sm font-medium text-[#303030]">"Баллы дружбы"</p>
+              <p className="mt-2 text-sm font-medium text-[#303030]">&quot;Баллы дружбы&quot;</p>
               <p className="mt-1 text-xs text-[#A1A1A1] max-w-[200px] mx-auto">
                 Копите баллы за активность и тратьте на сервисы платформы
               </p>
@@ -198,6 +255,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   );
 }

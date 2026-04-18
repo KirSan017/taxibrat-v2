@@ -1,13 +1,42 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ParkCard, type ParkCardData } from "@/components/parks/park-card";
+import { api } from "@/lib/api-client";
+import {
+  DRIVER_CLASS_LABELS,
+  DRIVER_CLASS_FROM_LABEL,
+} from "@/lib/labels";
 
-/* ── mock data ──────────────────────────────────────────── */
+interface ApiParkClass {
+  id: string;
+  parkName: string | null;
+  parkAddress: string | null;
+  parkPhone?: string | null;
+  driverClass: string;
+  rating: string | number;
+  deposit: number;
+  parkCommission: string | number;
+  hasAvailableCars: boolean;
+  isAdvertised?: boolean;
+  isSuperAdvertised?: boolean;
+  nameHidden?: boolean;
+  addressHidden?: boolean;
+}
+
+interface ApiBrand {
+  id: string;
+  name: string;
+}
+
+interface ApiModel {
+  id: string;
+  name: string;
+  brandId: string;
+}
 
 const HONOR_BOARD = [
   { id: 1, name: "Алексей М.", checks: 48, avatar: "А" },
@@ -20,82 +49,121 @@ const HONOR_BOARD = [
   { id: 8, name: "Олег Т.", checks: 12, avatar: "О" },
 ];
 
-const MOCK_PARKS: ParkCardData[] = [
-  { id: 1, name: "СитиМобил Парк", driverClass: "Эконом", rating: 4.25, rent: 2000, deposit: 5000, commission: 2, lastReviewDate: "26.02.25", lastReviewAuthor: "Александр Р.", advertised: true },
-  { id: 2, name: "Альфа", driverClass: "Комфорт", rating: 4.55, rent: 2500, deposit: 3000, commission: 3, lastReviewDate: "24.02.25", lastReviewAuthor: "Дмитрий К." },
-  { id: 3, name: "Название скрыто", driverClass: "Эконом", rating: 4.05, rent: 1800, deposit: 5000, commission: 2, hidden: true, lastReviewDate: "22.02.25", lastReviewAuthor: "Сергей В." },
-  { id: 4, name: "Драйв Парк", driverClass: "Бизнес", rating: 4.84, rent: 3500, deposit: 10000, commission: 1, lastReviewDate: "20.02.25", lastReviewAuthor: "Игорь Л.", advertised: true },
-  { id: 5, name: "Мега Такси", driverClass: "Эконом", rating: 3.92, rent: 1700, deposit: 3000, commission: 3, lastReviewDate: "18.02.25", lastReviewAuthor: "Андрей П.", hasAvailableCars: false },
-  { id: 6, name: "Премьер Авто", driverClass: "Комфорт+", rating: 4.65, rent: 3000, deposit: 7000, commission: 2, lastReviewDate: "16.02.25", lastReviewAuthor: "Максим Р." },
-  { id: 7, name: "Экспресс Парк", driverClass: "Эконом", rating: 4.12, rent: 1900, deposit: 4000, commission: 2, lastReviewDate: "14.02.25", lastReviewAuthor: "Николай Б.", hasAvailableCars: false },
-  { id: 8, name: "Голд Такси", driverClass: "Бизнес", rating: 4.78, rent: 4000, deposit: 12000, commission: 1, lastReviewDate: "12.02.25", lastReviewAuthor: "Олег Т." },
+const DRIVER_CLASS_OPTIONS = ["Все", ...Object.values(DRIVER_CLASS_LABELS)];
+const YEAR_OPTIONS = ["Все", "2024", "2023", "2022", "2021", "2020"];
+const DISTRICT_OPTIONS: Array<[string, string]> = [
+  ["CAO", "ЦАО"], ["SAO", "САО"], ["SVAO", "СВАО"], ["VAO", "ВАО"],
+  ["UVAO", "ЮВАО"], ["UAO", "ЮАО"], ["UZAO", "ЮЗАО"], ["ZAO", "ЗАО"], ["SZAO", "СЗАО"],
 ];
 
-const DRIVER_CLASSES = ["Все", "Эконом", "Комфорт", "Комфорт+", "Бизнес"];
-
-const BRANDS = ["Все", "Kia", "Hyundai", "Skoda", "Toyota", "Volkswagen"];
-
-const MODELS_BY_BRAND: Record<string, string[]> = {
-  Все: ["Все"],
-  Kia: ["Все", "Rio", "K5", "Sportage"],
-  Hyundai: ["Все", "Solaris", "Sonata", "Tucson"],
-  Skoda: ["Все", "Rapid", "Octavia", "Superb"],
-  Toyota: ["Все", "Camry", "Corolla", "RAV4"],
-  Volkswagen: ["Все", "Polo", "Jetta", "Tiguan"],
-};
-
-const YEARS = ["Все", "2024", "2023", "2022", "2021", "2020"];
-
-const DISTRICTS = [
-  "ЦАО", "САО", "СВАО", "ВАО", "ЮВАО", "ЮАО", "ЮЗАО", "ЗАО", "СЗАО",
-];
-
-/* ── component ──────────────────────────────────────────── */
+const LIMIT = 10;
 
 export default function ParksPage() {
-  const router = useRouter();
-  const [driverClass, setDriverClass] = useState("Все");
-  const [brand, setBrand] = useState("Все");
-  const [model, setModel] = useState("Все");
+  const [driverClassLabel, setDriverClassLabel] = useState("Все");
+  const [brandId, setBrandId] = useState("");
+  const [modelId, setModelId] = useState("");
   const [year, setYear] = useState("Все");
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const avgRating =
-    MOCK_PARKS.reduce((sum, p) => sum + p.rating, 0) / MOCK_PARKS.length;
+  const [brands, setBrands] = useState<ApiBrand[]>([]);
+  const [models, setModels] = useState<ApiModel[]>([]);
+  const [parks, setParks] = useState<ApiParkClass[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const term = searchQuery.trim();
-    if (!term) return;
-    const match = MOCK_PARKS.find(
-      (p) => !p.hidden && p.name.toLowerCase() === term.toLowerCase()
-    );
-    // If found park exists but has above-average rating — treat as "hidden" premium park
-    if (match && match.rating > avgRating) {
-      router.push(`/parks/hidden?name=${encodeURIComponent(match.name)}`);
+  // Load brands once
+  useEffect(() => {
+    api<ApiBrand[]>("/catalog/brands")
+      .then((data) => setBrands(Array.isArray(data) ? data : []))
+      .catch(() => setBrands([]));
+  }, []);
+
+  // Load models when brand changes
+  useEffect(() => {
+    if (!brandId) {
+      setModels([]);
+      setModelId("");
       return;
     }
-    // Otherwise just do nothing (in a real app we'd filter the list)
-  };
+    api<ApiModel[]>(`/catalog/models?brandId=${brandId}`)
+      .then((data) => setModels(Array.isArray(data) ? data : []))
+      .catch(() => setModels([]));
+  }, [brandId]);
 
-  const models = MODELS_BY_BRAND[brand] || ["Все"];
+  // Load parks on filter / page change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (driverClassLabel !== "Все") {
+      const enumVal = DRIVER_CLASS_FROM_LABEL[driverClassLabel];
+      if (enumVal) params.set("driverClass", enumVal);
+    }
+    if (brandId) params.set("brandId", brandId);
+    if (modelId) params.set("modelId", modelId);
+    if (year !== "Все") params.set("year", year);
+    if (selectedDistricts.length > 0) params.set("district", selectedDistricts.join(","));
+    params.set("page", String(page));
+    params.set("limit", String(LIMIT));
+
+    setLoading(true);
+    setError("");
+    api<ApiParkClass[]>(`/catalog/classes?${params.toString()}`)
+      .then((data) => setParks(Array.isArray(data) ? data : []))
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : "Ошибка загрузки");
+        setParks([]);
+      })
+      .finally(() => setLoading(false));
+  }, [driverClassLabel, brandId, modelId, year, selectedDistricts, page]);
 
   const toggleDistrict = (d: string) => {
     setSelectedDistricts((prev) =>
-      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
+      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
     );
+    setPage(1);
   };
 
-  // Simple filter (mock — in production this would be server-side)
-  const filtered = MOCK_PARKS.filter((p) => {
-    if (driverClass !== "Все" && p.driverClass !== driverClass) return false;
-    return true;
-  });
+  const resetFilters = () => {
+    setDriverClassLabel("Все");
+    setBrandId("");
+    setModelId("");
+    setYear("Все");
+    setSelectedDistricts([]);
+    setPage(1);
+  };
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / 5));
-  const paginated = filtered.slice((currentPage - 1) * 5, currentPage * 5);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Local filter by query on current page
+  };
+
+  const filteredBySearch = searchQuery.trim()
+    ? parks.filter((p) =>
+        (p.parkName ?? "").toLowerCase().includes(searchQuery.trim().toLowerCase()),
+      )
+    : parks;
+
+  const toCardData = (p: ApiParkClass): ParkCardData => {
+    const rating = typeof p.rating === "string" ? parseFloat(p.rating) : p.rating;
+    const commission = typeof p.parkCommission === "string" ? parseFloat(p.parkCommission) : p.parkCommission;
+    return {
+      id: p.id as unknown as number, // ParkCardData types id as number but routes accept strings
+      name: p.parkName ?? "",
+      hidden: Boolean(p.nameHidden),
+      driverClass: DRIVER_CLASS_LABELS[p.driverClass] ?? p.driverClass,
+      rating: isNaN(rating) ? 0 : rating,
+      rent: 0, // not returned by list endpoint; shown as 0 for now
+      deposit: p.deposit,
+      commission: isNaN(commission) ? 0 : commission,
+      advertised: Boolean(p.isAdvertised || p.isSuperAdvertised),
+      hasAvailableCars: p.hasAvailableCars,
+    };
+  };
+
+  // Per task: pagination using real `total` from response.
+  // Current API returns bare array (no total); use length heuristic for next-page availability.
+  const hasNextPage = parks.length === LIMIT;
 
   return (
     <>
@@ -110,7 +178,7 @@ export default function ParksPage() {
                 №1 в Москве
               </h1>
               <div className="mt-4 bg-[#F8D62E] rounded-xl px-6 py-3 inline-block">
-                <span className="text-2xl md:text-3xl font-medium text-[#303030]">143 125</span>
+                <span className="text-2xl md:text-3xl font-medium text-[#303030]">615+</span>
                 <span className="ml-2 text-xs text-[#303030]/70">пользователей</span>
               </div>
             </div>
@@ -174,11 +242,11 @@ export default function ParksPage() {
             <div>
               <label className="block text-xs text-[#A1A1A1] mb-1">Класс водителя</label>
               <select
-                value={driverClass}
-                onChange={(e) => setDriverClass(e.target.value)}
+                value={driverClassLabel}
+                onChange={(e) => { setDriverClassLabel(e.target.value); setPage(1); }}
                 className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none"
               >
-                {DRIVER_CLASSES.map((c) => (
+                {DRIVER_CLASS_OPTIONS.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -188,15 +256,17 @@ export default function ParksPage() {
             <div>
               <label className="block text-xs text-[#A1A1A1] mb-1">Марка</label>
               <select
-                value={brand}
+                value={brandId}
                 onChange={(e) => {
-                  setBrand(e.target.value);
-                  setModel("Все");
+                  setBrandId(e.target.value);
+                  setModelId("");
+                  setPage(1);
                 }}
                 className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none"
               >
-                {BRANDS.map((b) => (
-                  <option key={b} value={b}>{b}</option>
+                <option value="">Все</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
               </select>
             </div>
@@ -205,12 +275,14 @@ export default function ParksPage() {
             <div>
               <label className="block text-xs text-[#A1A1A1] mb-1">Модель</label>
               <select
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none"
+                value={modelId}
+                onChange={(e) => { setModelId(e.target.value); setPage(1); }}
+                disabled={!brandId || models.length === 0}
+                className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none disabled:bg-gray-50"
               >
+                <option value="">Все</option>
                 {models.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
             </div>
@@ -220,10 +292,10 @@ export default function ParksPage() {
               <label className="block text-xs text-[#A1A1A1] mb-1">Год</label>
               <select
                 value={year}
-                onChange={(e) => setYear(e.target.value)}
+                onChange={(e) => { setYear(e.target.value); setPage(1); }}
                 className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white focus:border-[#303030] outline-none"
               >
-                {YEARS.map((y) => (
+                {YEAR_OPTIONS.map((y) => (
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
@@ -231,25 +303,25 @@ export default function ParksPage() {
 
             {/* Show button */}
             <div className="flex items-end col-span-2 md:col-span-1">
-              <Button size="sm" className="w-full">
-                Показать {filtered.length} шт
+              <Button size="sm" className="w-full" onClick={() => setPage(1)}>
+                Показать {filteredBySearch.length} шт
               </Button>
             </div>
           </div>
 
           {/* Districts */}
           <div className="mt-4 flex flex-wrap gap-2">
-            {DISTRICTS.map((d) => (
+            {DISTRICT_OPTIONS.map(([code, label]) => (
               <button
-                key={d}
-                onClick={() => toggleDistrict(d)}
+                key={code}
+                onClick={() => toggleDistrict(code)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  selectedDistricts.includes(d)
+                  selectedDistricts.includes(code)
                     ? "bg-[#303030] text-white border-[#303030]"
                     : "bg-white text-[#303030] border-[#E5E5E5] hover:border-[#303030]"
                 }`}
               >
-                {d}
+                {label}
               </button>
             ))}
           </div>
@@ -258,13 +330,18 @@ export default function ParksPage() {
         {/* ══════ RESULTS HEADER ══════ */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-[#A1A1A1]">
-            Всего найдено <span className="text-[#303030] font-medium">{filtered.length}</span> таксопарков
+            Показано на странице: <span className="text-[#303030] font-medium">{filteredBySearch.length}</span>
           </p>
+          {error && <span className="text-sm text-[#FA6868]">{error}</span>}
         </div>
 
         {/* ══════ PARKS LIST ══════ */}
         <section className="space-y-4 mb-8">
-          {paginated.length === 0 ? (
+          {loading ? (
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="h-[180px] rounded-xl bg-gray-100 animate-pulse" />
+            ))
+          ) : filteredBySearch.length === 0 ? (
             <div className="bg-white border border-[#E5E5E5] rounded-2xl px-6 py-16 text-center">
               <div className="w-16 h-16 bg-[#FAFAFA] rounded-full mx-auto flex items-center justify-center mb-4">
                 <svg
@@ -286,56 +363,37 @@ export default function ParksPage() {
                 Попробуйте изменить параметры фильтра — возможно, некоторые условия
                 слишком строгие.
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setDriverClass("Все");
-                  setBrand("Все");
-                  setModel("Все");
-                  setYear("Все");
-                  setSelectedDistricts([]);
-                  setCurrentPage(1);
-                }}
-              >
+              <Button variant="outline" size="sm" onClick={resetFilters}>
                 Сбросить фильтры
               </Button>
             </div>
           ) : (
-            paginated.map((park) => <ParkCard key={park.id} park={park} />)
+            filteredBySearch.map((park) => (
+              <ParkCard key={park.id} park={toCardData(park)} />
+            ))
           )}
         </section>
 
         {/* ══════ PAGINATION ══════ */}
-        {totalPages > 1 && (
-          <nav className="flex items-center justify-center gap-1 mb-12">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-[#A1A1A1] hover:bg-gray-100 disabled:opacity-30"
+        {(page > 1 || hasNextPage) && !loading && (
+          <nav className="flex items-center justify-center gap-3 mb-12">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
-              &laquo;
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setCurrentPage(p)}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                  p === currentPage
-                    ? "bg-[#303030] text-white"
-                    : "text-[#303030] hover:bg-gray-100"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-[#A1A1A1] hover:bg-gray-100 disabled:opacity-30"
+              Назад
+            </Button>
+            <span className="text-sm text-[#303030]">Стр. {page}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!hasNextPage}
+              onClick={() => setPage((p) => p + 1)}
             >
-              &raquo;
-            </button>
+              Далее
+            </Button>
           </nav>
         )}
       </div>

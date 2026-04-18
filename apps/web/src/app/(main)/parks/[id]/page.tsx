@@ -1,62 +1,258 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SuccessModal } from "@/components/ui/success-modal";
+import { AuthModal } from "@/components/auth/auth-modal";
+import { api } from "@/lib/api-client";
+import { useAuth } from "@/lib/use-auth";
+import { getAccessToken } from "@/lib/auth";
+import { DRIVER_CLASS_LABELS } from "@/lib/labels";
 
-/* ── mock data ──────────────────────────────────────────── */
+interface ApiVehicle {
+  id: string;
+  brandName: string;
+  modelName: string;
+  year: number;
+  rentPrice: number;
+  isAvailable: boolean;
+  priceRating: string | number | null;
+  totalRating: string | number | null;
+}
 
-const MOCK_PARK = {
-  id: 1,
-  name: "СитиМобил Парк",
-  hidden: false,
-  rating: 4.25,
-  reviewCount: 48,
-  address: "г. Москва, ул. Автозаводская, д. 23, стр. 1",
-  driverClass: "Эконом",
-  description: "Один из крупнейших таксопарков Москвы. Работает с 2018 года. Собственный автопарк из 200+ автомобилей.",
-};
+interface ApiPark {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  city: string;
+  district: string | null;
+  isAdvertised: boolean;
+  isSuperAdvertised: boolean;
+  rating: string | number;
+  status: string;
+}
 
-const PARK_PARAMS = [
-  { name: "Комиссия парка", value: "2%" },
-  { name: "Аренда в сутки", value: "2 000 руб." },
-  { name: "Залог", value: "5 000 руб." },
-  { name: "Минимальный стаж", value: "1 год" },
-  { name: "Возраст водителя", value: "от 21 года" },
-  { name: "Брендирование", value: "Обязательно" },
-  { name: "Топливная карта", value: "Да" },
-  { name: "Мойка", value: "Бесплатно" },
-  { name: "ТО и ремонт", value: "За счёт парка" },
-  { name: "Штраф за простой", value: "500 руб./день" },
-  { name: "График работы", value: "6/1 или 12/12" },
-  { name: "Выходные", value: "По договоренности" },
-  { name: "Газовое оборудование", value: "На части авто" },
-  { name: "Детское кресло", value: "Нет" },
-  { name: "Подменный автомобиль", value: "Да" },
-  { name: "Система мониторинга", value: "GPS-трекер" },
-  { name: "Штрафы ГИБДД", value: "За счёт водителя" },
-  { name: "Каско", value: "Включено" },
-  { name: "ОСАГО", value: "Включено" },
-  { name: "Способ оплаты аренды", value: "Наличные / Карта" },
-];
+interface ApiClassDetail {
+  id: string;
+  parkId: string;
+  driverClass: string;
+  parkCommission: string | number;
+  withdrawalCommission: string | number;
+  transferCommission: string | number;
+  deposit: number;
+  depositReturnDays: number;
+  latePenalty: number;
+  trafficFinePenalty: number;
+  terminationDays: number;
+  contractFairness: number;
+  contractMatch: number;
+  daysOff: number;
+  newDriverPromoDays: string | number;
+  maxPromoDaysInClass: string | number;
+  replacementCar: number;
+  insurance: number;
+  inspectionFreq: number;
+  maintenanceDay: number;
+  extraScratch: number;
+  repairDowntime: number;
+  selfRepair: number;
+  repairPricing: number;
+  rating: string | number;
+  paramsRating: string | number | null;
+  hasAvailableCars: boolean;
+  park: ApiPark | null;
+  vehicles: ApiVehicle[];
+  // visibility flags after masking
+  parkName?: string | null;
+  parkAddress?: string | null;
+  parkPhone?: string | null;
+  nameHidden?: boolean;
+  addressHidden?: boolean;
+  phoneHidden?: boolean;
+  detailsBlurred?: boolean;
+  isAdvertised?: boolean;
+  isSuperAdvertised?: boolean;
+  error?: string;
+}
 
-const VEHICLES = [
-  { id: 1, brand: "Kia", model: "Rio", year: 2023, rent: 2000, available: true },
-  { id: 2, brand: "Hyundai", model: "Solaris", year: 2022, rent: 1900, available: true },
-  { id: 3, brand: "Skoda", model: "Rapid", year: 2023, rent: 2100, available: false },
-  { id: 4, brand: "Volkswagen", model: "Polo", year: 2022, rent: 1800, available: true },
-  { id: 5, brand: "Kia", model: "Rio", year: 2021, rent: 1700, available: false },
-];
-
-/* ── component ──────────────────────────────────────────── */
+function toNum(v: string | number | null | undefined): number {
+  if (v == null) return 0;
+  const n = typeof v === "string" ? parseFloat(v) : v;
+  return isNaN(n) ? 0 : n;
+}
 
 export default function ParkDetailPage() {
-  const [showAllParams, setShowAllParams] = useState(false);
-  const [isRegistered] = useState(true); // Mock: toggle to test blur overlay
+  const params = useParams<{ id: string }>();
+  const classId = params?.id as string;
+  const { user } = useAuth();
 
-  const park = MOCK_PARK;
-  const visibleParams = showAllParams ? PARK_PARAMS : PARK_PARAMS.slice(0, 8);
+  const [data, setData] = useState<ApiClassDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showAllParams, setShowAllParams] = useState(false);
+
+  const [authOpen, setAuthOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportText, setReportText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState<{ title: string; description: string; href?: string } | null>(null);
+
+  useEffect(() => {
+    if (!classId) return;
+    setLoading(true);
+    setError("");
+    api<ApiClassDetail>(`/catalog/classes/${classId}`)
+      .then((d) => {
+        if (d?.error) {
+          setError(d.error);
+          setData(null);
+        } else {
+          setData(d);
+        }
+      })
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : "Не удалось загрузить данные");
+        setData(null);
+      })
+      .finally(() => setLoading(false));
+  }, [classId]);
+
+  const requireAuth = (fn: () => void) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    fn();
+  };
+
+  const createRentTicket = async () => {
+    const token = getAccessToken();
+    if (!token || !data) return;
+    setSubmitting(true);
+    try {
+      const ticket = await api<{ id: string }>("/tickets", {
+        method: "POST",
+        token,
+        body: {
+          topic: "TAXI_CONNECT",
+          relatedEntityType: "PARK_CLASS",
+          relatedEntityId: data.id,
+          body: "Хочу взять в аренду",
+        },
+      });
+      setSuccess({
+        title: "Заявка создана",
+        description: "Менеджер свяжется с вами в чате заявки.",
+        href: ticket?.id ? `/support/${ticket.id}` : "/support",
+      });
+    } catch (e: unknown) {
+      setSuccess({
+        title: "Ошибка",
+        description: e instanceof Error ? e.message : "Не удалось создать заявку",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitReport = async () => {
+    if (!reportText.trim() || !data) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setSubmitting(true);
+    try {
+      const ticket = await api<{ id: string }>("/tickets", {
+        method: "POST",
+        token,
+        body: {
+          topic: "PARK_CHECK",
+          relatedEntityType: "PARK_CLASS",
+          relatedEntityId: data.id,
+          body: reportText.trim(),
+        },
+      });
+      setReportOpen(false);
+      setReportText("");
+      setSuccess({
+        title: "Спасибо за обратную связь",
+        description: "Мы проверим информацию и отреагируем в чате заявки.",
+        href: ticket?.id ? `/support/${ticket.id}` : "/support",
+      });
+    } catch (e: unknown) {
+      setSuccess({
+        title: "Ошибка",
+        description: e instanceof Error ? e.message : "Не удалось отправить заявку",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-[1600px] mx-auto px-6 py-10">
+        <div className="h-8 w-60 bg-gray-100 rounded animate-pulse mb-6" />
+        <div className="h-40 bg-gray-100 rounded-xl animate-pulse mb-4" />
+        <div className="h-60 bg-gray-100 rounded-xl animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="max-w-[1600px] mx-auto px-6 py-16 text-center">
+        <h1 className="text-xl font-medium text-[#303030] mb-2">Парк не найден</h1>
+        <p className="text-sm text-[#A1A1A1] mb-5">{error || "Проверьте ссылку"}</p>
+        <Link href="/parks">
+          <Button variant="outline">К списку</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const park = data.park;
+  const parkName = data.parkName ?? park?.name ?? null;
+  const parkAddress = data.parkAddress ?? park?.address ?? null;
+  const isNameHidden = Boolean(data.nameHidden) || !parkName;
+  const isAddressHidden = Boolean(data.addressHidden);
+  const rating = toNum(data.rating);
+  const vehicles = Array.isArray(data.vehicles) ? data.vehicles : [];
+  const classLabel = DRIVER_CLASS_LABELS[data.driverClass] ?? data.driverClass;
+  const isHighClass =
+    data.driverClass === "BUSINESS" ||
+    data.driverClass === "COMFORT_PLUS" ||
+    data.driverClass === "PREMIER" ||
+    data.driverClass === "ELITE";
+
+  const parkParams: Array<{ name: string; value: string }> = [
+    { name: "Комиссия парка", value: `${toNum(data.parkCommission)}%` },
+    { name: "Залог", value: `${data.deposit.toLocaleString("ru-RU")} руб.` },
+    { name: "Возврат залога", value: `${data.depositReturnDays} дн.` },
+    { name: "Комиссия на вывод", value: `${toNum(data.withdrawalCommission)}%` },
+    { name: "Комиссия на перевод", value: `${toNum(data.transferCommission)}%` },
+    { name: "Штраф за простой", value: `${data.latePenalty.toLocaleString("ru-RU")} руб.` },
+    { name: "Штраф за нарушения ПДД", value: `${data.trafficFinePenalty.toLocaleString("ru-RU")} руб.` },
+    { name: "Расторжение договора", value: `${data.terminationDays} дн.` },
+    { name: "Честность договора", value: `${data.contractFairness}/5` },
+    { name: "Соответствие договора", value: `${data.contractMatch}/5` },
+    { name: "Выходные", value: `${data.daysOff}/5` },
+    { name: "Промо для новых (дн.)", value: String(toNum(data.newDriverPromoDays)) },
+    { name: "Макс. промо в классе (дн.)", value: String(toNum(data.maxPromoDaysInClass)) },
+    { name: "Подменный автомобиль", value: `${data.replacementCar}/5` },
+    { name: "Страхование", value: `${data.insurance}/5` },
+    { name: "Частота ТО", value: `${data.inspectionFreq}/5` },
+    { name: "День обслуживания", value: `${data.maintenanceDay}/5` },
+    { name: "Мелкие царапины", value: `${data.extraScratch}/5` },
+    { name: "Простой при ремонте", value: `${data.repairDowntime}/5` },
+    { name: "Самостоятельный ремонт", value: `${data.selfRepair}/5` },
+    { name: "Стоимость ремонта", value: `${data.repairPricing}/5` },
+  ];
+
+  const visibleParams = showAllParams ? parkParams : parkParams.slice(0, 8);
 
   return (
     <>
@@ -65,36 +261,34 @@ export default function ParkDetailPage() {
         <nav className="flex items-center gap-2 text-sm text-[#A1A1A1] mb-6">
           <Link href="/parks" className="hover:text-[#303030] transition-colors">Таксопарки</Link>
           <span>/</span>
-          <span className="text-[#303030]">{park.hidden ? "Название скрыто" : park.name}</span>
+          <span className="text-[#303030]">{isNameHidden ? "Название скрыто" : parkName}</span>
         </nav>
 
         {/* ══════ HEADER ══════ */}
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-10">
           <div>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h1 className="text-2xl md:text-[32px] font-medium text-[#303030]">
-                {park.hidden ? (
+                {isNameHidden ? (
                   <span className="flex items-center gap-2">
                     Название скрыто
                     <svg className="w-6 h-6 text-[#A1A1A1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </span>
-                ) : park.name}
+                ) : parkName}
               </h1>
-              <Badge variant={park.driverClass === "Бизнес" || park.driverClass === "Комфорт+" ? "yellow" : "gray"}>
-                {park.driverClass}
-              </Badge>
+              <Badge variant={isHighClass ? "yellow" : "gray"}>{classLabel}</Badge>
             </div>
 
             {/* Rating */}
             <div className="flex items-center gap-3 mb-3">
-              <span className="text-3xl md:text-[40px] font-medium text-[#303030]">{park.rating.toFixed(2)}</span>
+              <span className="text-3xl md:text-[40px] font-medium text-[#303030]">{rating.toFixed(2)}</span>
               <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <svg
                     key={i}
-                    className={`w-5 h-5 ${i < Math.round(park.rating) ? "text-[#F8D62E]" : "text-[#E5E5E5]"}`}
+                    className={`w-5 h-5 ${i < Math.round(rating) ? "text-[#F8D62E]" : "text-[#E5E5E5]"}`}
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -102,25 +296,36 @@ export default function ParkDetailPage() {
                   </svg>
                 ))}
               </div>
-              <span className="text-sm text-[#A1A1A1]">{park.reviewCount} отзывов</span>
             </div>
 
             {/* Address */}
             <p className="text-sm text-[#A1A1A1]">
-              {park.hidden ? (
+              {isAddressHidden || !parkAddress ? (
                 <span className="flex items-center gap-1.5">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                   Адрес скрыт
                 </span>
-              ) : park.address}
+              ) : parkAddress}
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <Button size="lg">Взять в аренду</Button>
-            <Button size="lg" variant="outline">Неверная информация</Button>
+            <Button
+              size="lg"
+              onClick={() => requireAuth(createRentTicket)}
+              disabled={submitting}
+            >
+              {submitting ? "Отправка..." : "Взять в аренду"}
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => requireAuth(() => setReportOpen(true))}
+            >
+              Неверная информация
+            </Button>
           </div>
         </div>
 
@@ -144,7 +349,7 @@ export default function ParkDetailPage() {
             </div>
 
             {/* Blur overlay for non-registered */}
-            {!isRegistered && !showAllParams && (
+            {!user && !showAllParams && (
               <div className="absolute inset-0 top-[50%] flex items-center justify-center rounded-b-xl overflow-hidden">
                 <div className="absolute inset-0 backdrop-blur-sm bg-white/60" />
                 <div className="relative text-center">
@@ -153,17 +358,24 @@ export default function ParkDetailPage() {
                   </svg>
                   <p className="text-sm font-medium text-[#303030]">Зарегистрируйтесь для просмотра</p>
                   <p className="text-xs text-[#A1A1A1] mt-1">Полные данные доступны авторизованным пользователям</p>
+                  <Button
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => setAuthOpen(true)}
+                  >
+                    Войти / регистрация
+                  </Button>
                 </div>
               </div>
             )}
           </div>
 
-          {isRegistered && PARK_PARAMS.length > 8 && (
+          {user && parkParams.length > 8 && (
             <button
               onClick={() => setShowAllParams(!showAllParams)}
               className="mt-3 text-sm font-medium text-[#303030] hover:text-[#A1A1A1] transition-colors"
             >
-              {showAllParams ? "Скрыть" : `Показать все (${PARK_PARAMS.length})`}
+              {showAllParams ? "Скрыть" : `Показать все (${parkParams.length})`}
             </button>
           )}
         </section>
@@ -172,25 +384,100 @@ export default function ParkDetailPage() {
         <section className="mb-12">
           <h2 className="text-lg font-medium text-[#303030] mb-4">Автомобили парка</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {VEHICLES.map((v) => (
-              <div key={v.id} className="bg-white border border-[#E5E5E5] rounded-xl p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-sm font-medium text-[#303030]">
-                    {v.brand} {v.model} {v.year}
-                  </h3>
-                  <Badge variant={v.available ? "green" : "red"}>
-                    {v.available ? "Свободен" : "Занят"}
-                  </Badge>
+          {vehicles.length === 0 ? (
+            <p className="text-sm text-[#A1A1A1]">В парке сейчас нет автомобилей.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {vehicles.map((v) => (
+                <div key={v.id} className="bg-white border border-[#E5E5E5] rounded-xl p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-sm font-medium text-[#303030]">
+                      {v.brandName} {v.modelName} {v.year}
+                    </h3>
+                    <Badge variant={v.isAvailable ? "green" : "red"}>
+                      {v.isAvailable ? "Свободен" : "Занят"}
+                    </Badge>
+                  </div>
+                  <p className="text-lg font-medium text-[#303030]">
+                    {v.rentPrice.toLocaleString("ru-RU")} руб./сут.
+                  </p>
                 </div>
-                <p className="text-lg font-medium text-[#303030]">
-                  {v.rent.toLocaleString("ru-RU")} руб./сут.
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
+
+      {/* ══════ REPORT MODAL ══════ */}
+      {reportOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/40"
+            onClick={() => !submitting && setReportOpen(false)}
+          />
+          <div className="relative bg-white rounded-2xl w-full max-w-md p-6 md:p-8">
+            <button
+              onClick={() => !submitting && setReportOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-[#A1A1A1] hover:text-[#303030] transition-colors"
+              aria-label="Закрыть"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h3 className="text-lg font-medium text-[#303030] mb-1">Неверная информация</h3>
+            <p className="text-sm text-[#A1A1A1] mb-6">
+              Опишите, что именно требует уточнения. Мы передадим заявку менеджеру.
+            </p>
+
+            <textarea
+              className="w-full min-h-[120px] p-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] transition-colors resize-y"
+              placeholder="Например: указан неверный залог / комиссия"
+              value={reportText}
+              onChange={(e) => setReportText(e.target.value)}
+              disabled={submitting}
+            />
+
+            <div className="mt-4 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setReportOpen(false)}
+                disabled={submitting}
+              >
+                Отмена
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={submitReport}
+                disabled={submitting || !reportText.trim()}
+              >
+                {submitting ? "Отправка..." : "Отправить"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+
+      <SuccessModal
+        open={!!success}
+        onClose={() => setSuccess(null)}
+        title={success?.title ?? ""}
+        description={success?.description}
+        ctaLabel={success?.href ? "Открыть заявку" : "Ок"}
+        onCta={() => {
+          if (success?.href && typeof window !== "undefined") {
+            window.location.href = success.href;
+          } else {
+            setSuccess(null);
+          }
+        }}
+        secondaryLabel={success?.href ? "Закрыть" : undefined}
+        onSecondary={() => setSuccess(null)}
+      />
     </>
   );
 }
