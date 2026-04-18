@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Bell, Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { AuthModal } from "../auth/auth-modal";
 import { ConfirmModal } from "../ui/confirm-modal";
@@ -122,9 +123,7 @@ export function Header() {
                   aria-label="Уведомления"
                   className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#E5E5E5] hover:bg-gray-50 transition-colors"
                 >
-                  <svg className="w-4 h-4 text-[#303030]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
+                  <Bell className="w-4 h-4 text-[#303030]" />
                 </Link>
                 <Link href="/dashboard">
                   <Button variant="outline" size="sm">ЛК</Button>
@@ -153,14 +152,13 @@ export function Header() {
           <button
             className="md:hidden p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#303030" strokeWidth="2">
-              {mobileMenuOpen ? (
-                <path d="M18 6L6 18M6 6l12 12" />
-              ) : (
-                <path d="M3 12h18M3 6h18M3 18h18" />
-              )}
-            </svg>
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6 text-[#303030]" />
+            ) : (
+              <Menu className="w-6 h-6 text-[#303030]" />
+            )}
           </button>
         </div>
 

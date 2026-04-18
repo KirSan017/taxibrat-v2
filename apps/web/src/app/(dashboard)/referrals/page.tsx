@@ -61,7 +61,12 @@ export default function ReferralsPage() {
       api<StatsResponse>("/referrals/stats", { token }),
     ])
       .then(([link, fr, st]) => {
-        setMyLink(link);
+        // Build link from current origin + ?ref= param
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        const displayLink = link?.referralCode
+          ? `${origin}/?ref=${link.referralCode}`
+          : link?.link ?? "";
+        setMyLink({ referralCode: link?.referralCode ?? "", link: displayLink });
         setFriends(fr.data || []);
         setStats(st);
       })
