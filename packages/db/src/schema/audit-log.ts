@@ -21,6 +21,11 @@ export const auditEntityEnum = pgEnum("audit_entity", [
   "CAR",
   "TICKET",
   "POINTS",
+  "BUYOUT",
+  "NEWS",
+  "MANAGER_STATUS",
+  "BUYOUT_LISTING",
+  "SETTING",
 ]);
 
 export const auditLog = pgTable(

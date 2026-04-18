@@ -44,6 +44,11 @@ export enum AuditEntity {
   CAR = "CAR",
   TICKET = "TICKET",
   POINTS = "POINTS",
+  BUYOUT = "BUYOUT",
+  NEWS = "NEWS",
+  MANAGER_STATUS = "MANAGER_STATUS",
+  BUYOUT_LISTING = "BUYOUT_LISTING",
+  SETTING = "SETTING",
 }
 
 export enum NotificationType {
