@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { api } from "@/lib/api-client";
@@ -28,6 +29,7 @@ interface TicketDetail {
   body?: string | null;
   creatorId: string;
   assignedManagerId?: string | null;
+  rentalConfirmedAt?: string | null;
   createdAt: string;
   messages: Message[];
 }
@@ -63,6 +65,7 @@ export default function AdminTicketChatPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [confirmRentalOpen, setConfirmRentalOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +145,19 @@ export default function AdminTicketChatPage() {
     }
   };
 
+  const handleConfirmRental = async () => {
+    if (!ticketId) return;
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      await api(`/admin/tickets/${ticketId}/confirm-rental`, { method: "POST", token });
+      setSuccessMsg("Факт аренды подтверждён, баллы начислены");
+      loadTicket();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось подтвердить аренду");
+    }
+  };
+
   const handleReject = async (reason: string) => {
     if (!ticketId) return;
     const token = getAccessToken();
@@ -188,6 +204,11 @@ export default function AdminTicketChatPage() {
   const canSendMessage = ticket.status === "NEW" || ticket.status === "IN_PROGRESS";
   const canClose = canSendMessage;
   const canReviewSM = isSuperManager && ticket.status === "PENDING_SM_REVIEW";
+  const canConfirmRental =
+    isSuperManager &&
+    ticket.topic === "TAXI_CONNECT" &&
+    ticket.status === "COMPLETED" &&
+    !ticket.rentalConfirmedAt;
 
   return (
     <div className="max-w-[900px] flex flex-col h-[calc(100vh-180px)]">
@@ -197,6 +218,14 @@ export default function AdminTicketChatPage() {
         onConfirm={handleReject}
         title="Отклонить тикет"
         description="Укажите причину отклонения. Менеджер получит уведомление."
+      />
+      <ConfirmModal
+        open={confirmRentalOpen}
+        onClose={() => setConfirmRentalOpen(false)}
+        onConfirm={handleConfirmRental}
+        title="Подтвердить факт аренды?"
+        description="Пользователю будут начислены дополнительные баллы дружбы (по умолчанию 300). Действие необратимо."
+        confirmLabel="Подтвердить"
       />
       <SuccessModal
         open={!!successMsg}
@@ -243,6 +272,18 @@ export default function AdminTicketChatPage() {
                 Отклонить
               </Button>
             </>
+          )}
+          {canConfirmRental && (
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => setConfirmRentalOpen(true)}
+            >
+              Подтвердить факт аренды (+300 баллов)
+            </Button>
+          )}
+          {ticket.topic === "TAXI_CONNECT" && ticket.rentalConfirmedAt && (
+            <Badge variant="green">Аренда подтверждена</Badge>
           )}
         </div>
       </div>

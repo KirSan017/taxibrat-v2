@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
 import { Logo } from "@/components/layout/logo";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 
 /* ── roles ────────────────────────────────────────────── */
 
@@ -57,6 +60,108 @@ function getInitials(firstName: string | null, lastName: string | null): string 
   const l = (lastName || "").trim();
   if (f || l) return `${f.charAt(0)}${l.charAt(0)}`.toUpperCase() || "?";
   return "?";
+}
+
+/* ── manager work-status toggle ───────────────────────── */
+
+type ManagerSection =
+  | "CHAT"
+  | "TAXI_CHECK"
+  | "NO_9_PERCENT"
+  | "USERS"
+  | "BUYOUT";
+
+interface ManagerSetting {
+  id: string;
+  userId: string;
+  section: ManagerSection;
+  workStatus: "WORKING" | "RESTING";
+}
+
+// Sections relevant for day-to-day managers: CHAT covers tickets & user base;
+// NO_9_PERCENT covers the "По делам" order queue. We expose a single global
+// toggle that flips all sections in lock-step — ТЗ only requires one
+// "В работе / Отдыхаю" switch for managers.
+const TOGGLE_SECTIONS: ManagerSection[] = ["CHAT", "NO_9_PERCENT"];
+
+function WorkStatusToggle() {
+  const [settings, setSettings] = useState<ManagerSetting[] | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(() => {
+    const token = getAccessToken();
+    if (!token) return;
+    api<ManagerSetting[]>("/managers/settings", { token })
+      .then((data) => setSettings(Array.isArray(data) ? data : []))
+      .catch(() => setSettings([]));
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const isWorking = useMemo(() => {
+    if (!settings || settings.length === 0) return false;
+    // "Working" if ANY tracked section reports WORKING — same user may service multiple queues.
+    return settings.some(
+      (s) => TOGGLE_SECTIONS.includes(s.section) && s.workStatus === "WORKING",
+    );
+  }, [settings]);
+
+  const handleToggle = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+    setBusy(true);
+    try {
+      // Flip every relevant section. The backend auto-creates missing rows on first toggle.
+      await Promise.all(
+        TOGGLE_SECTIONS.map((section) =>
+          api(`/managers/settings/${section}`, { method: "PATCH", token }),
+        ),
+      );
+      load();
+    } catch {
+      // Swallow — ConfirmModal already closed; user can retry
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleToggle}
+        title={isWorking ? "Уйти на отдых?" : "Вернуться в работу?"}
+        description={
+          isWorking
+            ? "Новые тикеты и заказы не будут назначаться на вас, пока вы не вернётесь."
+            : "Вы снова будете получать новые тикеты и заказы."
+        }
+        confirmLabel={isWorking ? "Отдыхаю" : "В работу"}
+      />
+      <button
+        type="button"
+        onClick={() => setConfirmOpen(true)}
+        disabled={busy}
+        className={`hidden sm:inline-flex items-center gap-2 px-3 h-[34px] rounded-full text-xs font-medium border transition-colors ${
+          isWorking
+            ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+            : "bg-gray-50 border-gray-200 text-[#A1A1A1] hover:bg-gray-100"
+        }`}
+        title={isWorking ? "В работе — нажмите, чтобы уйти на отдых" : "Отдыхаю — нажмите, чтобы вернуться"}
+      >
+        <span
+          className={`w-2 h-2 rounded-full ${
+            isWorking ? "bg-green-500" : "bg-[#A1A1A1]"
+          }`}
+        />
+        {isWorking ? "В работе" : "Отдыхаю"}
+      </button>
+    </>
+  );
 }
 
 /* ── layout ───────────────────────────────────────────── */
@@ -120,8 +225,9 @@ export default function AdminLayout({
             <span className="text-[#303030]">{getBreadcrumb(pathname)}</span>
           </div>
 
-          {/* Right: notifications + avatar */}
+          {/* Right: work-status toggle + notifications + avatar */}
           <div className="flex items-center gap-3">
+            <WorkStatusToggle />
             <button className="relative p-2">
               <BellIcon className="w-5 h-5 text-[#303030]" />
             </button>

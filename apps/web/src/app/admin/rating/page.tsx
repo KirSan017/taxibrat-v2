@@ -21,6 +21,8 @@ interface Config {
   id: string;
   priceCoefficient: string;
   paramsCoefficient: string;
+  yandexCommission?: string;
+  yandexCommissionEconomy?: string;
 }
 
 interface Revenue {
@@ -80,6 +82,8 @@ export default function AdminRatingPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [priceCoef, setPriceCoef] = useState("0.6");
   const [paramsCoef, setParamsCoef] = useState("0.4");
+  const [yandexComm, setYandexComm] = useState("0");
+  const [yandexCommEconomy, setYandexCommEconomy] = useState("0");
   const [weightEdits, setWeightEdits] = useState<Record<string, WeightLevel>>({});
   const [revenueEdits, setRevenueEdits] = useState<Record<string, number>>({});
 
@@ -100,6 +104,8 @@ export default function AdminRatingPage() {
       if (cfg) {
         setPriceCoef(cfg.priceCoefficient);
         setParamsCoef(cfg.paramsCoefficient);
+        setYandexComm(cfg.yandexCommission ?? "0");
+        setYandexCommEconomy(cfg.yandexCommissionEconomy ?? "0");
       }
       const wMap: Record<string, WeightLevel> = {};
       (Array.isArray(ws) ? ws : []).forEach((w) => {
@@ -153,11 +159,26 @@ export default function AdminRatingPage() {
       setError("Сумма коэффициентов должна быть ровно 1.0");
       return;
     }
+    const yc = parseFloat(yandexComm);
+    const yce = parseFloat(yandexCommEconomy);
+    if (!isFinite(yc) || yc < 0 || yc > 100) {
+      setError("Комиссия Яндекса должна быть в диапазоне 0–100");
+      return;
+    }
+    if (!isFinite(yce) || yce < 0 || yce > 100) {
+      setError("Комиссия Яндекса эконом должна быть в диапазоне 0–100");
+      return;
+    }
     try {
       await api("/admin/rating/config", {
         method: "PATCH",
         token,
-        body: { priceCoefficient: priceCoef, paramsCoefficient: paramsCoef },
+        body: {
+          priceCoefficient: priceCoef,
+          paramsCoefficient: paramsCoef,
+          yandexCommission: yandexComm,
+          yandexCommissionEconomy: yandexCommEconomy,
+        },
       });
       setSuccessMsg("Коэффициенты обновлены. Рейтинги пересчитаны.");
       loadAll();
@@ -247,6 +268,35 @@ export default function AdminRatingPage() {
                 />
               </div>
             </div>
+
+            <h3 className="text-xs text-[#A1A1A1] mt-5 mb-2">Комиссии Яндекс-агрегатора</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-[#A1A1A1] mb-1">Комиссия Яндекса (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={yandexComm}
+                  onChange={(e) => setYandexComm(e.target.value)}
+                  className="w-full h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-[#A1A1A1] mb-1">Комиссия Яндекса эконом (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={yandexCommEconomy}
+                  onChange={(e) => setYandexCommEconomy(e.target.value)}
+                  className="w-full h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+                />
+              </div>
+            </div>
+
             <Button size="sm" className="mt-3" onClick={saveConfig}>Сохранить коэффициенты</Button>
           </section>
 
