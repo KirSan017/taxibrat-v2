@@ -2,8 +2,9 @@ import { Injectable, Inject, NotFoundException, ConflictException } from "@nestj
 import { eq, and } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import { parkClasses, parkVehicles } from "@taxibrat/db";
-import { CreateClassDto, UpdateClassDto } from "@taxibrat/shared";
+import { CreateClassDto, UpdateClassDto, AuditAction, AuditEntity } from "@taxibrat/shared";
 import { RatingRecalculator } from "../rating/rating.recalculator";
+import { AuditService } from "../audit/audit.service";
 
 /** Convert numeric DTO fields to strings for decimal DB columns */
 function toDbValues(dto: CreateClassDto | UpdateClassDto): Record<string, unknown> {
@@ -25,6 +26,7 @@ export class ClassesService {
   constructor(
     @Inject("DATABASE") private db: Database,
     private recalculator: RatingRecalculator,
+    private auditService: AuditService,
   ) {}
 
   async create(parkId: string, dto: CreateClassDto, userId: string) {
@@ -35,6 +37,15 @@ export class ClassesService {
         .returning();
       await this.recalculator.recalcClass(cls.id);
       await this.recalculator.recalcPark(parkId);
+
+      await this.auditService.log({
+        actorId: userId,
+        action: AuditAction.UPDATE,
+        entity: AuditEntity.PARK,
+        entityId: parkId,
+        newValue: { classCreated: cls },
+      });
+
       return cls;
     } catch {
       throw new ConflictException("This class already exists for this park");
@@ -57,6 +68,16 @@ export class ClassesService {
 
     await this.recalculator.recalcClass(classId);
     await this.recalculator.recalcPark(cls.parkId);
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.UPDATE,
+      entity: AuditEntity.PARK,
+      entityId: cls.parkId,
+      oldValue: cls,
+      newValue: updated,
+    });
+
     return updated;
   }
 
@@ -69,6 +90,14 @@ export class ClassesService {
       .insert(parkClasses)
       .values({ ...data, driverClass: newDriverClass as any, lastUpdatedBy: userId })
       .returning();
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.UPDATE,
+      entity: AuditEntity.PARK,
+      entityId: source.parkId,
+      newValue: { classCopied: copied, sourceClassId: classId },
+    });
 
     return copied;
   }

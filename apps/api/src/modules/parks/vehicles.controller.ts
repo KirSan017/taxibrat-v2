@@ -4,6 +4,7 @@ import {
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { CurrentUser, JwtPayload } from "../../common/decorators/current-user.decorator";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
 import { VehiclesService } from "./vehicles.service";
 import { UserRole, createVehicleSchema, updateVehicleSchema, CreateVehicleDto, UpdateVehicleDto } from "@taxibrat/shared";
@@ -18,20 +19,22 @@ export class VehiclesController {
   create(
     @Param("classId") classId: string,
     @Body(new ZodValidationPipe(createVehicleSchema)) dto: CreateVehicleDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.vehiclesService.create(classId, dto);
+    return this.vehiclesService.create(classId, dto, user.sub);
   }
 
   @Patch(":id")
   update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(updateVehicleSchema)) dto: UpdateVehicleDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.vehiclesService.update(id, dto);
+    return this.vehiclesService.update(id, dto, user.sub);
   }
 
   @Delete(":id")
-  delete(@Param("id") id: string) {
-    return this.vehiclesService.delete(id);
+  delete(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.vehiclesService.delete(id, user.sub);
   }
 }

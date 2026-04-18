@@ -11,6 +11,7 @@ import {
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { CurrentUser, JwtPayload } from "../../common/decorators/current-user.decorator";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
 import { UsersService } from "./users.service";
 import {
@@ -34,16 +35,17 @@ export class UsersAdminController {
 
   @Post(":id/approve")
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPER_MANAGER)
-  approveUser(@Param("id") id: string) {
-    return this.usersService.approveUser(id);
+  approveUser(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.usersService.approveUser(id, user.sub);
   }
 
   @Post(":id/reject")
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPER_MANAGER)
   rejectUser(
     @Param("id") id: string,
+    @CurrentUser() user: JwtPayload,
     @Body(new ZodValidationPipe(rejectUserSchema)) dto: RejectUserDto,
   ) {
-    return this.usersService.rejectUser(id, dto.reason);
+    return this.usersService.rejectUser(id, dto.reason, user.sub);
   }
 }

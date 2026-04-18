@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import { serviceSettings } from "@taxibrat/db";
 import type Redis from "ioredis";
+import { AuditAction, AuditEntity } from "@taxibrat/shared";
+import { AuditService } from "../audit/audit.service";
 
 const CACHE_PREFIX = "settings:";
 const CACHE_TTL = 300; // 5 minutes
@@ -12,6 +14,7 @@ export class SettingsService {
   constructor(
     @Inject("DATABASE") private db: Database,
     @Inject("REDIS") private redis: Redis,
+    private auditService: AuditService,
   ) {}
 
   async get(key: string): Promise<string | null> {
@@ -42,7 +45,7 @@ export class SettingsService {
     return val === "true";
   }
 
-  async set(key: string, value: string): Promise<void> {
+  async set(key: string, value: string, actorId?: string): Promise<void> {
     const [existing] = await this.db
       .select()
       .from(serviceSettings)
@@ -61,6 +64,18 @@ export class SettingsService {
     }
 
     await this.redis.del(`${CACHE_PREFIX}${key}`);
+
+    if (actorId) {
+      await this.auditService.log({
+        actorId,
+        action: existing ? AuditAction.UPDATE : AuditAction.CREATE,
+        entity: AuditEntity.SETTING,
+        // Settings use string keys, not UUIDs — use the setting row id (or a zero UUID when creating)
+        entityId: existing?.id ?? "00000000-0000-0000-0000-000000000000",
+        oldValue: existing ? { key, value: existing.value } : null,
+        newValue: { key, value },
+      });
+    }
   }
 
   async getAll(): Promise<Array<{ key: string; value: string }>> {

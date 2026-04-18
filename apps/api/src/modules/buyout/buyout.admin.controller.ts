@@ -45,15 +45,16 @@ export class BuyoutAdminController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER, UserRole.MANAGER)
   update(
     @Param("id") id: string,
+    @CurrentUser() user: JwtPayload,
     @Body(new ZodValidationPipe(updateBuyoutSchema)) dto: UpdateBuyoutDto,
   ) {
-    return this.buyoutService.update(id, dto);
+    return this.buyoutService.update(id, dto, user.sub);
   }
 
   @Post(":id/submit")
   @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER, UserRole.MANAGER)
-  submit(@Param("id") id: string) {
-    return this.buyoutService.submit(id);
+  submit(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.buyoutService.submit(id, user.sub);
   }
 
   @Post(":id/approve")
@@ -78,13 +79,13 @@ export class BuyoutAdminController {
 
   @Post(":id/archive")
   @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER)
-  archive(@Param("id") id: string) {
-    return this.buyoutService.archive(id);
+  archive(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.buyoutService.archive(id, user.sub);
   }
 
   @Post(":id/restore")
   @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER)
-  restore(@Param("id") id: string) {
-    return this.buyoutService.restore(id);
+  restore(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.buyoutService.restore(id, user.sub);
   }
 }

@@ -14,10 +14,13 @@ import {
   ListUsersDto,
   NotificationType,
   PointsTransactionType,
+  AuditAction,
+  AuditEntity,
 } from "@taxibrat/shared";
 import { PointsService } from "../points/points.service";
 import { SettingsService } from "../settings/settings.service";
 import { ReferralsService } from "../referrals/referrals.service";
+import { AuditService } from "../audit/audit.service";
 
 @Injectable()
 export class UsersService {
@@ -26,6 +29,7 @@ export class UsersService {
     private pointsService: PointsService,
     private settingsService: SettingsService,
     private referralsService: ReferralsService,
+    private auditService: AuditService,
   ) {}
 
   async getById(id: string) {
@@ -54,10 +58,19 @@ export class UsersService {
       .where(eq(users.id, userId))
       .returning();
 
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.UPDATE,
+      entity: AuditEntity.USER,
+      entityId: userId,
+      oldValue: user,
+      newValue: updated,
+    });
+
     return updated;
   }
 
-  async approveUser(userId: string) {
+  async approveUser(userId: string, actorId: string) {
     const user = await this.getById(userId);
     if (user.status !== UserStatus.PENDING_REVIEW) {
       throw new BadRequestException("User is not pending review");
@@ -91,10 +104,19 @@ export class UsersService {
         : "Ваш профиль успешно обновлён.",
     });
 
+    await this.auditService.log({
+      actorId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.USER,
+      entityId: userId,
+      oldValue: { status: user.status },
+      newValue: { status: UserStatus.ACTIVE },
+    });
+
     return updated;
   }
 
-  async rejectUser(userId: string, reason: string) {
+  async rejectUser(userId: string, reason: string, actorId: string) {
     const user = await this.getById(userId);
     if (user.status !== UserStatus.PENDING_REVIEW) {
       throw new BadRequestException("User is not pending review");
@@ -114,6 +136,15 @@ export class UsersService {
       type: NotificationType.SYSTEM,
       title: "Профиль отклонён",
       body: `Причина: ${reason}. Исправьте данные и отправьте повторно.`,
+    });
+
+    await this.auditService.log({
+      actorId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.USER,
+      entityId: userId,
+      oldValue: { status: user.status },
+      newValue: { status: UserStatus.REJECTED, rejectionReason: reason },
     });
 
     return updated;

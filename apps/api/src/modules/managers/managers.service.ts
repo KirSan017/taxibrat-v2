@@ -2,11 +2,15 @@ import { Injectable, Inject } from "@nestjs/common";
 import { eq, and } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import { managerSettings } from "@taxibrat/db";
-import { ManagerSection, WorkStatus } from "@taxibrat/shared";
+import { ManagerSection, WorkStatus, AuditAction, AuditEntity } from "@taxibrat/shared";
+import { AuditService } from "../audit/audit.service";
 
 @Injectable()
 export class ManagersService {
-  constructor(@Inject("DATABASE") private db: Database) {}
+  constructor(
+    @Inject("DATABASE") private db: Database,
+    private auditService: AuditService,
+  ) {}
 
   async getSettings(userId: string) {
     return this.db
@@ -32,6 +36,15 @@ export class ManagersService {
         .insert(managerSettings)
         .values({ userId, section, workStatus: WorkStatus.WORKING })
         .returning();
+
+      await this.auditService.log({
+        actorId: userId,
+        action: AuditAction.CREATE,
+        entity: AuditEntity.MANAGER_STATUS,
+        entityId: created.id,
+        newValue: { section, workStatus: WorkStatus.WORKING },
+      });
+
       return created;
     }
 
@@ -48,6 +61,15 @@ export class ManagersService {
       })
       .where(eq(managerSettings.id, existing.id))
       .returning();
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.MANAGER_STATUS,
+      entityId: existing.id,
+      oldValue: { section, workStatus: existing.workStatus },
+      newValue: { section, workStatus: newStatus },
+    });
 
     return updated;
   }

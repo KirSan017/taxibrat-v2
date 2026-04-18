@@ -50,15 +50,16 @@ export class NewsController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER)
   update(
     @Param("id") id: string,
+    @CurrentUser() user: JwtPayload,
     @Body(new ZodValidationPipe(updateNewsSchema)) dto: UpdateNewsDto,
   ) {
-    return this.newsService.update(id, dto);
+    return this.newsService.update(id, dto, user.sub);
   }
 
   @Delete("admin/news/:id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  delete(@Param("id") id: string) {
-    return this.newsService.delete(id);
+  delete(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.newsService.delete(id, user.sub);
   }
 }

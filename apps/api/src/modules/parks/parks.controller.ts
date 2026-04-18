@@ -37,13 +37,17 @@ export class ParksController {
 
   @Patch(":id")
   @Roles(UserRole.ADMIN, UserRole.SUPER_MANAGER, UserRole.MANAGER)
-  update(@Param("id") id: string, @Body(new ZodValidationPipe(updateParkSchema)) dto: UpdateParkDto) {
-    return this.parksService.update(id, dto);
+  update(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(updateParkSchema)) dto: UpdateParkDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.parksService.update(id, dto, user.sub);
   }
 
   @Delete(":id")
   @Roles(UserRole.ADMIN)
-  delete(@Param("id") id: string) {
-    return this.parksService.delete(id);
+  delete(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.parksService.delete(id, user.sub);
   }
 }

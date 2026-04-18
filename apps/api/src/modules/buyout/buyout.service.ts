@@ -7,14 +7,17 @@ import { buyoutListings, carBrands, carModels } from "@taxibrat/db";
 import {
   CreateBuyoutDto, UpdateBuyoutDto, ApproveBuyoutDto, ListBuyoutDto,
   BuyoutStatus, TicketTopic,
+  AuditAction, AuditEntity,
 } from "@taxibrat/shared";
 import { TicketsService } from "../tickets/tickets.service";
+import { AuditService } from "../audit/audit.service";
 
 @Injectable()
 export class BuyoutService {
   constructor(
     @Inject("DATABASE") private db: Database,
     private ticketsService: TicketsService,
+    private auditService: AuditService,
   ) {}
 
   async create(dto: CreateBuyoutDto, userId: string) {
@@ -31,6 +34,15 @@ export class BuyoutService {
           status: "DRAFT",
         })
         .returning();
+
+      await this.auditService.log({
+        actorId: userId,
+        action: AuditAction.CREATE,
+        entity: AuditEntity.BUYOUT_LISTING,
+        entityId: listing.id,
+        newValue: listing,
+      });
+
       return listing;
     } catch (err: any) {
       if (err.code === "23505" && err.constraint_name?.includes("vin7")) {
@@ -103,7 +115,7 @@ export class BuyoutService {
     return { data, total: Number(countResult[0].count), page: dto.page, limit: dto.limit };
   }
 
-  async update(id: string, dto: UpdateBuyoutDto) {
+  async update(id: string, dto: UpdateBuyoutDto, actorId?: string) {
     const listing = await this.getById(id);
 
     // Regenerate title if brand/model/year changed
@@ -120,21 +132,45 @@ export class BuyoutService {
       .set({ ...dto, title })
       .where(eq(buyoutListings.id, id))
       .returning();
+
+    if (actorId) {
+      await this.auditService.log({
+        actorId,
+        action: AuditAction.UPDATE,
+        entity: AuditEntity.BUYOUT_LISTING,
+        entityId: id,
+        oldValue: listing,
+        newValue: updated,
+      });
+    }
+
     return updated;
   }
 
-  async submit(id: string) {
-    await this.getById(id);
+  async submit(id: string, actorId?: string) {
+    const listing = await this.getById(id);
     const [updated] = await this.db
       .update(buyoutListings)
       .set({ status: "PENDING_REVIEW" as any })
       .where(eq(buyoutListings.id, id))
       .returning();
+
+    if (actorId) {
+      await this.auditService.log({
+        actorId,
+        action: AuditAction.STATUS_CHANGE,
+        entity: AuditEntity.BUYOUT_LISTING,
+        entityId: id,
+        oldValue: { status: listing.status },
+        newValue: { status: "PENDING_REVIEW" },
+      });
+    }
+
     return updated;
   }
 
   async approve(id: string, smId: string, dto: ApproveBuyoutDto) {
-    await this.getById(id);
+    const listing = await this.getById(id);
     const [updated] = await this.db
       .update(buyoutListings)
       .set({
@@ -147,36 +183,80 @@ export class BuyoutService {
       })
       .where(eq(buyoutListings.id, id))
       .returning();
+
+    await this.auditService.log({
+      actorId: smId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.BUYOUT_LISTING,
+      entityId: id,
+      oldValue: { status: listing.status },
+      newValue: { status: "ACTIVE" },
+    });
+
     return updated;
   }
 
   async reject(id: string, smId: string) {
-    await this.getById(id);
+    const listing = await this.getById(id);
     const [updated] = await this.db
       .update(buyoutListings)
       .set({ status: "DRAFT" as any, reviewedById: smId })
       .where(eq(buyoutListings.id, id))
       .returning();
+
+    await this.auditService.log({
+      actorId: smId,
+      action: AuditAction.STATUS_CHANGE,
+      entity: AuditEntity.BUYOUT_LISTING,
+      entityId: id,
+      oldValue: { status: listing.status },
+      newValue: { status: "DRAFT" },
+    });
+
     return updated;
   }
 
-  async archive(id: string) {
-    await this.getById(id);
+  async archive(id: string, actorId?: string) {
+    const listing = await this.getById(id);
     const [updated] = await this.db
       .update(buyoutListings)
       .set({ status: "ARCHIVED" as any })
       .where(eq(buyoutListings.id, id))
       .returning();
+
+    if (actorId) {
+      await this.auditService.log({
+        actorId,
+        action: AuditAction.STATUS_CHANGE,
+        entity: AuditEntity.BUYOUT_LISTING,
+        entityId: id,
+        oldValue: { status: listing.status },
+        newValue: { status: "ARCHIVED" },
+      });
+    }
+
     return updated;
   }
 
-  async restore(id: string) {
-    await this.getById(id);
+  async restore(id: string, actorId?: string) {
+    const listing = await this.getById(id);
     const [updated] = await this.db
       .update(buyoutListings)
       .set({ status: "ACTIVE" as any })
       .where(eq(buyoutListings.id, id))
       .returning();
+
+    if (actorId) {
+      await this.auditService.log({
+        actorId,
+        action: AuditAction.STATUS_CHANGE,
+        entity: AuditEntity.BUYOUT_LISTING,
+        entityId: id,
+        oldValue: { status: listing.status },
+        newValue: { status: "ACTIVE" },
+      });
+    }
+
     return updated;
   }
 

@@ -2,14 +2,16 @@ import { Injectable, Inject, NotFoundException } from "@nestjs/common";
 import { eq, and, desc, sql } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import { news, users, notifications } from "@taxibrat/db";
-import { NotificationType } from "@taxibrat/shared";
+import { NotificationType, AuditAction, AuditEntity } from "@taxibrat/shared";
 import { NotificationsGateway } from "../notifications/notifications.gateway";
+import { AuditService } from "../audit/audit.service";
 
 @Injectable()
 export class NewsService {
   constructor(
     @Inject("DATABASE") private db: Database,
     private notificationsGateway: NotificationsGateway,
+    private auditService: AuditService,
   ) {}
 
   async create(title: string, body: string, linkUrl: string | undefined, createdById: string) {
@@ -30,6 +32,14 @@ export class NewsService {
       type: "news",
       newsId: item.id,
       title,
+    });
+
+    await this.auditService.log({
+      actorId: createdById,
+      action: AuditAction.CREATE,
+      entity: AuditEntity.NEWS,
+      entityId: item.id,
+      newValue: item,
     });
 
     return item;
@@ -73,19 +83,42 @@ export class NewsService {
     return item;
   }
 
-  async update(id: string, data: { title?: string; body?: string; linkUrl?: string | null; isPublished?: boolean }) {
-    await this.getById(id);
+  async update(id: string, data: { title?: string; body?: string; linkUrl?: string | null; isPublished?: boolean }, actorId?: string) {
+    const existing = await this.getById(id);
     const [updated] = await this.db
       .update(news)
       .set(data)
       .where(eq(news.id, id))
       .returning();
+
+    if (actorId) {
+      await this.auditService.log({
+        actorId,
+        action: AuditAction.UPDATE,
+        entity: AuditEntity.NEWS,
+        entityId: id,
+        oldValue: existing,
+        newValue: updated,
+      });
+    }
+
     return updated;
   }
 
-  async delete(id: string) {
-    await this.getById(id);
+  async delete(id: string, actorId?: string) {
+    const existing = await this.getById(id);
     await this.db.delete(news).where(eq(news.id, id));
+
+    if (actorId) {
+      await this.auditService.log({
+        actorId,
+        action: AuditAction.DELETE,
+        entity: AuditEntity.NEWS,
+        entityId: id,
+        oldValue: existing,
+      });
+    }
+
     return { success: true };
   }
 }

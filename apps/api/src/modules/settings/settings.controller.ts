@@ -2,6 +2,7 @@ import { Controller, Get, Patch, Body, UseGuards, UsePipes } from "@nestjs/commo
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { CurrentUser, JwtPayload } from "../../common/decorators/current-user.decorator";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
 import { SettingsService } from "./settings.service";
 import { UserRole, updateSettingsSchema, UpdateSettingsDto } from "@taxibrat/shared";
@@ -19,9 +20,9 @@ export class SettingsController {
 
   @Patch()
   @UsePipes(new ZodValidationPipe(updateSettingsSchema))
-  async update(@Body() dto: UpdateSettingsDto) {
+  async update(@Body() dto: UpdateSettingsDto, @CurrentUser() user: JwtPayload) {
     for (const { key, value } of dto.updates) {
-      await this.settingsService.set(key, value);
+      await this.settingsService.set(key, value, user.sub);
     }
     return { success: true };
   }
