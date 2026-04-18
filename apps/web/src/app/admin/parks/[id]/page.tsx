@@ -33,10 +33,40 @@ interface ParkClass {
   id: string;
   driverClass: string;
   name?: string | null;
-  depositAmount?: number | null;
-  dailyRate?: number | null;
-  commissionPercent?: number | null;
+  // 18 parameters from schema
+  parkCommission?: string | number | null;
+  withdrawalCommission?: string | number | null;
+  transferCommission?: string | number | null;
+  deposit?: number | null;
+  depositReturnDays?: number | null;
+  latePenalty?: number | null;
+  trafficFinePenalty?: number | null;
+  terminationDays?: number | null;
+  contractFairness?: number | null;
+  contractMatch?: number | null;
+  daysOff?: number | null;
+  newDriverPromoDays?: string | number | null;
+  maxPromoDaysInClass?: string | number | null;
+  replacementCar?: number | null;
+  insurance?: number | null;
+  inspectionFreq?: number | null;
+  maintenanceDay?: number | null;
+  extraScratch?: number | null;
+  repairDowntime?: number | null;
+  selfRepair?: number | null;
+  repairPricing?: number | null;
+  rating?: string | number | null;
+  paramsRating?: string | number | null;
 }
+
+const CLASS_LABELS: Record<string, string> = {
+  ECONOMY: "Эконом",
+  COMFORT: "Комфорт",
+  COMFORT_PLUS: "Комфорт+",
+  BUSINESS: "Бизнес",
+  PREMIER: "Премьер",
+  ELITE: "Элит",
+};
 
 interface Vehicle {
   id: string;
@@ -353,40 +383,261 @@ export default function AdminParkEditPage() {
 
       {/* Classes */}
       <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
-        <h2 className="text-sm font-medium text-[#303030] mb-4">Классы и автомобили</h2>
+        <h2 className="text-sm font-medium text-[#303030] mb-4">Классы и параметры</h2>
         {classes.length === 0 ? (
           <p className="text-sm text-[#A1A1A1]">У парка пока нет классов</p>
         ) : (
           <div className="space-y-4">
-            {classes.map((cls) => {
-              const vs = vehiclesByClass[cls.id] || [];
-              return (
-                <div key={cls.id} className="border border-[#E5E5E5] rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-[#303030]">
-                      {cls.name || cls.driverClass}
-                    </h3>
-                    <span className="text-xs text-[#A1A1A1]">
-                      Депозит: {cls.depositAmount ?? "—"} ₽ · Аренда: {cls.dailyRate ?? "—"} ₽/день
-                    </span>
-                  </div>
-                  {vs.length === 0 ? (
-                    <p className="text-xs text-[#A1A1A1]">Нет автомобилей</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {vs.map((v) => (
-                        <li key={v.id} className="text-xs text-[#303030]">
-                          {v.brandName} {v.modelName} · {v.year} · {v.licensePlate || "—"}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
+            {classes.map((cls) => (
+              <ClassAccordion
+                key={cls.id}
+                parkId={parkId!}
+                cls={cls}
+                vehicles={vehiclesByClass[cls.id] || []}
+                onSaved={() => loadData()}
+              />
+            ))}
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+/* ── Class accordion with 18 params ───────────────────── */
+
+const PARAM_SECTIONS: Array<{
+  title: string;
+  fields: Array<{
+    key: string;
+    label: string;
+    type: "decimal" | "int" | "select1to5" | "select1to6" | "select1to3";
+    hint?: string;
+  }>;
+}> = [
+  {
+    title: "Комиссии и депозит",
+    fields: [
+      { key: "parkCommission", label: "Комиссия парка, %", type: "decimal" },
+      { key: "withdrawalCommission", label: "Комиссия на вывод, %", type: "decimal" },
+      { key: "transferCommission", label: "Комиссия перевода, %", type: "decimal" },
+      { key: "deposit", label: "Депозит, ₽", type: "int" },
+      { key: "depositReturnDays", label: "Возврат депозита (дней)", type: "int" },
+    ],
+  },
+  {
+    title: "Штрафы и сроки",
+    fields: [
+      { key: "latePenalty", label: "Штраф за просрочку, ₽", type: "int" },
+      { key: "trafficFinePenalty", label: "Штраф за нарушение ПДД, ₽", type: "int" },
+      { key: "terminationDays", label: "Срок расторжения (дней)", type: "int" },
+    ],
+  },
+  {
+    title: "Договор (1 — плохо, 5 — отлично)",
+    fields: [
+      { key: "contractFairness", label: "Честность договора", type: "select1to5" },
+      { key: "contractMatch", label: "Соответствие реальности", type: "select1to5" },
+      { key: "daysOff", label: "Выходные дни", type: "select1to5" },
+    ],
+  },
+  {
+    title: "Промоакции",
+    fields: [
+      { key: "newDriverPromoDays", label: "Промодни новичкам", type: "decimal" },
+      { key: "maxPromoDaysInClass", label: "Макс. промодней", type: "decimal" },
+    ],
+  },
+  {
+    title: "Сервис (1 — плохо, 5 — отлично)",
+    fields: [
+      { key: "replacementCar", label: "Подменное авто", type: "select1to5" },
+      { key: "insurance", label: "Страхование", type: "select1to5" },
+      { key: "inspectionFreq", label: "Периодичность осмотров", type: "select1to5" },
+      { key: "maintenanceDay", label: "День ТО", type: "select1to5" },
+      { key: "extraScratch", label: "Учёт царапин", type: "select1to5" },
+    ],
+  },
+  {
+    title: "Ремонт",
+    fields: [
+      { key: "repairDowntime", label: "Простой на ремонте (1-6)", type: "select1to6" },
+      { key: "selfRepair", label: "Самостоятельный ремонт (1-3)", type: "select1to3" },
+      { key: "repairPricing", label: "Прайс на ремонт (1-3)", type: "select1to3" },
+    ],
+  },
+];
+
+function ClassAccordion({
+  parkId,
+  cls,
+  vehicles,
+  onSaved,
+}: {
+  parkId: string;
+  cls: ParkClass;
+  vehicles: Vehicle[];
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const [ok, setOk] = useState(false);
+
+  const initial: Record<string, string> = {};
+  PARAM_SECTIONS.forEach((s) =>
+    s.fields.forEach((f) => {
+      const v = (cls as any)[f.key];
+      initial[f.key] = v != null ? String(v) : "";
+    }),
+  );
+
+  const [values, setValues] = useState<Record<string, string>>(initial);
+
+  const update = (k: string, v: string) => setValues((prev) => ({ ...prev, [k]: v }));
+
+  const save = async () => {
+    const token = getAccessToken();
+    if (!token) return;
+    setErr("");
+    setSaving(true);
+    try {
+      const body: Record<string, number> = {};
+      PARAM_SECTIONS.forEach((s) =>
+        s.fields.forEach((f) => {
+          const raw = values[f.key];
+          if (raw === "" || raw == null) return;
+          const num = Number(raw);
+          if (!isFinite(num)) return;
+          body[f.key] = num;
+        }),
+      );
+      await api(`/admin/parks/${parkId}/classes/${cls.id}`, {
+        method: "PATCH",
+        token,
+        body,
+      });
+      setOk(true);
+      setTimeout(() => setOk(false), 2000);
+      onSaved();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Не удалось сохранить");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const renderField = (field: (typeof PARAM_SECTIONS)[0]["fields"][0]) => {
+    const v = values[field.key] ?? "";
+
+    if (field.type === "select1to5" || field.type === "select1to6" || field.type === "select1to3") {
+      const max = field.type === "select1to6" ? 6 : field.type === "select1to3" ? 3 : 5;
+      const opts = Array.from({ length: max }, (_, i) => i + 1);
+      return (
+        <select
+          value={v}
+          onChange={(e) => update(field.key, e.target.value)}
+          className="w-full h-[38px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
+        >
+          <option value="">—</option>
+          {opts.map((n) => (
+            <option key={n} value={n}>{n}</option>
+          ))}
+        </select>
+      );
+    }
+
+    return (
+      <input
+        type="number"
+        step={field.type === "decimal" ? "0.01" : "1"}
+        value={v}
+        onChange={(e) => update(field.key, e.target.value)}
+        className="w-full h-[38px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+      />
+    );
+  };
+
+  return (
+    <div className="border border-[#E5E5E5] rounded-xl">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+      >
+        <div>
+          <h3 className="text-sm font-medium text-[#303030]">
+            {cls.name || CLASS_LABELS[cls.driverClass] || cls.driverClass}
+          </h3>
+          <p className="text-[11px] text-[#A1A1A1] mt-0.5">
+            Рейтинг: {cls.rating ?? "—"} · авто: {vehicles.length}
+          </p>
+        </div>
+        <svg
+          className={`w-4 h-4 text-[#A1A1A1] transition-transform ${open ? "rotate-180" : ""}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 border-t border-[#E5E5E5] pt-4">
+          {err && (
+            <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-lg px-3 py-2 mb-3">
+              <p className="text-xs text-[#FA6868]">{err}</p>
+            </div>
+          )}
+          {ok && (
+            <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3">
+              <p className="text-xs text-green-700">Сохранено</p>
+            </div>
+          )}
+
+          {PARAM_SECTIONS.map((section) => (
+            <div key={section.title} className="mb-4">
+              <h4 className="text-xs font-medium text-[#A1A1A1] uppercase tracking-wider mb-2">
+                {section.title}
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {section.fields.map((f) => (
+                  <div key={f.key}>
+                    <label className="block text-xs text-[#303030] mb-1">{f.label}</label>
+                    {renderField(f)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div className="flex gap-2 pt-2">
+            <Button size="sm" onClick={save} disabled={saving}>
+              {saving ? "Сохранение..." : "Сохранить параметры"}
+            </Button>
+          </div>
+
+          {/* Vehicles */}
+          <div className="mt-5 pt-5 border-t border-[#E5E5E5]">
+            <h4 className="text-xs font-medium text-[#A1A1A1] uppercase tracking-wider mb-2">
+              Автомобили ({vehicles.length})
+            </h4>
+            {vehicles.length === 0 ? (
+              <p className="text-xs text-[#A1A1A1]">Нет автомобилей</p>
+            ) : (
+              <ul className="space-y-1">
+                {vehicles.map((v) => (
+                  <li key={v.id} className="text-xs text-[#303030]">
+                    {v.brandName} {v.modelName} · {v.year} · {v.licensePlate || "—"}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

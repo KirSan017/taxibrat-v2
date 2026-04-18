@@ -33,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/cooperation", label: "Сотрудничество", icon: HandshakeIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/super-managers", label: "Супер-менеджеры", icon: ShieldIcon, roles: ["ADMIN"] },
   { href: "/admin/parks-list", label: "Список таксопарков", icon: ListIcon, roles: ["ADMIN"] },
+  { href: "/admin/rating", label: "Рейтинг", icon: StatsIcon, roles: ["ADMIN"] },
   { href: "/admin/settings", label: "Настройки сервиса", icon: SettingsIcon, roles: ["ADMIN"] },
 ];
 
