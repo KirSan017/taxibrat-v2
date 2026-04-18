@@ -28,8 +28,9 @@ interface ParksResponse {
   limit: number;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "gray" | "green" | "red" }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: "gray" | "green" | "red" | "yellow" }> = {
   DRAFT: { label: "Черновик", variant: "gray" },
+  PENDING_REVIEW: { label: "На проверке СМ", variant: "yellow" },
   ACTIVE: { label: "Активен", variant: "green" },
   ARCHIVED: { label: "Архив", variant: "red" },
 };
@@ -80,7 +81,13 @@ export default function AdminParksPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-xl font-medium text-[#303030]">Таксопарки</h1>
+        <div>
+          <h1 className="text-xl font-medium text-[#303030]">Модерация заявок на парки</h1>
+          <p className="text-xs text-[#A1A1A1] mt-1">
+            Заявки пользователей на проверку и добавление таксопарков. Для управления активными парками используйте раздел
+            <Link href="/admin/parks-list" className="text-[#303030] ml-1 hover:underline">«Парки (управление)»</Link>.
+          </p>
+        </div>
       </div>
 
       {/* Filters */}
@@ -93,7 +100,7 @@ export default function AdminParksPage() {
           />
         </div>
         <div className="flex gap-2">
-          {(["ALL", "ACTIVE", "DRAFT", "ARCHIVED"] as const).map((s) => (
+          {(["ALL", "DRAFT", "PENDING_REVIEW", "ACTIVE", "ARCHIVED"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}

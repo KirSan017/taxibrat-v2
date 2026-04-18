@@ -140,7 +140,7 @@ export default function ReferralsPage() {
           {[
             { step: "1", text: "Поделитесь реферальной ссылкой с другом" },
             { step: "2", text: "Друг регистрируется и заполняет профиль" },
-            { step: "3", text: "Вы получаете бонус, друг — 100 баллов" },
+            { step: "3", text: "Вы получаете 200 баллов, друг — 100 баллов" },
           ].map((item) => (
             <div key={item.step} className="flex items-start gap-3">
               <span className="w-6 h-6 bg-[#F8D62E] rounded-full flex items-center justify-center shrink-0 text-xs font-medium text-[#303030]">

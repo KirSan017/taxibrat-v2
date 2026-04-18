@@ -169,13 +169,30 @@ export class AuthService {
   }
 
   async logout(refreshToken: string) {
+    // Try to find userId by refresh token via Redis first (fast path)
+    const storedUserId = await this.redis.get(`refresh:${refreshToken}`);
     await this.redis.del(`refresh:${refreshToken}`);
 
-    const allSessions = await this.db.select().from(sessions);
-    for (const s of allSessions) {
-      if (await bcrypt.compare(refreshToken, s.refreshTokenHash)) {
-        await this.db.delete(sessions).where(eq(sessions.id, s.id));
-        break;
+    if (storedUserId) {
+      // Only scan sessions for this specific user (bounded set)
+      const userSessions = await this.db
+        .select()
+        .from(sessions)
+        .where(eq(sessions.userId, storedUserId));
+      for (const s of userSessions) {
+        if (await bcrypt.compare(refreshToken, s.refreshTokenHash)) {
+          await this.db.delete(sessions).where(eq(sessions.id, s.id));
+          break;
+        }
+      }
+    } else {
+      // Fallback: full scan (legacy tokens with no redis entry)
+      const allSessions = await this.db.select().from(sessions);
+      for (const s of allSessions) {
+        if (await bcrypt.compare(refreshToken, s.refreshTokenHash)) {
+          await this.db.delete(sessions).where(eq(sessions.id, s.id));
+          break;
+        }
       }
     }
 

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useAuth } from "@/lib/use-auth";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
@@ -41,11 +42,13 @@ const STATUS_MAP: Record<string, { label: string; variant: "yellow" | "gray" | "
 
 const TOPIC_LABELS: Record<string, string> = {
   PARK_CHECK: "Проверка таксопарка",
+  PARK_ADD: "Добавление таксопарка",
   USER_BASE_CHECK: "Проверка по базе",
   TAXI_CONNECT: "Подключение к такси",
   BUYOUT: "Выкуп авто",
   LEGAL: "Юридический вопрос",
   FRIENDSHIP_POINTS: "Баллы дружбы",
+  IDEA: "Идея",
   OTHER: "Иное",
 };
 
@@ -61,6 +64,7 @@ export default function TicketChatPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadTicket = () => {
@@ -108,7 +112,6 @@ export default function TicketChatPage() {
 
   const handleCancel = async () => {
     if (!ticketId) return;
-    if (!confirm("Вы уверены, что хотите отменить обращение?")) return;
     const token = getAccessToken();
     if (!token) return;
     setCancelling(true);
@@ -174,13 +177,22 @@ export default function TicketChatPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={handleCancel}
+            onClick={() => setCancelConfirmOpen(true)}
             disabled={cancelling}
             className="border-[#FA6868] text-[#FA6868] hover:bg-[#FA6868] hover:text-white"
           >
             {cancelling ? "..." : "Отменить"}
           </Button>
         )}
+        <ConfirmModal
+          open={cancelConfirmOpen}
+          onClose={() => setCancelConfirmOpen(false)}
+          onConfirm={handleCancel}
+          title="Отменить обращение?"
+          description="Обращение будет закрыто. Восстановить его потом будет нельзя."
+          confirmLabel="Отменить обращение"
+          variant="warning"
+        />
       </div>
 
       {/* Messages */}

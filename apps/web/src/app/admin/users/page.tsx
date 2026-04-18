@@ -370,9 +370,26 @@ export default function AdminUsersPage() {
               {duplicates.length > 0 && (
                 <div>
                   <span className="text-xs text-[#A1A1A1]">Дубли по ФИО</span>
-                  <p className="text-sm text-[#F8A828] font-medium">
+                  <p className="text-sm text-[#F8A828] font-medium mb-1">
                     Найдено: {duplicates.length}
                   </p>
+                  <ul className="space-y-0.5 max-h-[120px] overflow-y-auto">
+                    {duplicates.map((d) => {
+                      const name = [d.lastName, d.firstName].filter(Boolean).join(" ") || d.id;
+                      return (
+                        <li key={d.id}>
+                          <a
+                            href={`/admin/users/${d.id}`}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="text-xs text-[#303030] hover:underline"
+                          >
+                            {name}
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               )}
             </div>

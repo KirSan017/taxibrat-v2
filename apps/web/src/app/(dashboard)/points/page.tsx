@@ -29,8 +29,9 @@ interface HistoryResponse {
 
 const TYPE_LABELS: Record<string, string> = {
   REGISTRATION: "Регистрация",
-  PARK_CHECK: "Проверка таксопарка",
+  PARK_CHECK: "Проверка/Добавление таксопарка",
   TAXI_CONNECT: "Подключение к такси",
+  RENTAL_CONFIRMED: "Подтверждение аренды",
   BUYOUT: "Выкуп авто",
   REFERRAL: "Реферальный бонус",
   ORDER_NO9: "Заказ «По делам»",
@@ -94,12 +95,15 @@ export default function PointsPage() {
         <h3 className="text-sm font-medium text-[#303030] mb-3">Как заработать баллы?</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {[
-            { action: "Регистрация", points: "+100" },
-            { action: "Заполнение профиля", points: "+100" },
-            { action: "Приглашение друга", points: "+300" },
-            { action: "Проверка таксопарка", points: "+50" },
-            { action: "Аренда через сервис", points: "+500" },
+            { action: "Регистрация + профиль", points: "+100" },
+            { action: "Приглашение друга", points: "+200" },
+            { action: "Другу за регистрацию", points: "+100" },
+            { action: "Добавление таксопарка", points: "+200" },
+            { action: "Проверка таксопарка", points: "+150" },
+            { action: "Подключение к такси", points: "+150" },
+            { action: "Взять в аренду", points: "+300" },
             { action: "Выкуп авто через нас", points: "+1000" },
+            { action: "Идея", points: "+50" },
           ].map((item, i) => (
             <div key={i} className="flex items-center justify-between text-xs py-1.5">
               <span className="text-[#A1A1A1]">{item.action}</span>

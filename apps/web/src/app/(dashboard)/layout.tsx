@@ -262,7 +262,7 @@ export default function DashboardLayout({
       <footer className="hidden lg:block border-t border-[#E5E5E5] mt-auto">
         <div className="max-w-[1600px] mx-auto px-6 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <p className="text-xs text-[#A1A1A1]">
-            &copy; 2025 Таксибрат &mdash; Сервис для водителей такси №1
+            &copy; {new Date().getFullYear()} Таксибрат &mdash; Сервис для водителей такси №1
           </p>
           <div className="flex items-center gap-6">
             <Link href="/support" className="text-xs text-[#A1A1A1] hover:text-[#303030] transition-colors">Техподдержка</Link>

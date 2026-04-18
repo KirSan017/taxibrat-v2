@@ -47,14 +47,19 @@ interface QuickAction {
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { label: "Проверки парков", href: "/admin/parks", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
-  { label: "Открыть тикеты", href: "/admin/tickets", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
-  { label: "Заказы «По делам»", href: "/admin/orders", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
+  { label: "Модерация парков", href: "/admin/parks", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { label: "Пользователи", href: "/admin/users", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
+  { label: "Тикеты", href: "/admin/tickets", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
+  { label: "Заказы «По делам»", href: "/admin/orders", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
+  { label: "Выкуп авто", href: "/admin/buyout", roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
+  { label: "Парки (управление)", href: "/admin/parks-list", roles: ["ADMIN"] },
+  { label: "Менеджеры", href: "/admin/managers", roles: ["SUPER_MANAGER", "ADMIN"] },
+  { label: "Новости", href: "/admin/news", roles: ["SUPER_MANAGER", "ADMIN"] },
+  { label: "Сотрудничество", href: "/admin/cooperation", roles: ["SUPER_MANAGER", "ADMIN"] },
+  { label: "Аудит", href: "/admin/audit", roles: ["SUPER_MANAGER", "ADMIN"] },
   { label: "Статистика", href: "/admin/stats", roles: ["SUPER_MANAGER", "ADMIN"] },
   { label: "Рейтинг (настройки)", href: "/admin/rating", roles: ["ADMIN"] },
-  { label: "Список таксопарков", href: "/admin/parks-list", roles: ["ADMIN"] },
-  { label: "Настройки", href: "/admin/settings", roles: ["ADMIN"] },
+  { label: "Настройки сервиса", href: "/admin/settings", roles: ["ADMIN"] },
 ];
 
 const ACTION_LABELS: Record<string, string> = {

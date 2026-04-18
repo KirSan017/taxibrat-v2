@@ -20,6 +20,7 @@ interface Setting {
 const SETTING_LABELS: Record<string, string> = {
   points_registration: "Баллы за регистрацию",
   points_park_check: "Баллы за проверку парка",
+  points_park_add: "Баллы за добавление парка",
   points_taxi_connect: "Баллы за подключение к такси",
   points_rental_confirmed: "Баллы за подтверждение факта аренды",
   points_buyout: "Баллы за выкуп авто",
@@ -31,7 +32,8 @@ const SETTING_LABELS: Record<string, string> = {
   points_base_check_cost: "Стоимость проверки по базе",
   points_order_no9_cost: "Стоимость заказа «По делам»",
   points_order_cancel_cost: "Стоимость отмены заказа",
-  no9_enabled: "Сервис «По делам» включён",
+  no9_enabled: "Сервис «По делам» включён (админ)",
+  no9_auto_disabled: "Сервис «По делам» автоматически отключён системой",
   banner_url: "URL рекламного баннера",
   points_review_enabled: "Блок о пересмотре баллов на главной",
   points_review_date: "Дата следующего пересмотра баллов",
@@ -48,6 +50,7 @@ const GROUPS: Group[] = [
     keys: [
       "points_registration",
       "points_park_check",
+      "points_park_add",
       "points_taxi_connect",
       "points_rental_confirmed",
       "points_buyout",
@@ -68,7 +71,7 @@ const GROUPS: Group[] = [
   },
   {
     title: "Функции",
-    keys: ["no9_enabled", "points_review_enabled", "points_review_date"],
+    keys: ["no9_enabled", "no9_auto_disabled", "points_review_enabled", "points_review_date"],
   },
   {
     title: "Реклама",
@@ -76,7 +79,7 @@ const GROUPS: Group[] = [
   },
 ];
 
-const BOOLEAN_KEYS = new Set(["no9_enabled", "points_review_enabled"]);
+const BOOLEAN_KEYS = new Set(["no9_enabled", "no9_auto_disabled", "points_review_enabled"]);
 
 /* ── page ─────────────────────────────────────────────── */
 
