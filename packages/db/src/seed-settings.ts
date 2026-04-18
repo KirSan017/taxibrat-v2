@@ -6,6 +6,7 @@ import { serviceSettings } from "./schema/service-settings";
 const DEFAULTS: Array<{ key: string; value: string }> = [
   { key: "points_registration", value: "100" },
   { key: "points_park_check", value: "150" },
+  { key: "points_park_add", value: "200" },
   { key: "points_taxi_connect", value: "150" },
   { key: "points_buyout", value: "1000" },
   { key: "points_idea", value: "50" },
@@ -18,6 +19,7 @@ const DEFAULTS: Array<{ key: string; value: string }> = [
   { key: "points_order_no9_cost", value: "50" },
   { key: "points_order_cancel_cost", value: "15" },
   { key: "no9_enabled", value: "true" },
+  { key: "no9_auto_disabled", value: "false" },
   { key: "banner_url", value: "" },
   { key: "points_review_enabled", value: "false" },
   { key: "points_review_date", value: "" },

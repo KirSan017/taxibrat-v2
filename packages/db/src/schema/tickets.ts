@@ -4,7 +4,7 @@ import {
 import { users } from "./users";
 
 export const ticketTopicEnum = pgEnum("ticket_topic", [
-  "PARK_CHECK", "USER_BASE_CHECK", "TAXI_CONNECT",
+  "PARK_CHECK", "PARK_ADD", "USER_BASE_CHECK", "TAXI_CONNECT",
   "BUYOUT", "LEGAL", "FRIENDSHIP_POINTS", "IDEA", "OTHER",
 ]);
 

@@ -92,6 +92,7 @@ export enum District {
 
 export enum ParkStatus {
   DRAFT = "DRAFT",
+  PENDING_REVIEW = "PENDING_REVIEW",
   ACTIVE = "ACTIVE",
   ARCHIVED = "ARCHIVED",
 }
@@ -104,6 +105,7 @@ export enum RatingWeightLevel {
 
 export enum TicketTopic {
   PARK_CHECK = "PARK_CHECK",
+  PARK_ADD = "PARK_ADD",
   USER_BASE_CHECK = "USER_BASE_CHECK",
   TAXI_CONNECT = "TAXI_CONNECT",
   BUYOUT = "BUYOUT",

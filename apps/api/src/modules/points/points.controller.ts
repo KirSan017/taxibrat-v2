@@ -3,7 +3,7 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser, JwtPayload } from "../../common/decorators/current-user.decorator";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
 import { PointsService } from "./points.service";
-import { pointsHistorySchema, PointsHistoryDto, POINTS } from "@taxibrat/shared";
+import { pointsHistorySchema, PointsHistoryDto } from "@taxibrat/shared";
 
 @Controller("points")
 @UseGuards(JwtAuthGuard)
@@ -13,7 +13,8 @@ export class PointsController {
   @Get("balance")
   async getBalance(@CurrentUser() user: JwtPayload) {
     const balance = await this.pointsService.getBalance(user.sub);
-    return { balance, displayBalance: balance + POINTS.DISPLAY_OFFSET };
+    // displayBalance matches actual balance (no synthetic +615 offset).
+    return { balance, displayBalance: balance };
   }
 
   @Get("history")

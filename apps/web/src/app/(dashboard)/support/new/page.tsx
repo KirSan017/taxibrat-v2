@@ -54,7 +54,7 @@ function NewTicketForm() {
     }
   }, [currentTopic, router]);
 
-  const displayBalance = (user?.friendshipPoints || 0) + 615;
+  const displayBalance = user?.friendshipPoints || 0;
   const hasEnoughPoints = !currentTopic.costPoints || displayBalance >= currentTopic.costPoints;
 
   const handleSubmit = async (e: React.FormEvent) => {

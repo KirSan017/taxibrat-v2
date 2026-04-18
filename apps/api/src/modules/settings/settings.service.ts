@@ -88,20 +88,38 @@ export class SettingsService {
   async getPointsConfig() {
     const all = await this.getAll();
     const map = new Map(all.map((s) => [s.key, s.value]));
+    const n = (k: string, fb: number) => parseInt(map.get(k) ?? String(fb), 10);
     return {
-      registration: parseInt(map.get("points_registration") ?? "100", 10),
-      parkCheck: parseInt(map.get("points_park_check") ?? "150", 10),
-      taxiConnect: parseInt(map.get("points_taxi_connect") ?? "150", 10),
-      buyout: parseInt(map.get("points_buyout") ?? "1000", 10),
-      idea: parseInt(map.get("points_idea") ?? "50", 10),
-      referralRegister: parseInt(map.get("points_referral_register") ?? "200", 10),
-      referralBonus: parseInt(map.get("points_referral_bonus") ?? "100", 10),
-      referralRental: parseInt(map.get("points_referral_rental") ?? "300", 10),
-      referralBuyout: parseInt(map.get("points_referral_buyout") ?? "1000", 10),
-      rentalConfirmed: parseInt(map.get("points_rental_confirmed") ?? "300", 10),
-      baseCheckCost: parseInt(map.get("points_base_check_cost") ?? "50", 10),
-      orderNo9Cost: parseInt(map.get("points_order_no9_cost") ?? "50", 10),
-      orderCancelCost: parseInt(map.get("points_order_cancel_cost") ?? "15", 10),
+      // camelCase short-keys (backward compat)
+      registration: n("points_registration", 100),
+      parkCheck: n("points_park_check", 150),
+      parkAdd: n("points_park_add", 200),
+      taxiConnect: n("points_taxi_connect", 150),
+      buyout: n("points_buyout", 1000),
+      idea: n("points_idea", 50),
+      referralRegister: n("points_referral_register", 200),
+      referralBonus: n("points_referral_bonus", 100),
+      referralRental: n("points_referral_rental", 300),
+      referralBuyout: n("points_referral_buyout", 1000),
+      rentalConfirmed: n("points_rental_confirmed", 300),
+      baseCheckCost: n("points_base_check_cost", 50),
+      orderNo9Cost: n("points_order_no9_cost", 50),
+      orderCancelCost: n("points_order_cancel_cost", 15),
+      // raw DB keys (for dynamic UI lookups)
+      points_registration: n("points_registration", 100),
+      points_park_check: n("points_park_check", 150),
+      points_park_add: n("points_park_add", 200),
+      points_taxi_connect: n("points_taxi_connect", 150),
+      points_buyout: n("points_buyout", 1000),
+      points_idea: n("points_idea", 50),
+      points_referral_register: n("points_referral_register", 200),
+      points_referral_bonus: n("points_referral_bonus", 100),
+      points_referral_rental: n("points_referral_rental", 300),
+      points_referral_buyout: n("points_referral_buyout", 1000),
+      points_rental_confirmed: n("points_rental_confirmed", 300),
+      points_base_check_cost: n("points_base_check_cost", 50),
+      points_order_no9_cost: n("points_order_no9_cost", 50),
+      points_order_cancel_cost: n("points_order_cancel_cost", 15),
     };
   }
 }

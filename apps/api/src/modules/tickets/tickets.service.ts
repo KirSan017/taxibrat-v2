@@ -16,6 +16,7 @@ import {
 // SLA hours per ticket topic. Overdue tickets are sorted to the top in manager queue.
 const SLA_HOURS: Record<string, number> = {
   PARK_CHECK: 48,
+  PARK_ADD: 48,
   USER_BASE_CHECK: 24,
   TAXI_CONNECT: 24,
   BUYOUT: 72,
@@ -293,6 +294,8 @@ export class TicketsService {
     switch (topic) {
       case "PARK_CHECK":
         return { type: PointsTransactionType.PARK_CHECK, settingsKey: "points_park_check", defaultAmount: 150 };
+      case "PARK_ADD":
+        return { type: PointsTransactionType.PARK_CHECK, settingsKey: "points_park_add", defaultAmount: 200 };
       case "TAXI_CONNECT":
         return { type: PointsTransactionType.TAXI_CONNECT, settingsKey: "points_taxi_connect", defaultAmount: 150 };
       case "BUYOUT":
@@ -350,7 +353,7 @@ export class TicketsService {
     }
 
     // Increment successful park checks counter for honor board
-    if (ticket.topic === "PARK_CHECK") {
+    if (ticket.topic === "PARK_CHECK" || ticket.topic === "PARK_ADD") {
       await this.db
         .update(users)
         .set({ successfulParkChecks: sql`${users.successfulParkChecks} + 1` })
@@ -515,6 +518,10 @@ export class TicketsService {
     if (topic === "PARK_CHECK" && titleHint && titleHint.trim()) {
       return `Проверка Таксопарка ${titleHint.trim()}`.slice(0, 200);
     }
+    // PARK_ADD: if form supplied a park name hint, include it
+    if (topic === "PARK_ADD" && titleHint && titleHint.trim()) {
+      return `Добавление Таксопарка ${titleHint.trim()}`.slice(0, 200);
+    }
     // BUYOUT: include brand/model/year fetched from related listing
     if (topic === "BUYOUT" && relatedEntityId) {
       try {
@@ -576,6 +583,7 @@ export class TicketsService {
 
     const titles: Record<string, string> = {
       PARK_CHECK: `Проверка Таксопарка`,
+      PARK_ADD: `Добавление Таксопарка`,
       USER_BASE_CHECK: `Проверка по БАЗЕ ${userName}`,
       TAXI_CONNECT: `${userName} Аренда`,
       BUYOUT: `ВЫКУП`,

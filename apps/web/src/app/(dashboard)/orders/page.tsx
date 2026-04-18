@@ -89,7 +89,7 @@ export default function OrdersPage() {
         open={!!cancellingId}
         onClose={() => setCancellingId(null)}
         onConfirm={confirmCancel}
-        balance={(user?.friendshipPoints || 0) + 615}
+        balance={user?.friendshipPoints || 0}
       />
       <SuccessModal
         open={success}

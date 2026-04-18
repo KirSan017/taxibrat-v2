@@ -53,6 +53,7 @@ export const OWNER_TYPE_FROM_LABEL: Record<string, string> = Object.fromEntries(
 
 export const TICKET_TOPIC_LABELS: Record<string, string> = {
   PARK_CHECK: "Проверка таксопарка",
+  PARK_ADD: "Добавление таксопарка",
   USER_BASE_CHECK: "Проверка по базе",
   TAXI_CONNECT: "Подключение к такси",
   BUYOUT: "Выкуп авто",

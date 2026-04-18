@@ -54,7 +54,7 @@ export default function AddParkPage() {
         method: "POST",
         token,
         body: {
-          topic: "PARK_CHECK",
+          topic: "PARK_ADD",
           titleHint: name.trim(),
           body:
             `Добавление таксопарка:\n` +

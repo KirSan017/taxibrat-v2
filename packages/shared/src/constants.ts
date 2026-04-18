@@ -30,6 +30,7 @@ export const TICKET_TOPIC_CONFIG: Record<
   { section: string; smReviewRequired: boolean; defaultPoints: number; smOnly?: boolean }
 > = {
   PARK_CHECK: { section: "TAXI_CHECK", smReviewRequired: true, defaultPoints: 150 },
+  PARK_ADD: { section: "TAXI_CHECK", smReviewRequired: true, defaultPoints: 200 },
   USER_BASE_CHECK: { section: "CHAT", smReviewRequired: true, defaultPoints: 0 },
   TAXI_CONNECT: { section: "CHAT", smReviewRequired: true, defaultPoints: 150 },
   // Бронирование выкупа идёт сразу на супер-менеджера

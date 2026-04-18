@@ -34,20 +34,25 @@ const STATUS_MAP: Record<string, { label: string; variant: "yellow" | "gray" | "
 
 const TOPIC_LABELS: Record<string, string> = {
   PARK_CHECK: "Проверка таксопарка",
+  PARK_ADD: "Добавление таксопарка",
   USER_BASE_CHECK: "Проверка по базе",
   TAXI_CONNECT: "Подключение к такси",
   BUYOUT: "Выкуп авто",
   LEGAL: "Юридический вопрос",
   FRIENDSHIP_POINTS: "Баллы дружбы",
+  IDEA: "Идея",
   OTHER: "Иное",
 };
 
-const POINTS_INFO = [
-  { label: "Приглашение друга — 300 б. вам и 100 б. другу" },
-  { label: "Отправить на проверку — 200 баллов" },
-  { label: "Пожаловаться на водителя — 150 баллов" },
-  { label: "Взять такси в аренду через наш сервис — 500 баллов" },
-  { label: "Выкуп авто в рассрочку через нас — 1000 баллов" },
+const DEFAULT_POINTS_INFO: { label: string }[] = [
+  { label: "Регистрация + заполнение профиля — 100" },
+  { label: "Приглашение друга — 200 вам / 100 другу" },
+  { label: "Добавление таксопарка — 200" },
+  { label: "Проверка таксопарка — 150" },
+  { label: "Подключение к такси — 150" },
+  { label: "Взять в аренду — 300" },
+  { label: "Выкуп авто — 1000" },
+  { label: "Идея — 50" },
 ];
 
 /* ── component ─────────────────────────────────────── */
@@ -57,6 +62,7 @@ export default function DashboardPage() {
   const [tickets, setTickets] = useState<TicketListItem[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
   const [ticketsTotal, setTicketsTotal] = useState(0);
+  const [pointsInfo, setPointsInfo] = useState<{ label: string }[]>(DEFAULT_POINTS_INFO);
 
   useEffect(() => {
     if (!user) return;
@@ -71,6 +77,28 @@ export default function DashboardPage() {
       .catch(() => setTickets([]))
       .finally(() => setTicketsLoading(false));
   }, [user]);
+
+  useEffect(() => {
+    api<Record<string, number>>("/public/points-config")
+      .then((cfg) => {
+        if (!cfg || typeof cfg !== "object") return;
+        const pick = (key: string, fallback: number) =>
+          typeof cfg[key] === "number" ? cfg[key] : fallback;
+        setPointsInfo([
+          { label: `Регистрация + заполнение профиля — ${pick("points_registration", 100)}` },
+          { label: `Приглашение друга — ${pick("points_referral_register", 200)} вам / ${pick("points_referral_bonus", 100)} другу` },
+          { label: `Добавление таксопарка — ${pick("points_park_add", 200)}` },
+          { label: `Проверка таксопарка — ${pick("points_park_check", 150)}` },
+          { label: `Подключение к такси — ${pick("points_taxi_connect", 150)}` },
+          { label: `Взять в аренду — ${pick("points_rental_confirmed", 300)}` },
+          { label: `Выкуп авто — ${pick("points_buyout", 1000)}` },
+          { label: `Идея — ${pick("points_idea", 50)}` },
+        ]);
+      })
+      .catch(() => {
+        // fall back to DEFAULT_POINTS_INFO
+      });
+  }, []);
 
   if (!user) return null;
 
@@ -132,7 +160,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
         <div className="border border-[#E5E5E5] rounded-xl p-4 bg-white">
           <p className="text-xs text-[#A1A1A1] mb-1">Баллы дружбы</p>
-          <p className="text-2xl font-medium text-[#303030]">{(user.friendshipPoints || 0) + 615}</p>
+          <p className="text-2xl font-medium text-[#303030]">{user.friendshipPoints || 0}</p>
         </div>
         <div className="border border-[#E5E5E5] rounded-xl p-4 bg-white">
           <p className="text-xs text-[#A1A1A1] mb-1">Обращений</p>
@@ -194,7 +222,7 @@ export default function DashboardPage() {
             Как получить &quot;Баллы дружбы&quot;?
           </h3>
           <ul className="space-y-2.5">
-            {POINTS_INFO.map((item, i) => (
+            {pointsInfo.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-xs text-[#A1A1A1]">
                 <span className="w-1 h-1 rounded-full bg-[#A1A1A1] mt-1.5 shrink-0" />
                 {item.label}
