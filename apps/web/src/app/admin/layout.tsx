@@ -1,18 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/use-auth";
 
-/* ── roles & mock user ────────────────────────────────── */
+/* ── roles ────────────────────────────────────────────── */
 
 type AdminRole = "MANAGER" | "SUPER_MANAGER" | "ADMIN";
-
-const MOCK_ADMIN = {
-  name: "Алексей Петров",
-  role: "ADMIN" as AdminRole,
-  notifications: 5,
-};
 
 /* ── nav items with role-based access ─────────────────── */
 
@@ -53,6 +48,13 @@ function getBreadcrumb(pathname: string): string {
   return item?.label ?? "Админ-панель";
 }
 
+function getInitials(firstName: string | null, lastName: string | null): string {
+  const f = (firstName || "").trim();
+  const l = (lastName || "").trim();
+  if (f || l) return `${f.charAt(0)}${l.charAt(0)}`.toUpperCase() || "?";
+  return "?";
+}
+
 /* ── layout ───────────────────────────────────────────── */
 
 export default function AdminLayout({
@@ -61,9 +63,38 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const role = MOCK_ADMIN.role;
+
+  // Guard: need to be logged in and have non-USER role
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace("/");
+      return;
+    }
+    if (user.role === "USER") {
+      router.replace("/dashboard");
+    }
+  }, [loading, user, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
+        <div className="text-sm text-[#A1A1A1]">Загрузка...</div>
+      </div>
+    );
+  }
+
+  if (user.role === "USER") {
+    return null;
+  }
+
+  const role = user.role as AdminRole;
   const filteredNav = NAV_ITEMS.filter((item) => item.roles.includes(role));
+  const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.phone;
+  const initials = getInitials(user.firstName, user.lastName);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
@@ -96,12 +127,14 @@ export default function AdminLayout({
           <div className="flex items-center gap-3">
             <button className="relative p-2">
               <BellIcon className="w-5 h-5 text-[#303030]" />
-              {MOCK_ADMIN.notifications > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#FA6868] rounded-full" />
-              )}
             </button>
             <div className="w-8 h-8 bg-[#E5E5E5] rounded-full overflow-hidden flex items-center justify-center">
-              <UserIcon className="w-5 h-5 text-[#A1A1A1]" />
+              {user.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-medium text-[#A1A1A1]">{initials}</span>
+              )}
             </div>
 
             {/* Mobile hamburger */}
@@ -129,11 +162,16 @@ export default function AdminLayout({
             {/* Admin info */}
             <div className="mb-6 px-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#E5E5E5] rounded-full flex items-center justify-center">
-                  <UserIcon className="w-6 h-6 text-[#A1A1A1]" />
+                <div className="w-10 h-10 bg-[#E5E5E5] rounded-full flex items-center justify-center overflow-hidden">
+                  {user.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-medium text-[#A1A1A1]">{initials}</span>
+                  )}
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-[#303030]">{MOCK_ADMIN.name}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#303030] truncate">{displayName}</p>
                   <p className="text-xs text-[#A1A1A1]">{ROLE_LABELS[role]}</p>
                 </div>
               </div>
@@ -178,7 +216,7 @@ export default function AdminLayout({
               <div className="fixed inset-0 bg-black/20" onClick={() => setSidebarOpen(false)} />
               <aside className="relative w-[280px] bg-white border-r border-[#E5E5E5] flex flex-col px-4 py-6 overflow-y-auto">
                 <div className="mb-6 px-3">
-                  <p className="text-sm font-medium text-[#303030]">{MOCK_ADMIN.name}</p>
+                  <p className="text-sm font-medium text-[#303030]">{displayName}</p>
                   <p className="text-xs text-[#A1A1A1]">{ROLE_LABELS[role]}</p>
                 </div>
                 <nav className="flex flex-col gap-0.5">
@@ -345,15 +383,6 @@ function BellIcon({ className = "" }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 01-3.46 0" />
-    </svg>
-  );
-}
-
-function UserIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 }

@@ -1,71 +1,94 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
+import { useAuth } from "@/lib/use-auth";
 
-/* ── types & mock data ────────────────────────────────── */
-
-type TicketStatus = "NEW" | "IN_PROGRESS" | "SM_REVIEW" | "COMPLETED" | "REJECTED";
-type TicketCategory = "check" | "order" | "buyout" | "support";
+/* ── types ────────────────────────────────────────────── */
 
 interface Ticket {
   id: string;
-  title: string;
-  userName: string;
-  status: TicketStatus;
-  category: TicketCategory;
-  date: string;
   topic: string;
-  expired: boolean;
+  status: string;
+  title?: string | null;
+  body?: string | null;
+  creatorId: string;
+  assignedManagerId?: string | null;
+  createdAt: string;
 }
 
-const MOCK_TICKETS: Ticket[] = [
-  { id: "1", title: "Проверка таксопарка «Альфа»", userName: "Иванов И.И.", status: "NEW", category: "check", date: "16.04.2026", topic: "Проверка", expired: true },
-  { id: "2", title: "Заказ «По делам» #1204", userName: "Петров П.С.", status: "IN_PROGRESS", category: "order", date: "15.04.2026", topic: "По делам", expired: false },
-  { id: "3", title: "Выкуп Hyundai Solaris 2023", userName: "Сидорова М.А.", status: "SM_REVIEW", category: "buyout", date: "14.04.2026", topic: "Выкуп", expired: false },
-  { id: "4", title: "Проверка «Мега Такси»", userName: "Козлов А.Д.", status: "IN_PROGRESS", category: "check", date: "13.04.2026", topic: "Проверка", expired: true },
-  { id: "5", title: "Обращение по баллам", userName: "Смирнов Д.О.", status: "COMPLETED", category: "support", date: "12.04.2026", topic: "Поддержка", expired: false },
-  { id: "6", title: "Заказ «По делам» #1198", userName: "Кузнецова А.П.", status: "COMPLETED", category: "order", date: "10.04.2026", topic: "По делам", expired: false },
-  { id: "7", title: "Выкуп Toyota Camry 2022", userName: "Попов Р.В.", status: "NEW", category: "buyout", date: "09.04.2026", topic: "Выкуп", expired: false },
-  { id: "8", title: "Проверка «Драйв Парк»", userName: "Новикова Е.А.", status: "REJECTED", category: "check", date: "07.04.2026", topic: "Проверка", expired: false },
-];
+interface TicketsResponse {
+  data: Ticket[];
+  total: number;
+}
 
-const STATUS_CONFIG: Record<TicketStatus, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
   NEW: { label: "Новый", variant: "yellow" },
   IN_PROGRESS: { label: "В работе", variant: "gray" },
-  SM_REVIEW: { label: "На проверке СМ", variant: "yellow" },
+  PENDING_SM_REVIEW: { label: "На проверке СМ", variant: "yellow" },
+  SM_REJECTED: { label: "Отклонён СМ", variant: "red" },
   COMPLETED: { label: "Завершён", variant: "green" },
-  REJECTED: { label: "Отклонён", variant: "red" },
+  CANCELLED: { label: "Отменён", variant: "gray" },
 };
 
-type TabKey = "all" | "check" | "order" | "buyout" | "sm_review";
+const TOPIC_LABELS: Record<string, string> = {
+  PARK_CHECK: "Проверка парка",
+  USER_BASE_CHECK: "Проверка по базе",
+  TAXI_CONNECT: "Подключение",
+  BUYOUT: "Выкуп",
+  LEGAL: "Юридический",
+  FRIENDSHIP_POINTS: "Баллы",
+  OTHER: "Иное",
+};
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "all", label: "Все" },
-  { key: "check", label: "Проверки" },
-  { key: "order", label: "По делам" },
-  { key: "buyout", label: "Выкуп" },
-  { key: "sm_review", label: "На проверке СМ" },
-];
+type TabKey = "all" | "mine" | "review" | "PARK_CHECK" | "BUYOUT" | "TAXI_CONNECT" | "LEGAL" | "OTHER";
 
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AdminTicketsPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>("all");
+  const { user } = useAuth();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<TabKey>("mine");
 
-  const filtered = MOCK_TICKETS.filter((t) => {
-    if (activeTab === "all") return true;
-    if (activeTab === "sm_review") return t.status === "SM_REVIEW";
-    return t.category === activeTab;
-  });
+  const isSuperManager = user?.role === "SUPER_MANAGER" || user?.role === "ADMIN";
 
-  // Sort: expired first
-  const sorted = [...filtered].sort((a, b) => {
-    if (a.expired && !b.expired) return -1;
-    if (!a.expired && b.expired) return 1;
-    return 0;
-  });
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: "mine", label: "Мои тикеты" },
+    ...(isSuperManager ? [{ key: "review" as TabKey, label: "На проверке СМ" }] : []),
+    { key: "PARK_CHECK", label: "Проверки парков" },
+    { key: "BUYOUT", label: "Выкуп" },
+    { key: "TAXI_CONNECT", label: "Подключение" },
+    { key: "LEGAL", label: "Юридические" },
+    { key: "OTHER", label: "Иное" },
+  ];
+
+  useEffect(() => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) return;
+    setLoading(true);
+    setError("");
+
+    const url =
+      activeTab === "review"
+        ? "/admin/tickets/review?page=1&limit=50"
+        : activeTab === "mine"
+          ? "/admin/tickets?page=1&limit=50"
+          : `/admin/tickets?page=1&limit=50&topic=${activeTab}`;
+
+    api<TicketsResponse>(url, { token })
+      .then((res) => setTickets(res.data || []))
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : "Ошибка загрузки");
+        setTickets([]);
+      })
+      .finally(() => setLoading(false));
+  }, [user, activeTab]);
 
   return (
     <div>
@@ -88,88 +111,85 @@ export default function AdminTicketsPage() {
         ))}
       </div>
 
+      {error && (
+        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+          <p className="text-sm text-[#FA6868]">{error}</p>
+        </div>
+      )}
+
       {/* Table (desktop) */}
       <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#E5E5E5]">
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Заголовок</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider hidden sm:table-cell">Пользователь</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Тикет</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Статус</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider hidden md:table-cell">Тема</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider hidden md:table-cell">Дата</th>
             </tr>
           </thead>
           <tbody>
-            {sorted.map((ticket) => {
-              const sc = STATUS_CONFIG[ticket.status];
+            {loading ? (
+              <tr><td colSpan={4} className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Загрузка...</td></tr>
+            ) : tickets.length === 0 ? (
+              <tr><td colSpan={4} className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Тикеты не найдены</td></tr>
+            ) : tickets.map((ticket) => {
+              const sc = STATUS_CONFIG[ticket.status] || { label: ticket.status, variant: "gray" as const };
+              const title = ticket.title || TOPIC_LABELS[ticket.topic] || ticket.topic;
               return (
-                <tr
-                  key={ticket.id}
-                  className={`border-b border-[#E5E5E5] last:border-0 hover:bg-gray-50 transition-colors ${
-                    ticket.expired ? "bg-[#FA6868]/5" : ""
-                  }`}
-                >
+                <tr key={ticket.id} className="border-b border-[#E5E5E5] last:border-0 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
-                    <Link href={`/support/${ticket.id}`} className="text-[#303030] font-medium hover:underline">
-                      {ticket.title}
+                    <Link href={`/admin/tickets/${ticket.id}`} className="text-[#303030] font-medium hover:underline">
+                      {title}
                     </Link>
-                    {ticket.expired && (
-                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#FA6868] text-white">
-                        Просрочен
-                      </span>
+                    {ticket.body && (
+                      <p className="text-xs text-[#A1A1A1] mt-0.5 line-clamp-1">{ticket.body}</p>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-[#A1A1A1] hidden sm:table-cell">{ticket.userName}</td>
                   <td className="px-4 py-3">
                     <Badge variant={sc.variant}>{sc.label}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-[#A1A1A1] hidden md:table-cell">{ticket.topic}</td>
-                  <td className="px-4 py-3 text-[#A1A1A1] hidden md:table-cell">{ticket.date}</td>
+                  <td className="px-4 py-3 text-[#A1A1A1] hidden md:table-cell">
+                    {TOPIC_LABELS[ticket.topic] || ticket.topic}
+                  </td>
+                  <td className="px-4 py-3 text-[#A1A1A1] hidden md:table-cell">
+                    {new Date(ticket.createdAt).toLocaleDateString("ru-RU")}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {sorted.length === 0 && (
-          <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Тикеты не найдены</div>
-        )}
       </div>
 
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
-        {sorted.length === 0 ? (
+        {loading ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">Загрузка...</div>
+        ) : tickets.length === 0 ? (
           <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
             Тикеты не найдены
           </div>
-        ) : (
-          sorted.map((ticket) => {
-            const sc = STATUS_CONFIG[ticket.status];
-            return (
-              <Link
-                key={ticket.id}
-                href={`/support/${ticket.id}`}
-                className={`block bg-white border rounded-xl p-4 ${
-                  ticket.expired ? "border-[#FA6868]/30 bg-[#FA6868]/5" : "border-[#E5E5E5]"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3 mb-1.5">
-                  <h3 className="text-sm font-medium text-[#303030]">{ticket.title}</h3>
-                  <Badge variant={sc.variant}>{sc.label}</Badge>
-                </div>
-                <p className="text-xs text-[#A1A1A1]">{ticket.userName} &middot; {ticket.topic}</p>
-                <div className="flex items-center justify-between mt-1.5">
-                  <p className="text-[11px] text-[#A1A1A1]">{ticket.date}</p>
-                  {ticket.expired && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#FA6868] text-white">
-                      Просрочен
-                    </span>
-                  )}
-                </div>
-              </Link>
-            );
-          })
-        )}
+        ) : tickets.map((ticket) => {
+          const sc = STATUS_CONFIG[ticket.status] || { label: ticket.status, variant: "gray" as const };
+          const title = ticket.title || TOPIC_LABELS[ticket.topic] || ticket.topic;
+          return (
+            <Link
+              key={ticket.id}
+              href={`/admin/tickets/${ticket.id}`}
+              className="block bg-white border border-[#E5E5E5] rounded-xl p-4"
+            >
+              <div className="flex items-start justify-between gap-3 mb-1.5">
+                <h3 className="text-sm font-medium text-[#303030]">{title}</h3>
+                <Badge variant={sc.variant}>{sc.label}</Badge>
+              </div>
+              <p className="text-xs text-[#A1A1A1]">{TOPIC_LABELS[ticket.topic] || ticket.topic}</p>
+              <p className="text-[11px] text-[#A1A1A1] mt-1.5">
+                {new Date(ticket.createdAt).toLocaleDateString("ru-RU")}
+              </p>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

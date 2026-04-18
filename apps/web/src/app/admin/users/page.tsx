@@ -1,75 +1,131 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { api } from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
+import { useAuth } from "@/lib/use-auth";
 
-/* ── types & mock data ────────────────────────────────── */
+/* ── types ────────────────────────────────────────────── */
 
-type UserStatus = "PHONE_VERIFIED" | "PENDING_REVIEW" | "ACTIVE" | "REJECTED";
-
-interface User {
+interface UserItem {
   id: string;
-  lastName: string;
-  firstName: string;
-  patronymic: string;
+  firstName: string | null;
+  lastName: string | null;
+  patronymic: string | null;
   phone: string;
-  status: UserStatus;
-  registeredAt: string;
+  email: string | null;
+  status: string;
+  role: string;
+  rejectionReason: string | null;
+  createdAt: string;
 }
 
-const MOCK_USERS: User[] = [
-  { id: "1", lastName: "Иванов", firstName: "Иван", patronymic: "Иванович", phone: "+7 (999) 123-45-67", status: "ACTIVE", registeredAt: "14.04.2026" },
-  { id: "2", lastName: "Петров", firstName: "Пётр", patronymic: "Сергеевич", phone: "+7 (999) 234-56-78", status: "PENDING_REVIEW", registeredAt: "12.04.2026" },
-  { id: "3", lastName: "Сидорова", firstName: "Мария", patronymic: "Алексеевна", phone: "+7 (999) 345-67-89", status: "PHONE_VERIFIED", registeredAt: "10.04.2026" },
-  { id: "4", lastName: "Козлов", firstName: "Алексей", patronymic: "Дмитриевич", phone: "+7 (999) 456-78-90", status: "REJECTED", registeredAt: "08.04.2026" },
-  { id: "5", lastName: "Смирнов", firstName: "Дмитрий", patronymic: "Олегович", phone: "+7 (999) 567-89-01", status: "ACTIVE", registeredAt: "05.04.2026" },
-  { id: "6", lastName: "Кузнецова", firstName: "Анна", patronymic: "Павловна", phone: "+7 (999) 678-90-12", status: "PENDING_REVIEW", registeredAt: "03.04.2026" },
-  { id: "7", lastName: "Попов", firstName: "Роман", patronymic: "Викторович", phone: "+7 (999) 789-01-23", status: "ACTIVE", registeredAt: "01.04.2026" },
-  { id: "8", lastName: "Новикова", firstName: "Елена", patronymic: "Андреевна", phone: "+7 (999) 890-12-34", status: "PHONE_VERIFIED", registeredAt: "28.03.2026" },
-];
+interface UsersResponse {
+  data: UserItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
-const STATUS_CONFIG: Record<UserStatus, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
   PHONE_VERIFIED: { label: "Телефон подтверждён", variant: "yellow" },
   PENDING_REVIEW: { label: "На проверке", variant: "gray" },
   ACTIVE: { label: "Активен", variant: "green" },
   REJECTED: { label: "Отклонён", variant: "red" },
+  BANNED: { label: "Заблокирован", variant: "red" },
 };
 
-/* ── mock role: managers can't see phone ──────────────── */
-const MOCK_ROLE = "ADMIN" as "MANAGER" | "SUPER_MANAGER" | "ADMIN";
+function formatFullName(u: UserItem): string {
+  return [u.lastName, u.firstName, u.patronymic].filter(Boolean).join(" ") || "—";
+}
 
 /* ── page ─────────────────────────────────────────────── */
 
 export default function AdminUsersPage() {
-  const [statusFilter, setStatusFilter] = useState<UserStatus | "ALL">("ALL");
+  const { user: currentUser } = useAuth();
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [search, setSearch] = useState("");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [rejectUser, setRejectUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
+  const [rejectUser, setRejectUser] = useState<UserItem | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
+  const [total, setTotal] = useState(0);
 
-  const filtered = MOCK_USERS.filter((u) => {
-    if (statusFilter !== "ALL" && u.status !== statusFilter) return false;
-    if (search) {
-      const full = `${u.lastName} ${u.firstName} ${u.patronymic}`.toLowerCase();
-      if (!full.includes(search.toLowerCase())) return false;
+  const canSeePhone = currentUser?.role !== "MANAGER";
+
+  const loadUsers = () => {
+    const token = getAccessToken();
+    if (!token) return;
+    setLoading(true);
+    setError("");
+    const params = new URLSearchParams();
+    params.set("page", "1");
+    params.set("limit", "50");
+    if (statusFilter !== "ALL") params.set("status", statusFilter);
+    if (search) params.set("search", search);
+    api<UsersResponse>(`/admin/users?${params.toString()}`, { token })
+      .then((res) => {
+        setUsers(res.data || []);
+        setTotal(res.total || 0);
+      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка загрузки"))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, statusFilter]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    loadUsers();
+  };
+
+  const handleApprove = async (u: UserItem) => {
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      await api(`/admin/users/${u.id}/approve`, { method: "POST", token });
+      setSuccessMsg(`Профиль ${formatFullName(u)} подтверждён`);
+      setSelectedUser(null);
+      loadUsers();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось подтвердить");
     }
-    return true;
-  });
+  };
 
-  const canSeePhone = MOCK_ROLE !== "MANAGER";
+  const handleReject = async (u: UserItem, reason: string) => {
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      await api(`/admin/users/${u.id}/reject`, {
+        method: "POST",
+        token,
+        body: { reason },
+      });
+      setSuccessMsg(`Профиль ${formatFullName(u)} отклонён`);
+      setSelectedUser(null);
+      loadUsers();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Не удалось отклонить");
+    }
+  };
 
   return (
     <div>
       <RejectModal
         open={!!rejectUser}
         onClose={() => setRejectUser(null)}
-        onConfirm={(reason) => {
-          setSuccessMsg(`Профиль отклонён. Причина: ${reason}`);
-        }}
+        onConfirm={(reason) => rejectUser && handleReject(rejectUser, reason)}
         description="Укажите причину отклонения профиля. Пользователь получит уведомление."
       />
       <SuccessModal
@@ -78,6 +134,7 @@ export default function AdminUsersPage() {
         title="Готово"
         description={successMsg}
       />
+
       {/* User detail modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -97,7 +154,7 @@ export default function AdminUsersPage() {
             <div className="space-y-3 mb-6">
               <div>
                 <span className="text-xs text-[#A1A1A1]">ФИО</span>
-                <p className="text-sm text-[#303030]">{selectedUser.lastName} {selectedUser.firstName} {selectedUser.patronymic}</p>
+                <p className="text-sm text-[#303030]">{formatFullName(selectedUser)}</p>
               </div>
               {canSeePhone && (
                 <div>
@@ -105,29 +162,42 @@ export default function AdminUsersPage() {
                   <p className="text-sm text-[#303030]">{selectedUser.phone}</p>
                 </div>
               )}
+              {canSeePhone && selectedUser.email && (
+                <div>
+                  <span className="text-xs text-[#A1A1A1]">Email</span>
+                  <p className="text-sm text-[#303030]">{selectedUser.email}</p>
+                </div>
+              )}
               <div>
                 <span className="text-xs text-[#A1A1A1]">Статус</span>
                 <div className="mt-1">
-                  <Badge variant={STATUS_CONFIG[selectedUser.status].variant}>
-                    {STATUS_CONFIG[selectedUser.status].label}
+                  <Badge variant={(STATUS_CONFIG[selectedUser.status] || { variant: "gray" as const }).variant}>
+                    {STATUS_CONFIG[selectedUser.status]?.label || selectedUser.status}
                   </Badge>
                 </div>
               </div>
               <div>
-                <span className="text-xs text-[#A1A1A1]">Дата регистрации</span>
-                <p className="text-sm text-[#303030]">{selectedUser.registeredAt}</p>
+                <span className="text-xs text-[#A1A1A1]">Роль</span>
+                <p className="text-sm text-[#303030]">{selectedUser.role}</p>
               </div>
+              <div>
+                <span className="text-xs text-[#A1A1A1]">Дата регистрации</span>
+                <p className="text-sm text-[#303030]">{new Date(selectedUser.createdAt).toLocaleDateString("ru-RU")}</p>
+              </div>
+              {selectedUser.rejectionReason && (
+                <div>
+                  <span className="text-xs text-[#A1A1A1]">Причина отклонения</span>
+                  <p className="text-sm text-[#FA6868]">{selectedUser.rejectionReason}</p>
+                </div>
+              )}
             </div>
 
-            {(selectedUser.status === "PENDING_REVIEW" || selectedUser.status === "PHONE_VERIFIED") && (
+            {selectedUser.status === "PENDING_REVIEW" && (
               <div className="flex gap-3">
                 <Button
                   size="sm"
                   className="flex-1 bg-green-600 hover:bg-green-700"
-                  onClick={() => {
-                    setSuccessMsg(`Профиль ${selectedUser.lastName} подтверждён`);
-                    setSelectedUser(null);
-                  }}
+                  onClick={() => handleApprove(selectedUser)}
                 >
                   Подтвердить
                 </Button>
@@ -148,21 +218,23 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <h1 className="text-xl font-medium text-[#303030] mb-6">Пользователи</h1>
+      <h1 className="text-xl font-medium text-[#303030] mb-6">Пользователи ({total})</h1>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="w-full sm:w-[300px]">
           <Input
-            placeholder="Поиск по ФИО..."
+            placeholder="Поиск по ФИО / телефону..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <Button size="sm" type="submit">Искать</Button>
         <div className="flex flex-wrap gap-2">
           {(["ALL", "PHONE_VERIFIED", "PENDING_REVIEW", "ACTIVE", "REJECTED"] as const).map((s) => (
             <button
               key={s}
+              type="button"
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-2 rounded-lg text-xs transition-colors whitespace-nowrap ${
                 statusFilter === s
@@ -170,11 +242,17 @@ export default function AdminUsersPage() {
                   : "bg-gray-100 text-[#A1A1A1] hover:bg-gray-200"
               }`}
             >
-              {s === "ALL" ? "Все" : STATUS_CONFIG[s].label}
+              {s === "ALL" ? "Все" : STATUS_CONFIG[s]?.label || s}
             </button>
           ))}
         </div>
-      </div>
+      </form>
+
+      {error && (
+        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+          <p className="text-sm text-[#FA6868]">{error}</p>
+        </div>
+      )}
 
       {/* Table (desktop) */}
       <div className="hidden md:block bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
@@ -190,65 +268,67 @@ export default function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((user) => {
-              const sc = STATUS_CONFIG[user.status];
-              return (
-                <tr
-                  key={user.id}
-                  className="border-b border-[#E5E5E5] last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setSelectedUser(user)}
-                >
-                  <td className="px-4 py-3 text-[#303030] font-medium">
-                    {user.lastName} {user.firstName} {user.patronymic}
-                  </td>
-                  {canSeePhone && (
-                    <td className="px-4 py-3 text-[#A1A1A1] hidden sm:table-cell">{user.phone}</td>
-                  )}
-                  <td className="px-4 py-3">
-                    <Badge variant={sc.variant}>{sc.label}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-[#A1A1A1] hidden md:table-cell">{user.registeredAt}</td>
-                </tr>
-              );
-            })}
+            {loading ? (
+              <tr><td colSpan={4} className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Загрузка...</td></tr>
+            ) : users.length === 0 ? (
+              <tr><td colSpan={4} className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Пользователи не найдены</td></tr>
+            ) : users.map((u) => (
+              <tr
+                key={u.id}
+                className="border-b border-[#E5E5E5] last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => setSelectedUser(u)}
+              >
+                <td className="px-4 py-3 text-[#303030] font-medium">
+                  {formatFullName(u)}
+                </td>
+                {canSeePhone && (
+                  <td className="px-4 py-3 text-[#A1A1A1] hidden sm:table-cell">{u.phone}</td>
+                )}
+                <td className="px-4 py-3">
+                  <Badge variant={(STATUS_CONFIG[u.status] || { variant: "gray" as const }).variant}>
+                    {STATUS_CONFIG[u.status]?.label || u.status}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3 text-[#A1A1A1] hidden md:table-cell">
+                  {new Date(u.createdAt).toLocaleDateString("ru-RU")}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
-        {filtered.length === 0 && (
-          <div className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Пользователи не найдены</div>
-        )}
       </div>
 
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">Загрузка...</div>
+        ) : users.length === 0 ? (
           <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
             Пользователи не найдены
           </div>
-        ) : (
-          filtered.map((user) => {
-            const sc = STATUS_CONFIG[user.status];
-            return (
-              <button
-                key={user.id}
-                onClick={() => setSelectedUser(user)}
-                className="w-full text-left bg-white border border-[#E5E5E5] rounded-xl p-4"
-              >
-                <div className="flex items-start justify-between gap-3 mb-1.5">
-                  <h3 className="text-sm font-medium text-[#303030]">
-                    {user.lastName} {user.firstName} {user.patronymic}
-                  </h3>
-                  <Badge variant={sc.variant}>{sc.label}</Badge>
-                </div>
-                {canSeePhone && (
-                  <p className="text-xs text-[#A1A1A1]">{user.phone}</p>
-                )}
-                <p className="text-[11px] text-[#A1A1A1] mt-1">
-                  Регистрация: {user.registeredAt}
-                </p>
-              </button>
-            );
-          })
-        )}
+        ) : users.map((u) => {
+          const sc = STATUS_CONFIG[u.status] || { variant: "gray" as const, label: u.status };
+          return (
+            <button
+              key={u.id}
+              onClick={() => setSelectedUser(u)}
+              className="w-full text-left bg-white border border-[#E5E5E5] rounded-xl p-4"
+            >
+              <div className="flex items-start justify-between gap-3 mb-1.5">
+                <h3 className="text-sm font-medium text-[#303030]">
+                  {formatFullName(u)}
+                </h3>
+                <Badge variant={sc.variant}>{sc.label}</Badge>
+              </div>
+              {canSeePhone && (
+                <p className="text-xs text-[#A1A1A1]">{u.phone}</p>
+              )}
+              <p className="text-[11px] text-[#A1A1A1] mt-1">
+                Регистрация: {new Date(u.createdAt).toLocaleDateString("ru-RU")}
+              </p>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
