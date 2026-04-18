@@ -67,6 +67,15 @@ export default function AdminParksPage() {
     return true;
   });
 
+  // Duplicate detection by normalized name — parks sharing same name (case-insensitive, trimmed)
+  const duplicatesByName = new Map<string, Park[]>();
+  for (const p of parks) {
+    const key = (p.name || "").trim().toLowerCase();
+    if (!key) continue;
+    if (!duplicatesByName.has(key)) duplicatesByName.set(key, []);
+    duplicatesByName.get(key)!.push(p);
+  }
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -139,6 +148,19 @@ export default function AdminParksPage() {
                         AD
                       </span>
                     )}
+                    {(() => {
+                      const dupList = duplicatesByName.get((park.name || "").trim().toLowerCase()) || [];
+                      const others = dupList.filter((d) => d.id !== park.id);
+                      if (others.length === 0) return null;
+                      return (
+                        <span
+                          className="ml-2 inline-flex items-center text-[10px] px-1.5 py-0.5 rounded bg-[#FA6868]/10 text-[#FA6868] font-medium cursor-help"
+                          title={`Найдено парков с таким же названием: ${others.length}`}
+                        >
+                          Дубли: {others.length}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     {park.rating != null ? (

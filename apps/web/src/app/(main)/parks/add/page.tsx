@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AddressInput } from "@/components/ui/address-input";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
@@ -136,18 +137,13 @@ export default function AddParkPage() {
             required
           />
 
-          <div>
-            <label className="block text-sm font-medium text-[#303030] mb-1.5">Адрес</label>
-            <input
-              type="text"
-              placeholder="Город, улица, дом"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              required
-              className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] placeholder:text-[#B0B0B0] outline-none focus:border-[#303030] transition-colors"
-            />
-            <p className="text-[10px] text-[#A1A1A1] mt-1">Подсказки адресов появятся после ввода</p>
-          </div>
+          <AddressInput
+            label="Адрес"
+            placeholder="Город, улица, дом"
+            value={address}
+            onChange={setAddress}
+            required
+          />
 
           <Input
             label="Телефон парка"

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { AddressInput } from "@/components/ui/address-input";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/use-auth";
@@ -113,17 +113,17 @@ export default function No9Page() {
               <h2 className="text-lg font-medium text-[#303030] mb-6">Оформить заказ</h2>
 
               <div className="space-y-4 mb-6">
-                <Input
+                <AddressInput
                   label="Точка А"
                   placeholder="Откуда забрать (адрес)"
                   value={pointFrom}
-                  onChange={(e) => setPointFrom(e.target.value)}
+                  onChange={setPointFrom}
                 />
-                <Input
+                <AddressInput
                   label="Точка Б"
                   placeholder="Куда ехать (адрес)"
                   value={pointTo}
-                  onChange={(e) => setPointTo(e.target.value)}
+                  onChange={setPointTo}
                 />
               </div>
 

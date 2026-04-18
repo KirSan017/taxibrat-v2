@@ -1,4 +1,5 @@
 import { Injectable, Inject } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { desc, eq, and, sql, ilike } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import {
@@ -14,7 +15,10 @@ const STATS_NO9_OFFSET = 309;
 
 @Injectable()
 export class PublicService {
-  constructor(@Inject("DATABASE") private db: Database) {}
+  constructor(
+    @Inject("DATABASE") private db: Database,
+    private config: ConfigService,
+  ) {}
 
   async getHonorBoard(limit = 10) {
     const rows = await this.db
@@ -121,8 +125,41 @@ export class PublicService {
   }
 
   async addressSuggest(q: string) {
-    // Stub — full DaData integration is future work.
-    // TODO: integrate with DaData address suggestion API (see brands provider).
-    return { suggestions: [] as string[], query: q };
+    const query = (q || "").trim();
+    if (query.length < 2) return { suggestions: [], query };
+
+    const token = this.config.get<string>("DADATA_API_KEY");
+    if (!token) {
+      return { suggestions: [], query };
+    }
+
+    try {
+      const res = await fetch(
+        "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            query,
+            count: 5,
+            locations: [{ region: "Москва" }, { region: "Московская" }],
+          }),
+        },
+      );
+
+      if (!res.ok) return { suggestions: [], query };
+      const data = (await res.json()) as { suggestions?: Array<{ value: string; unrestricted_value?: string; data?: unknown }> };
+      const suggestions = (data.suggestions ?? []).map((s) => ({
+        value: s.value,
+        unrestricted_value: s.unrestricted_value ?? s.value,
+      }));
+      return { suggestions, query };
+    } catch {
+      return { suggestions: [], query };
+    }
   }
 }

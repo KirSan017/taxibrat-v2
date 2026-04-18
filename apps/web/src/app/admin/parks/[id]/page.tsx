@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AddressInput } from "@/components/ui/address-input";
 import { Badge } from "@/components/ui/badge";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
@@ -328,10 +329,10 @@ export default function AdminParkEditPage() {
             value={form.city}
             onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
           />
-          <Input
+          <AddressInput
             label="Адрес"
             value={form.address}
-            onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
+            onChange={(v) => setForm((p) => ({ ...p, address: v }))}
           />
           <Input
             label="Часы работы"
