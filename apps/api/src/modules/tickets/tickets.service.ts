@@ -3,7 +3,10 @@ import {
 } from "@nestjs/common";
 import { eq, and, desc, sql } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
-import { tickets, users } from "@taxibrat/db";
+import {
+  tickets, users, buyoutListings, carBrands, carModels,
+  parkClasses, taxiParks,
+} from "@taxibrat/db";
 import {
   CreateTicketDto, ListTicketsDto, TicketStatus, TicketTopic,
   TICKET_TOPIC_CONFIG, NotificationType, PointsTransactionType,
@@ -66,7 +69,12 @@ export class TicketsService {
       ? `${user.lastName} ${user.firstName}`
       : "Пользователь";
 
-    const title = this.generateTitle(dto.topic, userName);
+    const title = await this.generateTitle(
+      dto.topic,
+      userName,
+      dto.relatedEntityId,
+      dto.titleHint,
+    );
 
     const [ticket] = await this.db
       .insert(tickets)
@@ -159,6 +167,27 @@ export class TicketsService {
     // Paginate in memory
     const start = (dto.page - 1) * dto.limit;
     const data = annotated.slice(start, start + dto.limit);
+
+    return { data, total: Number(countResult[0].count), page: dto.page, limit: dto.limit };
+  }
+
+  async listAll(dto: ListTicketsDto) {
+    const conditions: any[] = [];
+    if (dto.topic) conditions.push(eq(tickets.topic, dto.topic as any));
+    if (dto.status) conditions.push(eq(tickets.status, dto.status as any));
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [data, countResult] = await Promise.all([
+      this.db.select().from(tickets)
+        .where(where)
+        .orderBy(desc(tickets.updatedAt))
+        .limit(dto.limit)
+        .offset((dto.page - 1) * dto.limit),
+      this.db.select({ count: sql<number>`count(*)` })
+        .from(tickets)
+        .where(where),
+    ]);
 
     return { data, total: Number(countResult[0].count), page: dto.page, limit: dto.limit };
   }
@@ -405,7 +434,75 @@ export class TicketsService {
     return { success: true };
   }
 
-  private generateTitle(topic: string, userName: string): string {
+  private async generateTitle(
+    topic: string,
+    userName: string,
+    relatedEntityId?: string,
+    titleHint?: string,
+  ): Promise<string> {
+    // PARK_CHECK: if form supplied a park name hint, include it
+    if (topic === "PARK_CHECK" && titleHint && titleHint.trim()) {
+      return `Проверка Таксопарка ${titleHint.trim()}`.slice(0, 200);
+    }
+    // BUYOUT: include brand/model/year fetched from related listing
+    if (topic === "BUYOUT" && relatedEntityId) {
+      try {
+        const [listing] = await this.db
+          .select({
+            brandId: buyoutListings.brandId,
+            modelId: buyoutListings.modelId,
+            year: buyoutListings.year,
+          })
+          .from(buyoutListings)
+          .where(eq(buyoutListings.id, relatedEntityId))
+          .limit(1);
+        if (listing) {
+          const [brand] = await this.db
+            .select({ name: carBrands.name })
+            .from(carBrands)
+            .where(eq(carBrands.id, listing.brandId))
+            .limit(1);
+          const [model] = await this.db
+            .select({ name: carModels.name })
+            .from(carModels)
+            .where(eq(carModels.id, listing.modelId))
+            .limit(1);
+          const brandName = brand?.name ?? "";
+          const modelName = model?.name ?? "";
+          return `ВЫКУП ${brandName} ${modelName} ${listing.year}г`.trim().replace(/\s+/g, " ");
+        }
+      } catch {
+        // fall through to default title
+      }
+    }
+
+    // TAXI_CONNECT: include park name and class
+    if (topic === "TAXI_CONNECT" && relatedEntityId) {
+      try {
+        const [cls] = await this.db
+          .select({
+            parkId: parkClasses.parkId,
+            driverClass: parkClasses.driverClass,
+          })
+          .from(parkClasses)
+          .where(eq(parkClasses.id, relatedEntityId))
+          .limit(1);
+        if (cls) {
+          const [park] = await this.db
+            .select({ name: taxiParks.name })
+            .from(taxiParks)
+            .where(eq(taxiParks.id, cls.parkId))
+            .limit(1);
+          if (park) {
+            const classLabel = DRIVER_CLASS_LABELS_RU[cls.driverClass] ?? cls.driverClass;
+            return `${userName} Аренда в ${park.name} ${classLabel}`;
+          }
+        }
+      } catch {
+        // fall through to default title
+      }
+    }
+
     const titles: Record<string, string> = {
       PARK_CHECK: `Проверка Таксопарка`,
       USER_BASE_CHECK: `Проверка по БАЗЕ ${userName}`,
@@ -419,3 +516,12 @@ export class TicketsService {
     return titles[topic] || `Тикет ${userName}`;
   }
 }
+
+const DRIVER_CLASS_LABELS_RU: Record<string, string> = {
+  ECONOMY: "Эконом",
+  COMFORT: "Комфорт",
+  COMFORT_PLUS: "Комфорт+",
+  BUSINESS: "Бизнес",
+  PREMIER: "Премьер",
+  ELITE: "Элит",
+};

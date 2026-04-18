@@ -27,6 +27,10 @@ export class TicketsAdminController {
     @CurrentUser() user: JwtPayload,
     @Query(new ZodValidationPipe(listTicketsSchema)) dto: ListTicketsDto,
   ) {
+    // Admins and SMs see all tickets; regular managers only their own.
+    if (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_MANAGER) {
+      return this.ticketsService.listAll(dto);
+    }
     return this.ticketsService.listForManager(user.sub, dto);
   }
 

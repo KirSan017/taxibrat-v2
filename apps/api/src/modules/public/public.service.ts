@@ -9,6 +9,7 @@ import {
   buyoutListings,
   parkClasses,
 } from "@taxibrat/db";
+import { SettingsService } from "../settings/settings.service";
 
 const STATS_USERS_OFFSET = 615;
 const STATS_NO9_OFFSET = 309;
@@ -18,7 +19,23 @@ export class PublicService {
   constructor(
     @Inject("DATABASE") private db: Database,
     private config: ConfigService,
+    private settingsService: SettingsService,
   ) {}
+
+  async getBanner() {
+    const url = await this.settingsService.get("banner_url");
+    return { url: url && url.trim() ? url : null };
+  }
+
+  async getPointsReview() {
+    const enabled = await this.settingsService.getBoolean("points_review_enabled");
+    const date = (await this.settingsService.get("points_review_date")) ?? "";
+    return { enabled, date };
+  }
+
+  async getPointsConfig() {
+    return this.settingsService.getPointsConfig();
+  }
 
   async getHonorBoard(limit = 10) {
     const rows = await this.db

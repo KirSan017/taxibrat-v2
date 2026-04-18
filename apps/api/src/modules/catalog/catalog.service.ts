@@ -1,5 +1,5 @@
 import { Injectable, Inject } from "@nestjs/common";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, lt, or } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import {
   parkClasses,
@@ -10,10 +10,72 @@ import {
   users,
 } from "@taxibrat/db";
 import { CatalogQueryDto } from "@taxibrat/shared";
+import { RatingRecalculator } from "../rating/rating.recalculator";
 
 @Injectable()
 export class CatalogService {
-  constructor(@Inject("DATABASE") private db: Database) {}
+  constructor(
+    @Inject("DATABASE") private db: Database,
+    private recalculator: RatingRecalculator,
+  ) {}
+
+  async listHomepageSlider(limit = 8) {
+    const avgRating = await this.recalculator.getAvgRating();
+
+    // Grab a wide window: advertised parks OR low-rating parks with available cars
+    const rows = await this.db
+      .select({
+        id: parkClasses.id,
+        parkId: taxiParks.id,
+        parkName: taxiParks.name,
+        parkAddress: taxiParks.address,
+        parkPhone: taxiParks.phone,
+        parkDistrict: taxiParks.district,
+        isAdvertised: taxiParks.isAdvertised,
+        isSuperAdvertised: taxiParks.isSuperAdvertised,
+        driverClass: parkClasses.driverClass,
+        rating: parkClasses.rating,
+        paramsRating: parkClasses.paramsRating,
+        deposit: parkClasses.deposit,
+        parkCommission: parkClasses.parkCommission,
+        hasAvailableCars: parkClasses.hasAvailableCars,
+      })
+      .from(parkClasses)
+      .innerJoin(taxiParks, eq(parkClasses.parkId, taxiParks.id))
+      .where(
+        and(
+          eq(taxiParks.status, "ACTIVE"),
+          eq(parkClasses.hasAvailableCars, true),
+          or(
+            eq(taxiParks.isAdvertised, true),
+            eq(taxiParks.isSuperAdvertised, true),
+            lt(parkClasses.rating, String(avgRating)),
+          ),
+        ),
+      )
+      .limit(50);
+
+    // Deduplicate by parkId (first-wins)
+    const seen = new Set<string>();
+    const unique: typeof rows = [];
+    for (const r of rows) {
+      if (seen.has(r.parkId)) continue;
+      seen.add(r.parkId);
+      unique.push(r);
+    }
+
+    const advertised = unique
+      .filter((r) => r.isAdvertised || r.isSuperAdvertised)
+      .sort((a, b) => parseFloat(String(b.rating)) - parseFloat(String(a.rating)));
+
+    const regular = unique.filter((r) => !r.isAdvertised && !r.isSuperAdvertised);
+    for (let i = regular.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [regular[i], regular[j]] = [regular[j], regular[i]];
+    }
+
+    return [...advertised, ...regular].slice(0, limit);
+  }
 
   async listClasses(dto: CatalogQueryDto) {
     const conditions = [

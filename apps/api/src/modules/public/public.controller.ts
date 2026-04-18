@@ -24,4 +24,19 @@ export class PublicController {
   addressSuggest(@Query("q") q?: string) {
     return this.publicService.addressSuggest(q ?? "");
   }
+
+  @Get("banner")
+  getBanner() {
+    return this.publicService.getBanner();
+  }
+
+  @Get("points-review")
+  getPointsReview() {
+    return this.publicService.getPointsReview();
+  }
+
+  @Get("points-config")
+  getPointsConfig() {
+    return this.publicService.getPointsConfig();
+  }
 }

@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { RATING } from "@taxibrat/shared";
 
+// TODO: integrate Yandex-specific commissions (per-class aggregator fees)
+// into calcTotalCost. Requires additional config from ТЗ — deferred until the
+// exact commission schedule is documented.
+
 @Injectable()
 export class RatingService {
   clamp(value: number): number {

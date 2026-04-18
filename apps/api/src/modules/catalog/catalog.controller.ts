@@ -43,6 +43,14 @@ export class CatalogController {
     return this.visibilityService.applyMask(classes as any, user);
   }
 
+  @Get("homepage")
+  async listHomepage(@Query("limit") limitStr: string | undefined, @Req() req: any) {
+    const user = this.extractUser(req);
+    const limit = Math.min(Math.max(parseInt(limitStr || "8", 10) || 8, 1), 20);
+    const classes = await this.catalogService.listHomepageSlider(limit);
+    return this.visibilityService.applyMask(classes as any, user);
+  }
+
   @Get("classes/:id")
   async getClass(@Param("id") id: string, @Req() req: any) {
     const user = this.extractUser(req);

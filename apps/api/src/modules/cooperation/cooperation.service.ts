@@ -9,6 +9,11 @@ import {
 } from "@taxibrat/shared";
 import { TelegramProvider } from "../auth/providers/telegram.provider";
 
+// TODO: cooperation email delivery. Telegram channel is the primary notification
+// path; SMTP email fallback is out of scope until a mail provider is configured
+// (SENDGRID_API_KEY / SMTP_* env). Telegram notification already works via
+// ADMIN_TELEGRAM_CHAT_ID.
+
 @Injectable()
 export class CooperationService {
   private readonly logger = new Logger(CooperationService.name);

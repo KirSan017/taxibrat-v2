@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, lt, sql } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import { tickets, ticketBuffer, managerSettings, users } from "@taxibrat/db";
 import { TICKET_TOPIC_CONFIG, TicketTopic, NotificationType } from "@taxibrat/shared";
@@ -213,6 +213,31 @@ export class TicketDistributorService {
       });
 
       this.logger.log(`Buffer: ticket ${buffered.ticketId} assigned to ${assignedToId}`);
+    }
+  }
+
+  /**
+   * Archive SM_REJECTED tickets that have been in that state for more than 7 days.
+   * Runs daily at midnight.
+   */
+  @Cron("0 0 * * *")
+  async archiveStaleRejected() {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600_000);
+    const result = await this.db
+      .update(tickets)
+      .set({
+        status: "COMPLETED" as any,
+        smRejectionReason: sql`COALESCE(${tickets.smRejectionReason}, 'Архивировано автоматически через 7 дней')`,
+      })
+      .where(
+        and(
+          eq(tickets.status, "SM_REJECTED" as any),
+          lt(tickets.updatedAt, sevenDaysAgo),
+        ),
+      )
+      .returning({ id: tickets.id });
+    if (result.length > 0) {
+      this.logger.log(`Auto-archived ${result.length} stale SM_REJECTED tickets`);
     }
   }
 }
