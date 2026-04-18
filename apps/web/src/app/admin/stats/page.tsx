@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import { TICKET_TOPIC_LABELS, DRIVER_CLASS_LABELS } from "@/lib/labels";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -46,33 +47,33 @@ interface OrdersPoint {
 type GroupBy = "day" | "week" | "month";
 
 const OVERALL_LABELS: Record<string, string> = {
-  totalUsers: "Всего пользователей",
-  activeUsers: "Активных",
-  phoneVerifiedUsers: "Подтверждённых по телефону",
-  pendingReviewUsers: "На проверке",
-  rejectedUsers: "Отклонённых",
-  bannedUsers: "Заблокированных",
-  totalParks: "Всего парков",
-  activeParks: "Активных парков",
-  totalTickets: "Всего тикетов",
-  completedTickets: "Завершённых тикетов",
-  openTickets: "Открытых тикетов",
-  totalOrders: "Всего заказов",
-  activeOrders: "Активных заказов",
-  totalBuyouts: "Объявлений выкупа",
-  activeBuyouts: "Активных объявлений",
-  pointsAwarded: "Начислено баллов",
-  pointsSpent: "Списано баллов",
+  // Top-level sections
   users: "Пользователи",
-  parks: "Парки",
-  tickets: "Тикеты",
-  orders: "Заказы",
+  points: "Баллы дружбы",
+  tickets: "Тикеты по типам",
+  orders: "Заказы «По делам»",
+  parks: "Таксопарки",
+  prices: "Цены по классам",
   buyouts: "Выкуп",
-  points: "Баллы",
+  // Inner keys (users)
   total: "Всего",
-  active: "Активно",
-  completed: "Завершено",
-  pending: "В ожидании",
+  phoneVerified: "По телефону",
+  active: "Активных",
+  inPeriod: "За период",
+  // Inner keys (points)
+  totalAwarded: "Начислено всего",
+  totalSpent: "Списано всего",
+  totalBalance: "Текущий баланс системы",
+  // Inner keys (orders)
+  ordered: "Заказанных",
+  completed: "Завершённых",
+  cancelled: "Отменённых",
+  banned: "Теневой бан",
+  // Inner keys (parks)
+  avgCommission: "Средняя комиссия",
+  // Generic
+  open: "Открытых",
+  pending: "Ожидающих",
   awarded: "Начислено",
   spent: "Списано",
 };
@@ -316,8 +317,56 @@ export default function AdminStatsPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {Object.entries(overall).flatMap(([key, value]) => {
                   const label = OVERALL_LABELS[key] ?? key;
-                  // Nested object: render each numeric/string leaf as its own card
-                  if (value && typeof value === "object" && !Array.isArray(value)) {
+
+                  // ARRAY (like tickets by topic, prices by class)
+                  if (Array.isArray(value)) {
+                    return [
+                      <section
+                        key={key}
+                        className="col-span-2 md:col-span-4 bg-white border border-[#E5E5E5] rounded-xl p-4"
+                      >
+                        <h3 className="text-sm font-medium text-[#303030] mb-3">{label}</h3>
+                        {value.length === 0 ? (
+                          <p className="text-xs text-[#A1A1A1]">Нет данных</p>
+                        ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {value.map((item: any, idx: number) => {
+                              const itemLabel = item.topic
+                                ? TICKET_TOPIC_LABELS[item.topic] ?? item.topic
+                                : item.driverClass
+                                ? DRIVER_CLASS_LABELS[item.driverClass] ?? item.driverClass
+                                : `Элемент ${idx + 1}`;
+                              const itemValue =
+                                item.total ?? item.avgRentPrice ?? item.avg ?? item.value ?? "—";
+                              return (
+                                <div key={idx} className="bg-[#F3F1E7] rounded-lg p-3">
+                                  <p className="text-xs text-[#A1A1A1] mb-1">{itemLabel}</p>
+                                  <p className="text-base font-medium text-[#303030]">
+                                    {typeof itemValue === "number"
+                                      ? itemValue.toLocaleString("ru-RU")
+                                      : String(itemValue)}
+                                  </p>
+                                  {item.completed !== undefined && (
+                                    <p className="text-[10px] text-[#A1A1A1] mt-1">
+                                      Завершено: {item.completed}
+                                    </p>
+                                  )}
+                                  {item.vehicleCount !== undefined && (
+                                    <p className="text-[10px] text-[#A1A1A1] mt-1">
+                                      Авто: {item.vehicleCount}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </section>,
+                    ];
+                  }
+
+                  // OBJECT (like users, orders)
+                  if (value && typeof value === "object") {
                     return Object.entries(value as Record<string, unknown>).map(
                       ([innerKey, innerValue]) => (
                         <div
@@ -334,6 +383,8 @@ export default function AdminStatsPage() {
                       ),
                     );
                   }
+
+                  // PRIMITIVE
                   return [
                     <div key={key} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
                       <p className="text-xs text-[#A1A1A1] mb-1">{label}</p>

@@ -24,7 +24,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin/parks", label: "Проверки таксопарков", icon: CheckIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
+  { href: "/admin/parks", label: "Проверка парков", icon: CheckIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/users", label: "Пользователи", icon: UsersIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/tickets", label: "Чат (тикеты)", icon: ChatIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/orders", label: "По делам, без 9%", icon: OrdersIcon, roles: ["MANAGER", "SUPER_MANAGER", "ADMIN"] },
@@ -36,7 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/news", label: "Новости", icon: NewsIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/cooperation", label: "Сотрудничество", icon: HandshakeIcon, roles: ["SUPER_MANAGER", "ADMIN"] },
   { href: "/admin/super-managers", label: "Супер-менеджеры", icon: ShieldIcon, roles: ["ADMIN"] },
-  { href: "/admin/parks-list", label: "Список таксопарков", icon: ListIcon, roles: ["ADMIN"] },
+  { href: "/admin/parks-list", label: "Парки (управление)", icon: ListIcon, roles: ["ADMIN"] },
   { href: "/admin/rating", label: "Рейтинг", icon: StatsIcon, roles: ["ADMIN"] },
   { href: "/admin/settings", label: "Настройки сервиса", icon: SettingsIcon, roles: ["ADMIN"] },
 ];

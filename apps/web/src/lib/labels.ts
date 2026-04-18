@@ -50,3 +50,14 @@ export const OWNER_TYPE_LABELS: Record<string, string> = {
 export const OWNER_TYPE_FROM_LABEL: Record<string, string> = Object.fromEntries(
   Object.entries(OWNER_TYPE_LABELS).map(([k, v]) => [v, k]),
 );
+
+export const TICKET_TOPIC_LABELS: Record<string, string> = {
+  PARK_CHECK: "Проверка таксопарка",
+  USER_BASE_CHECK: "Проверка по базе",
+  TAXI_CONNECT: "Подключение к такси",
+  BUYOUT: "Выкуп авто",
+  LEGAL: "Юридический вопрос",
+  FRIENDSHIP_POINTS: "Баллы дружбы",
+  IDEA: "Идея",
+  OTHER: "Иное",
+};
