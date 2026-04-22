@@ -1,36 +1,49 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 interface LogoProps {
   className?: string;
   href?: string;
   size?: "sm" | "md" | "lg";
-  variant?: "light" | "dark";
+  variant?: "auto" | "light" | "dark";
 }
 
 const SIZE_MAP = {
-  sm: { width: 120, height: 40 },
-  md: { width: 150, height: 50 },
-  lg: { width: 180, height: 60 },
+  sm: { icon: 36, text: "text-[18px]" },
+  md: { icon: 44, text: "text-[22px] md:text-[24px]" },
+  lg: { icon: 56, text: "text-[28px]" },
 };
 
 export function Logo({
   className = "",
   href = "/",
   size = "md",
+  variant = "auto",
 }: LogoProps) {
-  const { width, height } = SIZE_MAP[size];
+  const { icon, text } = SIZE_MAP[size];
+  const pathname = usePathname();
+
+  // Auto: detect dark header pages (home has dark hero)
+  const isDarkHeader = variant === "dark" || (variant === "auto" && pathname === "/");
+  const textColor = isDarkHeader ? "text-white" : "text-[#1F1F1F]";
+
   return (
-    <Link href={href} className={`inline-flex items-center ${className}`}>
+    <Link href={href} className={`inline-flex items-center gap-[10px] ${className}`}>
       <Image
-        src="/figma/logo.png"
-        alt="Таксибрат"
-        width={width}
-        height={height}
+        src="/figma/logo-icon.png"
+        alt=""
+        width={icon}
+        height={icon}
         priority
-        style={{ width: "auto", height: height }}
+        style={{ width: icon, height: icon }}
         className="shrink-0"
       />
+      <span className={`${text} font-semibold leading-none tracking-[-0.01em] ${textColor}`}>
+        Таксибрат
+      </span>
     </Link>
   );
 }

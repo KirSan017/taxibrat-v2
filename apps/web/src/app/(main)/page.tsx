@@ -229,21 +229,21 @@ export default function HomePage() {
     <>
       {/* ══════ HERO — dark #1F1F1F per Figma ══════ */}
       <section className="bg-[#1F1F1F] relative overflow-hidden">
-        <div className="relative max-w-[1600px] mx-auto px-[24px] md:px-[100px] pt-[140px] pb-[80px] md:pt-[210px] md:pb-[93px]">
-          <div className="grid md:grid-cols-[690px_1fr] gap-10 md:gap-[46px] items-start">
+        <div className="relative max-w-[1600px] mx-auto px-[24px] md:px-[100px] pt-[80px] pb-[60px] md:pt-[140px] md:pb-[93px]">
+          <div className="grid md:grid-cols-[560px_1fr] gap-10 md:gap-[40px] items-center">
             {/* Left — headline, desc, CTA */}
-            <div className="relative z-10 max-w-[690px]">
+            <div className="relative z-10 max-w-[560px]">
               <p className="text-[16px] md:text-[20px] font-medium text-[#F8D62E] leading-[26px]">
                 Сервис для каждого таксиста
               </p>
-              <h1 className="mt-[30px] text-[40px] md:text-[60px] leading-[1.08] font-medium text-white tracking-[-0.02em]">
+              <h1 className="mt-[24px] text-[40px] md:text-[56px] leading-[1.08] font-medium text-white tracking-[-0.02em]">
                 Выбери лучший таксопарк у&nbsp;себя на&nbsp;районе{" "}
                 <span className="text-[#F8D62E]">за 2&nbsp;минуты</span>
               </h1>
-              <p className="mt-[30px] md:mt-[56px] text-[14px] leading-[22px] font-normal text-white max-w-[416px]">
+              <p className="mt-[24px] md:mt-[40px] text-[14px] leading-[22px] font-normal text-white/80 max-w-[460px]">
                 Мы ваш верный спутник помощи работы в&nbsp;такси, проходите проверки на&nbsp;баны, влияйте на&nbsp;рейтинг таксопарков. А&nbsp;так&nbsp;же зарабатывайте «баллы дружбы» и&nbsp;тратьте их на&nbsp;платные фишки нашего сервиса
               </p>
-              <div className="mt-[40px] flex items-center gap-[10px]">
+              <div className="mt-[32px] md:mt-[40px] flex items-center gap-[10px]">
                 <button
                   type="button"
                   onClick={() => setAuthOpen(true)}
@@ -257,24 +257,24 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right — illustration with counter overlay */}
-            <div className="relative w-full md:-mr-[100px]">
+            {/* Right — BIG illustration with counter overlay, extends outside container */}
+            <div className="relative w-full md:-mr-[160px] lg:-mr-[240px]">
               {/* Counter overlay (Figma: 287x118 @ top-left corner) */}
-              <div className="absolute -top-[40px] left-[10px] md:-top-[80px] md:left-[36px] z-20 bg-[#F8D62E] rounded-[20px] w-[220px] md:w-[287px] h-[88px] md:h-[118px] px-[28px] md:px-[40px] py-[14px] md:py-[18px] shadow-md">
+              <div className="absolute -top-[30px] left-[10px] md:top-[40px] md:left-[80px] z-20 bg-[#F8D62E] rounded-[20px] w-[220px] md:w-[287px] px-[28px] md:px-[40px] py-[14px] md:py-[22px] shadow-xl">
                 <div className="text-[40px] md:text-[60px] font-medium leading-[1] text-[#303030] tracking-tight">
                   {publicStats ? publicStats.users.toLocaleString("ru-RU") : "143 125"}
                 </div>
-                <div className="mt-[8px] text-[11px] md:text-[14px] leading-[22px] font-normal text-[#303030]">
+                <div className="mt-[6px] text-[11px] md:text-[14px] leading-[18px] font-normal text-[#303030]">
                   пользователей уже с&nbsp;нами
                 </div>
               </div>
               <Image
                 src="/figma/hero.png"
                 alt=""
-                width={1060}
-                height={518}
+                width={1600}
+                height={780}
                 priority
-                className="w-full h-auto relative z-10"
+                className="w-full h-auto relative z-10 scale-[1.15] md:scale-[1.25] origin-center"
               />
             </div>
           </div>

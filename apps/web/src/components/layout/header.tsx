@@ -104,7 +104,7 @@ export function Header() {
   const balance = user ? user.friendshipPoints ?? 0 : 0;
   // Dark hero on home page → transparent header with white text
   const isHome = pathname === "/";
-  const headerBg = isHome ? "bg-[#1A1A1A]" : "bg-white border-b border-[#E5E5E5]";
+  const headerBg = isHome ? "bg-[#1F1F1F]" : "bg-white border-b border-[#E5E5E5]";
   const navTextColor = isHome
     ? "text-white hover:text-[#F8D62E]"
     : "text-[#303030] hover:text-[#A1A1A1]";
