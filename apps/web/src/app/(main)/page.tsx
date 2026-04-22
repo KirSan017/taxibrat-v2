@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { api } from "@/lib/api-client";
@@ -28,55 +27,68 @@ interface ParkClassItem {
   isSuperAdvertised?: boolean;
 }
 
+interface PublicStats {
+  users: number;
+  parks: number;
+  no9Orders: number;
+  buyoutCars: number;
+}
+
+/* ── Feature cards config (exact Figma colors) ──────────── */
+
 interface FeatureCard {
   bg: string;
   heading: React.ReactNode;
   textColor: string;
   steps: string[];
   stepTextColor: string;
-  footer?: React.ReactNode;
+  promo?: React.ReactNode;
+  pills?: React.ReactNode;
   button: { text: string; href?: string; onClick?: boolean; bg: string; color: string };
   image: string;
+  badge?: React.ReactNode;
 }
 
-const DEFAULT_FEATURES = (onAuth: () => void): FeatureCard[] => [
+const DEFAULT_FEATURES = (): FeatureCard[] => [
   {
-    bg: "bg-[#1A1A1A]",
+    bg: "bg-[#1F1F1F]",
     heading: (
       <>
-        Получите заказ «По делам»<br />
-        в любом месте <span className="text-[#F8D62E]">за 2 мин, без 9%</span>
+        Получите заказ «По&nbsp;делам» в&nbsp;любом месте{" "}
+        <span className="text-[#F8D62E]">за 2&nbsp;мин, без 9%</span>
       </>
     ),
     textColor: "text-white",
-    stepTextColor: "text-white/70",
+    stepTextColor: "text-white",
     steps: [
       "Укажите точки А и Б, класс такси",
       "Вызовем ваше такси за 2 мин",
       "Выполните заказ или повысьте спрос",
     ],
-    footer: (
-      <p className="text-xs text-[#F8D62E] leading-relaxed max-w-[320px]">
-        Выполни заказ — получи 5 звезд и промокод на 6 часов без комиссии!
+    promo: (
+      <p className="text-[14px] leading-[22px] text-[#F8D62E] max-w-[300px]">
+        Выполнив заказ — получите 5 звезд и промокод на 6&nbsp;часов без комиссии!
       </p>
     ),
     button: {
       text: "Вызвать такси",
       href: "/no9",
       bg: "bg-white",
-      color: "text-[#1A1A1A]",
+      color: "text-black",
     },
     image: "/figma/feature-no9.png",
   },
   {
-    bg: "bg-[#2F9E4D]",
+    bg: "bg-[#3BB560]",
     heading: (
       <>
-        Выкуп<br />автомобилей
+        Выкуп
+        <br />
+        автомобилей
       </>
     ),
     textColor: "text-white",
-    stepTextColor: "text-white/80",
+    stepTextColor: "text-white",
     steps: [
       "Выберите авто по параметрам",
       "Найдите лучшую цену и условия в городе",
@@ -87,7 +99,7 @@ const DEFAULT_FEATURES = (onAuth: () => void): FeatureCard[] => [
       text: "Посмотреть авто",
       href: "/buyout",
       bg: "bg-white",
-      color: "text-[#1A1A1A]",
+      color: "text-black",
     },
     image: "/figma/feature-buyout.png",
   },
@@ -95,11 +107,13 @@ const DEFAULT_FEATURES = (onAuth: () => void): FeatureCard[] => [
     bg: "bg-[#F8D62E]",
     heading: (
       <>
-        Проверка по базе<br />таксопарков
+        Проверка по&nbsp;базе
+        <br />
+        таксопарков
       </>
     ),
-    textColor: "text-[#1A1A1A]",
-    stepTextColor: "text-[#1A1A1A]/70",
+    textColor: "text-[#303030]",
+    stepTextColor: "text-[#303030]",
     steps: [
       "Отправьте запрос на проверку (10 секунд)",
       "Дадим ответ в течении 1 часа",
@@ -108,27 +122,29 @@ const DEFAULT_FEATURES = (onAuth: () => void): FeatureCard[] => [
     button: {
       text: "Проверить по базе",
       onClick: true,
-      bg: "bg-[#1A1A1A]",
-      color: "text-white",
+      bg: "bg-white",
+      color: "text-black",
     },
     image: "/figma/feature-check.png",
   },
   {
-    bg: "bg-[#EDEDED]",
+    bg: "bg-[#F2F2F2]",
     heading: (
       <>
-        Подключим<br />вас к такси
+        Подключим
+        <br />
+        вас к&nbsp;такси
       </>
     ),
-    textColor: "text-[#1A1A1A]",
-    stepTextColor: "text-[#1A1A1A]/70",
+    textColor: "text-[#303030]",
+    stepTextColor: "text-[#303030]",
     steps: [],
-    footer: (
-      <div className="flex flex-col gap-2 items-start">
-        <span className="inline-flex px-3 py-1.5 bg-[#2F9E4D] text-white text-xs font-medium rounded-md">
+    pills: (
+      <div className="flex flex-col gap-[11px] items-start mt-[10px]">
+        <span className="inline-flex items-center h-[46px] px-[24px] bg-[#3BB560] text-white text-[16px] md:text-[19px] font-semibold rounded-[10px]">
           Комиссия — 1,5%
         </span>
-        <span className="inline-flex px-3 py-1.5 bg-[#F8D62E] text-[#1A1A1A] text-xs font-medium rounded-md">
+        <span className="inline-flex items-center h-[46px] px-[24px] bg-[#F8D62E] text-[#303030] text-[16px] md:text-[19px] font-semibold rounded-[10px]">
           Вывод — моментальный
         </span>
       </div>
@@ -137,18 +153,16 @@ const DEFAULT_FEATURES = (onAuth: () => void): FeatureCard[] => [
       text: "Подключиться",
       onClick: true,
       bg: "bg-white",
-      color: "text-[#1A1A1A]",
+      color: "text-black",
     },
+    badge: (
+      <span className="inline-flex items-center h-[37px] px-[11px] bg-[#F8D62E] text-[#303030] text-[14px] font-medium rounded-[20px] ml-[10px]">
+        за 2&nbsp;мин
+      </span>
+    ),
     image: "/figma/feature-connect.png",
   },
 ];
-
-interface PublicStats {
-  users: number;
-  parks: number;
-  no9Orders: number;
-  buyoutCars: number;
-}
 
 export default function HomePage() {
   const router = useRouter();
@@ -213,55 +227,54 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ══════ HERO — dark bg per Figma ══════ */}
-      <section className="bg-[#1A1A1A] relative overflow-hidden">
-        <div className="relative max-w-[1600px] mx-auto px-6 py-12 md:py-20">
-          <div className="grid md:grid-cols-[1fr_1.1fr] gap-10 md:gap-12 items-center">
-            {/* Left side */}
-            <div className="max-w-2xl">
-              <p className="text-xs md:text-sm text-[#F8D62E] mb-5 font-medium">
+      {/* ══════ HERO — dark #1F1F1F per Figma ══════ */}
+      <section className="bg-[#1F1F1F] relative overflow-hidden">
+        <div className="relative max-w-[1600px] mx-auto px-[24px] md:px-[100px] pt-[140px] pb-[80px] md:pt-[210px] md:pb-[93px]">
+          <div className="grid md:grid-cols-[690px_1fr] gap-10 md:gap-[46px] items-start">
+            {/* Left — headline, desc, CTA */}
+            <div className="relative z-10 max-w-[690px]">
+              <p className="text-[16px] md:text-[20px] font-medium text-[#F8D62E] leading-[26px]">
                 Сервис для каждого таксиста
               </p>
-              <h1 className="text-[36px] md:text-[56px] leading-[1.08] font-medium text-white tracking-tight">
-                Выбери лучший таксопарк у себя на районе{" "}
-                <span className="text-[#F8D62E]">за 2 минуты</span>
+              <h1 className="mt-[30px] text-[40px] md:text-[60px] leading-[1.08] font-medium text-white tracking-[-0.02em]">
+                Выбери лучший таксопарк у&nbsp;себя на&nbsp;районе{" "}
+                <span className="text-[#F8D62E]">за 2&nbsp;минуты</span>
               </h1>
-              <p className="mt-6 text-sm md:text-base text-white/60 max-w-md leading-relaxed">
-                Мы вам верный спутник помощи работы в такси, проведем проверку на баны, влияете на рейтинг таксопарка. А так же зарабатывайте «баллы дружбы» и тратьте их на платные финансовые сервисы.
+              <p className="mt-[30px] md:mt-[56px] text-[14px] leading-[22px] font-normal text-white max-w-[416px]">
+                Мы ваш верный спутник помощи работы в&nbsp;такси, проходите проверки на&nbsp;баны, влияйте на&nbsp;рейтинг таксопарков. А&nbsp;так&nbsp;же зарабатывайте «баллы дружбы» и&nbsp;тратьте их на&nbsp;платные фишки нашего сервиса
               </p>
-              <div className="mt-10 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                <Button
-                  size="lg"
+              <div className="mt-[40px] flex items-center gap-[10px]">
+                <button
+                  type="button"
                   onClick={() => setAuthOpen(true)}
-                  className="!bg-white !text-[#1A1A1A] hover:!bg-white/90"
+                  className="inline-flex items-center justify-center h-[49px] px-[40px] rounded-[10px] bg-white text-black text-[14px] font-medium leading-[18px] hover:bg-white/90 transition-colors"
                 >
                   Зарегистрироваться
-                </Button>
-                <div className="flex flex-col text-[10px] text-[#F8D62E] leading-tight ml-2">
-                  <span>нужно</span>
-                  <span>30 сек</span>
-                </div>
+                </button>
+                <span className="inline-flex items-center h-[37px] px-[11px] bg-[#F8D62E] text-[#303030] text-[13px] font-medium rounded-[20px]">
+                  всего 10&nbsp;сек
+                </span>
               </div>
             </div>
 
-            {/* Right side — hero illustration with overlays */}
-            <div className="relative w-full">
-              {/* Users counter overlay on hero */}
-              <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10 bg-[#F8D62E] rounded-2xl px-5 md:px-6 py-3 md:py-4 shadow-lg">
-                <div className="text-[32px] md:text-[44px] font-medium leading-none text-[#1A1A1A] tracking-tight">
-                  {publicStats ? publicStats.users.toLocaleString("ru-RU") : "615"}
+            {/* Right — illustration with counter overlay */}
+            <div className="relative w-full md:-mr-[100px]">
+              {/* Counter overlay (Figma: 287x118 @ top-left corner) */}
+              <div className="absolute -top-[40px] left-[10px] md:-top-[80px] md:left-[36px] z-20 bg-[#F8D62E] rounded-[20px] w-[220px] md:w-[287px] h-[88px] md:h-[118px] px-[28px] md:px-[40px] py-[14px] md:py-[18px] shadow-md">
+                <div className="text-[40px] md:text-[60px] font-medium leading-[1] text-[#303030] tracking-tight">
+                  {publicStats ? publicStats.users.toLocaleString("ru-RU") : "143 125"}
                 </div>
-                <div className="text-[10px] md:text-xs text-[#1A1A1A]/80 mt-1 font-medium">
-                  пользователей с нами
+                <div className="mt-[8px] text-[11px] md:text-[14px] leading-[22px] font-normal text-[#303030]">
+                  пользователей уже с&nbsp;нами
                 </div>
               </div>
               <Image
                 src="/figma/hero.png"
                 alt=""
-                width={1718}
-                height={1038}
+                width={1060}
+                height={518}
                 priority
-                className="w-full h-auto"
+                className="w-full h-auto relative z-10"
               />
             </div>
           </div>
@@ -271,50 +284,57 @@ export default function HomePage() {
       {/* ══════ BANNER (configurable 1400x400) ══════ */}
       {bannerUrl && (
         <section className="bg-white">
-          <div className="max-w-[1600px] mx-auto px-6 pt-8">
+          <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pt-[40px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={bannerUrl}
               alt="Баннер"
-              className="w-full h-auto rounded-2xl object-cover"
+              className="w-full h-auto rounded-[20px] object-cover"
               style={{ aspectRatio: "1400/400" }}
             />
           </div>
         </section>
       )}
 
-      {/* ══════ STATS + PARKS SLIDER ══════ */}
+      {/* ══════ PARKS SLIDER — 148 stat + cards ══════ */}
       <section className="bg-white">
-        <div className="max-w-[1600px] mx-auto px-6 py-14 md:py-20">
+        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pt-[100px] md:pt-[193px] pb-[80px] md:pb-[100px]">
           {/* Stats row */}
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-            <div className="flex items-start gap-5">
-              <span className="text-[72px] md:text-[88px] font-medium leading-[0.9] text-[#F8D62E] tracking-tight">
+          <div className="flex flex-col md:flex-row md:items-center gap-[32px] md:gap-0 mb-[40px] md:mb-[60px]">
+            <div className="flex items-center gap-[30px] md:gap-[30px] flex-1">
+              <span className="text-[90px] md:text-[139px] font-medium leading-[0.85] text-[#F8D62E] tracking-[-0.04em]">
                 {publicStats?.parks ?? 148}
               </span>
-              <p className="mt-3 text-lg md:text-xl font-medium text-[#303030] max-w-xs leading-snug">
-                Таксопарков проверено
-                <br />в Москве и МО
+              <p className="text-[24px] md:text-[50px] font-medium text-[#303030] leading-[1.1] tracking-[-0.02em] max-w-[600px]">
+                Таксопарков проверено<br className="hidden md:block" /> в&nbsp;Москве и&nbsp;МО
               </p>
             </div>
-            <Link
-              href="/parks"
-              className="inline-flex items-center gap-2 text-sm font-medium text-[#303030] hover:gap-3 transition-all"
-            >
-              Смотреть все
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </Link>
+            <div className="flex items-center gap-[10px] md:gap-[20px]">
+              <Link
+                href="/parks"
+                className="inline-flex items-center justify-center h-[49px] px-[40px] rounded-[10px] bg-[#F8D62E] text-[#303030] text-[14px] font-medium hover:bg-[#F8D62E]/90 transition-colors"
+              >
+                Подобрать лучший
+              </Link>
+              <button
+                type="button"
+                aria-label="Следующий"
+                className="hidden md:inline-flex items-center justify-center w-[35px] h-[35px] rounded-[7px] bg-[#303030] text-white hover:bg-[#303030]/90 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          {/* Park cards horizontal scroll */}
+          {/* Park cards horizontal scroll (335x362 each, r=20, gap 20) */}
           {parksLoading ? (
-            <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6">
+            <div className="flex gap-[20px] overflow-x-auto pb-4 -mx-6 px-6">
               {[...Array(4)].map((_, i) => (
                 <div
                   key={i}
-                  className="flex-none w-[280px] h-[220px] rounded-xl bg-gray-100 animate-pulse"
+                  className="flex-none w-[335px] h-[362px] rounded-[20px] bg-[#FAFAFA] animate-pulse"
                 />
               ))}
             </div>
@@ -323,7 +343,7 @@ export default function HomePage() {
               Пока нет парков в каталоге
             </div>
           ) : (
-            <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex gap-[20px] overflow-x-auto pb-4 -mx-6 px-6 md:-mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide">
               {parks.map((park) => {
                 const rating = typeof park.rating === "string" ? parseFloat(park.rating) : park.rating;
                 const commission = typeof park.parkCommission === "string" ? parseFloat(park.parkCommission) : park.parkCommission;
@@ -333,14 +353,15 @@ export default function HomePage() {
                   <Link
                     key={park.id}
                     href={`/parks/${park.id}`}
-                    className="flex-none w-[280px] snap-start border border-[#E5E5E5] rounded-xl p-5 hover:shadow-md transition-shadow bg-white"
+                    className="flex-none w-[335px] h-[362px] snap-start bg-white border border-[#EFEFEF] rounded-[20px] p-[30px] hover:shadow-md transition-shadow relative"
                   >
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex items-center gap-0.5">
+                    {/* Top row: stars + rating */}
+                    <div className="flex items-center justify-between mb-[38px]">
+                      <div className="flex items-center gap-[2px]">
                         {[...Array(5)].map((_, i) => (
                           <svg
                             key={i}
-                            className={`w-4 h-4 ${i < Math.round(rating) ? "text-[#F8D62E]" : "text-[#E5E5E5]"}`}
+                            className={`w-[14px] h-[28px] ${i < Math.round(rating) ? "text-[#F8D62E]" : "text-[#E5E5E5]"}`}
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -348,24 +369,35 @@ export default function HomePage() {
                           </svg>
                         ))}
                       </div>
-                      <span className="text-sm font-medium text-[#303030]">{rating.toFixed(2)}</span>
+                      <span className="text-[20px] font-medium text-[#303030] leading-[26px]">{rating.toFixed(2)}</span>
                     </div>
-                    <h3 className="text-sm font-medium text-[#303030] mb-1 truncate">{displayName}</h3>
-                    <Badge variant={isBusinessClass ? "yellow" : "gray"}>
-                      {classLabel(park.driverClass)}
-                    </Badge>
-                    <div className="mt-4 space-y-1.5 text-xs text-[#A1A1A1]">
+                    {/* Name + class */}
+                    <div className="mb-[16px] flex items-center gap-[10px]">
+                      <h3 className="text-[20px] font-medium text-[#303030] leading-[26px] truncate max-w-[180px]">{displayName}</h3>
+                      <Badge variant={isBusinessClass ? "yellow" : "gray"}>
+                        {classLabel(park.driverClass)}
+                      </Badge>
+                    </div>
+                    {/* Details list */}
+                    <div className="space-y-[10px] text-[13px] text-[#A1A1A1]">
+                      <div className="flex justify-between">
+                        <span>Комиссия таксопарка</span>
+                        <span className="text-[#A1A1A1]">{commission}%</span>
+                      </div>
                       <div className="flex justify-between">
                         <span>Залог</span>
-                        <span className="text-[#303030] font-medium">
-                          {park.deposit.toLocaleString("ru-RU")} руб.
+                        <span className="text-[#A1A1A1]">
+                          {park.deposit.toLocaleString("ru-RU")} руб
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Комиссия</span>
-                        <span className="text-[#303030] font-medium">{commission}%</span>
-                      </div>
                     </div>
+                    {/* Button bottom */}
+                    <button
+                      type="button"
+                      className="absolute bottom-[30px] left-[30px] right-[30px] h-[42px] rounded-[10px] bg-[#303030] text-white text-[14px] font-medium hover:bg-[#303030]/90 transition-colors"
+                    >
+                      Подробнее
+                    </button>
                   </Link>
                 );
               })}
@@ -374,16 +406,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════ FEATURES GRID ══════ */}
+      {/* ══════ FEATURES GRID 2x2 (4 cards 690x442, gap 20) ══════ */}
       <section className="bg-white">
-        <div className="max-w-[1600px] mx-auto px-6 pb-8 md:pb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {DEFAULT_FEATURES(() => setAuthOpen(true)).map((f, i) => {
+        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pb-[40px] md:pb-[60px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-[20px]">
+            {DEFAULT_FEATURES().map((f, i) => {
               const btnContent = (
                 <button
                   type="button"
                   onClick={f.button.onClick ? () => setAuthOpen(true) : undefined}
-                  className={`inline-flex items-center justify-center h-11 px-6 rounded-lg text-sm font-medium ${f.button.bg} ${f.button.color} hover:opacity-90 transition-opacity`}
+                  className={`inline-flex items-center justify-center h-[49px] px-[40px] rounded-[10px] text-[14px] font-medium ${f.button.bg} ${f.button.color} hover:opacity-90 transition-opacity`}
                 >
                   {f.button.text}
                 </button>
@@ -391,34 +423,36 @@ export default function HomePage() {
               return (
                 <div
                   key={i}
-                  className={`${f.bg} ${f.textColor} rounded-[24px] p-7 md:p-10 flex flex-col justify-between min-h-[320px] relative overflow-hidden`}
+                  className={`${f.bg} ${f.textColor} rounded-[20px] p-[30px] md:p-[50px] h-[442px] relative overflow-hidden`}
                 >
                   <div className="relative z-10 max-w-[60%]">
-                    <h3 className="text-[22px] md:text-[28px] font-medium leading-[1.15]">
+                    <h3 className="text-[22px] md:text-[34px] font-semibold leading-[1.12] tracking-[-0.01em]">
                       {f.heading}
                     </h3>
                     {f.steps.length > 0 && (
-                      <ol className={`mt-5 space-y-1.5 text-[13px] leading-relaxed ${f.stepTextColor}`}>
+                      <ol className={`mt-[20px] space-y-[2px] text-[14px] leading-[22px] ${f.stepTextColor}`}>
                         {f.steps.map((s, idx) => (
                           <li key={idx}>{idx + 1} — {s}</li>
                         ))}
                       </ol>
                     )}
-                    {f.footer && <div className="mt-5">{f.footer}</div>}
+                    {f.promo && <div className="mt-[20px]">{f.promo}</div>}
+                    {f.pills && f.pills}
                   </div>
-                  <div className="relative z-10 mt-6">
+                  <div className="absolute bottom-[30px] md:bottom-[50px] left-[30px] md:left-[50px] flex items-center z-10">
                     {f.button.href ? (
                       <Link href={f.button.href}>{btnContent}</Link>
                     ) : (
                       btnContent
                     )}
+                    {f.badge && f.badge}
                   </div>
                   <Image
                     src={f.image}
                     alt=""
-                    width={320}
-                    height={320}
-                    className="absolute bottom-0 right-0 w-[140px] md:w-[200px] h-auto object-contain pointer-events-none select-none"
+                    width={640}
+                    height={640}
+                    className="absolute bottom-0 right-0 w-[180px] md:w-[340px] h-auto object-contain pointer-events-none select-none"
                   />
                 </div>
               );
@@ -427,73 +461,71 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════ CTA ══════ */}
+      {/* ══════ CTA BOTTOM (yellow 1400x442, r=20, pad 50) ══════ */}
       <section className="bg-white">
-        <div className="max-w-[1600px] mx-auto px-6 pb-12 md:pb-16">
-          <div className="bg-[#F8D62E] rounded-[24px] p-8 md:p-12 grid md:grid-cols-[1.3fr_1fr] gap-8 md:gap-10">
-            {/* Left side */}
+        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pb-[60px] md:pb-[100px]">
+          <div className="bg-[#F8D62E] rounded-[20px] p-[30px] md:p-[50px] grid md:grid-cols-[1fr_401px] gap-[30px] md:gap-[125px] items-start">
+            {/* Left */}
             <div>
-              <h2 className="text-[24px] md:text-[36px] leading-[1.2] font-medium text-[#1A1A1A]">
-                Зарегистрируйтесь сейчас и получите{" "}
-                <span className="text-[#1A1A1A]">100 баллов дружбы</span> на заказ{" "}
-                «По&nbsp;делам, без 9%» и проверку в базе таксопарков
+              <h2 className="text-[24px] md:text-[34px] font-semibold leading-[1.25] text-[#303030] tracking-[-0.01em] max-w-[658px]">
+                Зарегистрируйтесь сейчас и&nbsp;получите{" "}
+                <span className="text-[#303030]">100&nbsp;баллов дружбы</span> на&nbsp;заказ «По&nbsp;делам, без&nbsp;9%» и&nbsp;проверку в&nbsp;базе таксопарков
               </h2>
-              <p className="mt-5 text-xs md:text-sm text-[#1A1A1A]/70 leading-relaxed max-w-lg">
-                Со временем количество баллов для новых участников будет уменьшаться.
+              <p className="mt-[20px] text-[13px] md:text-[14px] leading-[22px] text-[#303030] max-w-[529px]">
+                Со&nbsp;временем количество баллов для новых участников будет уменьшаться.
               </p>
               {pointsReview.enabled && pointsReview.date && (
-                <div className="mt-3 inline-flex items-center gap-2 text-xs text-[#1A1A1A]">
+                <div className="mt-[12px] inline-flex items-center gap-[7px] text-[14px] text-[#303030]">
                   <span>Следующее уменьшение</span>
-                  <span className="px-3 py-1 bg-[#FA6868] text-white rounded-full font-medium">
+                  <span className="inline-flex items-center h-[30px] px-[10px] bg-[#FA6868] text-white text-[14px] font-semibold rounded-[10px]">
                     {pointsReview.date}
                   </span>
                 </div>
               )}
-              <div className="mt-8 flex gap-3">
-                <Button
-                  size="lg"
+              <div className="mt-[30px] md:mt-[40px] flex gap-[10px]">
+                <button
+                  type="button"
                   onClick={() => setAuthOpen(true)}
-                  className="!bg-[#1A1A1A] !text-white hover:!bg-[#1A1A1A]/90"
+                  className="inline-flex items-center justify-center h-[49px] px-[40px] rounded-[10px] bg-[#303030] text-white text-[14px] font-medium hover:bg-[#303030]/90 transition-colors"
                 >
                   Зарегистрироваться
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
+                </button>
+                <button
+                  type="button"
                   onClick={() => setAuthOpen(true)}
-                  className="!bg-white !border-white !text-[#1A1A1A] hover:!bg-white/90"
+                  className="inline-flex items-center justify-center h-[49px] px-[40px] rounded-[10px] bg-white text-black text-[14px] font-medium hover:bg-white/90 transition-colors"
                 >
                   Войти
-                </Button>
+                </button>
               </div>
             </div>
-            {/* Right side — dark card with points list */}
-            <div className="bg-[#1A1A1A] rounded-[20px] p-6 md:p-8 text-white">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-full bg-[#F8D62E]/20 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-[#F8D62E]" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                  </svg>
-                </div>
-                <p className="text-sm font-medium">Как получить «баллы дружбы»?</p>
+            {/* Right — dark points card (401x318 r=20 pad 30) */}
+            <div className="bg-[#303030] rounded-[20px] p-[30px] w-full md:w-[401px]">
+              <div className="w-[40px] h-[40px] rounded-full bg-white/10 flex items-center justify-center mb-[15px]">
+                <svg className="w-[22px] h-[22px] text-[#F8D62E]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
               </div>
-              <ul className="space-y-3 text-xs md:text-[13px] text-white/80">
-                <li>Зарегистрируйтесь — <span className="text-white">100 б</span></li>
-                <li>Приведите друга — <span className="text-white">200 б</span> вам и <span className="text-white">100 б</span> другу</li>
-                <li>Отправили на проверку таксопарка — <span className="text-white">200 баллов</span></li>
-                <li>Подключились к такси — <span className="text-white">150 баллов</span></li>
-                <li>Взяли такси в аренду себе или другу — <span className="text-white">300 баллов</span></li>
-                <li>Взяли авто в выкуп себе или другу — <span className="text-white">1000 баллов</span></li>
+              <p className="text-[20px] leading-[26px] font-medium text-[#F8D62E] mb-[15px]">
+                Как получить «баллы дружбы»?
+              </p>
+              <ul className="space-y-[6px] text-[14px] leading-[22px] text-white">
+                <li>Зарегистрируйтесь — 100&nbsp;б</li>
+                <li>Приведите друга — 200&nbsp;б вам и&nbsp;100&nbsp;б другу</li>
+                <li>Отправили на&nbsp;проверку таксопарк — 200&nbsp;баллов</li>
+                <li>Подключились к&nbsp;такси — 150&nbsp;баллов</li>
+                <li>Взяли такси в&nbsp;аренду себе или другу — 300&nbsp;баллов</li>
+                <li>Взяли авто в&nbsp;выкуп себе или другу — 1000&nbsp;баллов</li>
               </ul>
             </div>
           </div>
 
           {pointsReview.enabled && !pointsReview.date && (
-            <div className="mt-4 bg-[#FFF8D6] border border-[#F8D62E] rounded-xl p-4 flex items-start gap-3">
-              <svg className="w-5 h-5 text-[#B8A033] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="mt-[20px] bg-[#FFF8D6] border border-[#F8D62E] rounded-[16px] p-[16px] flex items-start gap-[12px]">
+              <svg className="w-[20px] h-[20px] text-[#B8A033] shrink-0 mt-[2px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M12 3a9 9 0 110 18 9 9 0 010-18z" />
               </svg>
-              <p className="text-sm text-[#303030]">
+              <p className="text-[14px] text-[#303030]">
                 <span className="font-medium">Внимание!</span> В ближайшее время баллы дружбы будут пересмотрены в сторону уменьшения.
               </p>
             </div>
