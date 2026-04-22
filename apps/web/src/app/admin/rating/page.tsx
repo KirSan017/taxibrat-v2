@@ -52,7 +52,6 @@ const PARAM_LABELS: Record<string, string> = {
   contractMatch: "Соответствие договора реальности",
   daysOff: "Выходные",
   newDriverPromoDays: "Промодни новичкам",
-  maxPromoDaysInClass: "Макс. промодней в классе",
   replacementCar: "Подменное авто",
   insurance: "Страхование",
   inspectionFreq: "Периодичность осмотров",
@@ -303,8 +302,11 @@ export default function AdminRatingPage() {
           {/* Weights */}
           <section className="bg-white border border-[#E5E5E5] rounded-xl p-5">
             <h2 className="text-sm font-medium text-[#303030] mb-3">Веса параметров (20 шт.)</h2>
+            <p className="text-[11px] text-[#A1A1A1] mb-3">
+              «Макс. промодней в классе» — вспомогательное значение, не учитывается в рейтинге.
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {weights.map((w) => (
+              {weights.filter((w) => w.paramName !== "maxPromoDaysInClass").map((w) => (
                 <div
                   key={w.paramName}
                   className="flex items-center justify-between gap-3 border border-[#E5E5E5] rounded-lg px-3 py-2"

@@ -711,6 +711,14 @@ export default function ParksPage() {
               />
               <span className="text-[12px] text-[#A1A1A1]">Больше не показывать</span>
             </label>
+            <a
+              href="https://rutube.ru/channel/taxibrat"
+              target="_blank"
+              rel="noopener"
+              className="block text-center text-[13px] text-[#303030] underline hover:no-underline mb-[16px]"
+            >
+              Смотреть видео инструкцию
+            </a>
             <button
               onClick={dismissInstruction}
               className="w-full inline-flex items-center justify-center h-[49px] rounded-[10px] bg-[#303030] text-white text-[14px] font-medium hover:bg-[#404040] transition-colors"

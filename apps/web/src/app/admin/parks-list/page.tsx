@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ interface Park {
   isSuperAdvertised?: boolean;
   city?: string | null;
   createdAt: string;
+  hasAvailableCars?: boolean;
 }
 
 const LIMIT = 20;
@@ -49,6 +51,8 @@ function parkAdState(p: { isAdvertised?: boolean; isSuperAdvertised?: boolean })
 
 export default function AdminParksListPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams?.get("highlight") ?? "";
   const [parks, setParks] = useState<Park[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -266,8 +270,15 @@ export default function AdminParksListPage() {
               <tr><td colSpan={4} className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Таксопарков нет</td></tr>
             ) : filtered.map((p) => {
               const sc = STATUS_CONFIG[p.status] || { label: p.status, variant: "gray" as const };
+              const isGrey = p.hasAvailableCars === false;
+              const isHighlighted = highlightId && p.id === highlightId;
+              const rowClass = [
+                "border-b border-[#E5E5E5] last:border-0",
+                isGrey ? "opacity-60 grayscale" : "",
+                isHighlighted ? "bg-[#FFF7D1]" : "",
+              ].filter(Boolean).join(" ");
               return (
-                <tr key={p.id} className="border-b border-[#E5E5E5] last:border-0">
+                <tr key={p.id} className={rowClass}>
                   <td className="px-4 py-3">
                     <Link href={`/admin/parks/${p.id}`} className="text-[#303030] font-medium hover:underline">
                       {p.name}
@@ -276,6 +287,11 @@ export default function AdminParksListPage() {
                       <span className="ml-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F8D62E] text-[#303030]">
                         <span aria-hidden>★</span>
                         {p.isSuperAdvertised ? "Супер реклама" : "Реклама"}
+                      </span>
+                    )}
+                    {isGrey && (
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-200 text-[#A1A1A1]">
+                        Нет свободных машин
                       </span>
                     )}
                   </td>

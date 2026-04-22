@@ -453,27 +453,68 @@ export default function ParkDetailPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[16px]">
-              {vehicles.map((v) => (
-                <div
-                  key={v.id}
-                  className="bg-white border border-[#EFEFEF] rounded-[20px] p-[24px] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-shadow"
-                >
-                  <div className="flex items-start justify-between gap-[12px] mb-[16px]">
-                    <h3 className="text-[15px] font-medium text-[#303030] leading-[1.3]">
-                      {v.brandName} {v.modelName}
-                      <br />
-                      <span className="text-[#A1A1A1]">{v.year}</span>
-                    </h3>
-                    <Badge variant={v.isAvailable ? "green" : "red"}>
-                      {v.isAvailable ? "Свободен" : "Занят"}
-                    </Badge>
+              {vehicles.map((v) => {
+                const totalRatingNum =
+                  v.totalRating == null
+                    ? null
+                    : typeof v.totalRating === "number"
+                    ? v.totalRating
+                    : Number(v.totalRating);
+                return (
+                  <div
+                    key={v.id}
+                    className="bg-white border border-[#EFEFEF] rounded-[20px] p-[24px] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-[12px] mb-[16px]">
+                      <h3 className="text-[15px] font-medium text-[#303030] leading-[1.3]">
+                        {v.brandName} {v.modelName}
+                        <br />
+                        <span className="text-[#A1A1A1]">{v.year}</span>
+                      </h3>
+                      <Badge variant={v.isAvailable ? "green" : "red"}>
+                        {v.isAvailable ? "Свободен" : "Занят"}
+                      </Badge>
+                    </div>
+                    <p className="text-[22px] font-medium text-[#303030] tracking-[-0.01em]">
+                      {v.rentPrice.toLocaleString("ru-RU")} ₽
+                      <span className="text-[13px] text-[#A1A1A1] font-normal ml-[4px]">/ сут.</span>
+                    </p>
+                    {totalRatingNum != null && !Number.isNaN(totalRatingNum) && (
+                      <div className="mt-[12px] flex items-center gap-[6px]">
+                        <svg className="w-[14px] h-[14px] text-[#F8D62E]" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span className="text-[13px] text-[#303030]">
+                          {totalRatingNum.toFixed(2)}
+                        </span>
+                        <div className="relative group">
+                          <svg
+                            className="w-[14px] h-[14px] text-[#A1A1A1] cursor-help"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            aria-hidden="true"
+                          >
+                            <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="12" y1="16" x2="12" y2="12" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <div className="pointer-events-none absolute hidden group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 w-[280px] p-[12px] bg-[#303030] text-white text-[11px] leading-[18px] rounded-[10px] shadow-lg z-20">
+                            Итоговый рейтинг автомобиля складывается из:
+                            <br />• рейтинга марки (средний по всем моделям)
+                            <br />• рейтинга модели (средний по всем годам)
+                            <br />• рейтинга класса авто (средний по таксопаркам)
+                            <br />• рейтинга таксопарка (по параметрам и цене)
+                            <br />
+                            Каждый параметр имеет свой вес.
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-[22px] font-medium text-[#303030] tracking-[-0.01em]">
-                    {v.rentPrice.toLocaleString("ru-RU")} ₽
-                    <span className="text-[13px] text-[#A1A1A1] font-normal ml-[4px]">/ сут.</span>
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

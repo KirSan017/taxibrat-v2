@@ -125,7 +125,30 @@ export class ParksService {
         .offset((page - 1) * limit),
       this.db.select({ count: sql<number>`count(*)` }).from(taxiParks),
     ]);
-    return { data, total: Number(countResult[0].count), page, limit };
+
+    // Aggregate hasAvailableCars flag across park_classes for each park
+    const parkIds = data.map((p) => p.id);
+    const availMap = new Map<string, boolean>();
+    if (parkIds.length > 0) {
+      const rows = await this.db
+        .select({
+          parkId: parkClasses.parkId,
+          hasAny: sql<boolean>`bool_or(${parkClasses.hasAvailableCars})`,
+        })
+        .from(parkClasses)
+        .where(sql`${parkClasses.parkId} = ANY(${parkIds})`)
+        .groupBy(parkClasses.parkId);
+      for (const r of rows) {
+        availMap.set(r.parkId as string, Boolean(r.hasAny));
+      }
+    }
+
+    const enriched = data.map((p) => ({
+      ...p,
+      hasAvailableCars: availMap.get(p.id) ?? false,
+    }));
+
+    return { data: enriched, total: Number(countResult[0].count), page, limit };
   }
 
   async update(id: string, dto: UpdateParkDto, userId: string) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ interface UserItem {
   role: string;
   rejectionReason: string | null;
   createdAt: string;
+  birthDate?: string | null;
+  birthDateHidden?: boolean;
 }
 
 interface UsersResponse {
@@ -51,12 +53,14 @@ function formatFullName(u: UserItem): string {
 
 export default function AdminUsersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams?.get("search") ?? "";
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
   const [rejectUser, setRejectUser] = useState<UserItem | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
@@ -120,6 +124,13 @@ export default function AdminUsersPage() {
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, statusFilter, page]);
+
+  // Если на странице задан ?search=... — загрузить сразу с поиском
+  useEffect(() => {
+    if (!currentUser || !initialSearch) return;
+    loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, initialSearch]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -317,6 +328,18 @@ export default function AdminUsersPage() {
                 <div>
                   <span className="text-xs text-[#A1A1A1]">Email</span>
                   <p className="text-sm text-[#303030]">{selectedUser.email}</p>
+                </div>
+              )}
+              {(selectedUser.birthDate || selectedUser.birthDateHidden) && (
+                <div>
+                  <span className="text-xs text-[#A1A1A1]">Дата рождения</span>
+                  <p className="text-sm text-[#303030]">
+                    {selectedUser.birthDateHidden
+                      ? "Скрыто"
+                      : selectedUser.birthDate
+                      ? new Date(selectedUser.birthDate).toLocaleDateString("ru-RU")
+                      : "—"}
+                  </p>
                 </div>
               )}
               <div>

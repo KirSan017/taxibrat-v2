@@ -3,7 +3,7 @@ import { sql, gte, lte, and, eq } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import {
   users, tickets, no9Orders, taxiParks, parkClasses,
-  parkVehicles, pointsTransactions,
+  parkVehicles, pointsTransactions, carBrands,
 } from "@taxibrat/db";
 
 interface DateRange {
@@ -22,15 +22,27 @@ export class OverallStatsService {
   constructor(@Inject("DATABASE") private db: Database) {}
 
   async getOverall(range: DateRange) {
-    const [userStats, pointsStats, ticketStats, orderStats, parkStats, priceStats] =
-      await Promise.all([
-        this.getUserStats(range),
-        this.getPointsStats(range),
-        this.getTicketStats(range),
-        this.getOrderStats(range),
-        this.getParkStats(),
-        this.getPriceStats(),
-      ]);
+    const [
+      userStats,
+      pointsStats,
+      ticketStats,
+      orderStats,
+      parkStats,
+      priceStats,
+      parksTodayBreakdown,
+      usersCarBrands,
+      usersByCarClass,
+    ] = await Promise.all([
+      this.getUserStats(range),
+      this.getPointsStats(range),
+      this.getTicketStats(range),
+      this.getOrderStats(range),
+      this.getParkStats(),
+      this.getPriceStats(),
+      this.getParksTodayBreakdown(),
+      this.getUsersCarBrands(),
+      this.getUsersByCarClass(),
+    ]);
 
     return {
       users: userStats,
@@ -39,7 +51,66 @@ export class OverallStatsService {
       orders: orderStats,
       parks: parkStats,
       prices: priceStats,
+      parksTodayBreakdown,
+      usersCarBrands,
+      usersByCarClass,
     };
+  }
+
+  async getParksTodayBreakdown() {
+    const [result] = await this.db
+      .select({
+        total: sql<number>`count(*)`,
+        draft: sql<number>`count(*) filter (where ${taxiParks.status} = 'DRAFT')`,
+        pendingReview: sql<number>`count(*) filter (where ${taxiParks.status} = 'PENDING_REVIEW')`,
+        active: sql<number>`count(*) filter (where ${taxiParks.status} = 'ACTIVE')`,
+      })
+      .from(taxiParks)
+      .where(sql`${taxiParks.createdAt} >= current_date`);
+
+    return {
+      total: Number(result?.total ?? 0),
+      draft: Number(result?.draft ?? 0),
+      pendingReview: Number(result?.pendingReview ?? 0),
+      active: Number(result?.active ?? 0),
+    };
+  }
+
+  async getUsersCarBrands() {
+    const rows = await this.db
+      .select({
+        brandId: users.carBrandId,
+        brandName: carBrands.name,
+        count: sql<number>`count(*)`,
+      })
+      .from(users)
+      .leftJoin(carBrands, eq(users.carBrandId, carBrands.id))
+      .where(sql`${users.carBrandId} IS NOT NULL`)
+      .groupBy(users.carBrandId, carBrands.name)
+      .orderBy(sql`count(*) desc`);
+
+    return rows.map((r) => ({
+      brandId: r.brandId,
+      brandName: r.brandName ?? "—",
+      count: Number(r.count),
+    }));
+  }
+
+  async getUsersByCarClass() {
+    const rows = await this.db
+      .select({
+        carClass: users.carClass,
+        count: sql<number>`count(*)`,
+      })
+      .from(users)
+      .where(sql`${users.carClass} IS NOT NULL`)
+      .groupBy(users.carClass)
+      .orderBy(sql`count(*) desc`);
+
+    return rows.map((r) => ({
+      carClass: r.carClass,
+      count: Number(r.count),
+    }));
   }
 
   private async getUserStats(range: DateRange) {

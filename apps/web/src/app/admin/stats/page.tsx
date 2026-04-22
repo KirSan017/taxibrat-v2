@@ -316,6 +316,10 @@ export default function AdminStatsPage() {
               <h2 className="text-sm font-medium text-[#303030] mb-4">Общая статистика</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {Object.entries(overall).flatMap(([key, value]) => {
+                  // Специальные секции рендерятся отдельно ниже
+                  if (["parksTodayBreakdown", "usersCarBrands", "usersByCarClass"].includes(key)) {
+                    return [];
+                  }
                   const label = OVERALL_LABELS[key] ?? key;
 
                   // ARRAY (like tickets by topic, prices by class)
@@ -395,6 +399,78 @@ export default function AdminStatsPage() {
                   ];
                 })}
               </div>
+
+              {/* Таксопарков проверено сегодня */}
+              {overall.parksTodayBreakdown ? (() => {
+                const b = overall.parksTodayBreakdown as {
+                  total: number; draft: number; pendingReview: number; active: number;
+                };
+                return (
+                  <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mt-4">
+                    <h3 className="text-sm font-medium text-[#303030] mb-4">
+                      Таксопарков проверено сегодня
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="bg-[#F3F1E7] rounded-lg p-3">
+                        <p className="text-xs text-[#A1A1A1] mb-1">Всего за сегодня</p>
+                        <p className="text-xl font-medium text-[#303030]">{b.total}</p>
+                      </div>
+                      <div className="bg-[#F3F1E7] rounded-lg p-3">
+                        <p className="text-xs text-[#A1A1A1] mb-1">На проверке менеджера</p>
+                        <p className="text-xl font-medium text-[#303030]">{b.draft}</p>
+                      </div>
+                      <div className="bg-[#F3F1E7] rounded-lg p-3">
+                        <p className="text-xs text-[#A1A1A1] mb-1">На проверке СМ</p>
+                        <p className="text-xl font-medium text-[#303030]">{b.pendingReview}</p>
+                      </div>
+                      <div className="bg-[#F3F1E7] rounded-lg p-3">
+                        <p className="text-xs text-[#A1A1A1] mb-1">Активных (одобрено)</p>
+                        <p className="text-xl font-medium text-[#303030]">{b.active}</p>
+                      </div>
+                    </div>
+                  </section>
+                );
+              })() : null}
+
+              {/* Марки авто пользователей */}
+              {Array.isArray(overall.usersCarBrands) && (overall.usersCarBrands as any[]).length > 0 && (
+                <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mt-4">
+                  <h3 className="text-sm font-medium text-[#303030] mb-4">
+                    Марки авто пользователей
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {(overall.usersCarBrands as any[]).slice(0, 10).map((b, idx) => (
+                      <div key={idx} className="bg-[#F3F1E7] rounded-lg p-3">
+                        <p className="text-xs text-[#A1A1A1] mb-1">{b.brandName}</p>
+                        <p className="text-base font-medium text-[#303030]">
+                          {Number(b.count).toLocaleString("ru-RU")}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Пользователи по классу авто */}
+              {Array.isArray(overall.usersByCarClass) && (overall.usersByCarClass as any[]).length > 0 && (
+                <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mt-4">
+                  <h3 className="text-sm font-medium text-[#303030] mb-4">
+                    Пользователи по классу авто
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {(overall.usersByCarClass as any[]).map((c, idx) => (
+                      <div key={idx} className="bg-[#F3F1E7] rounded-lg p-3">
+                        <p className="text-xs text-[#A1A1A1] mb-1">
+                          {DRIVER_CLASS_LABELS[c.carClass] ?? c.carClass ?? "—"}
+                        </p>
+                        <p className="text-xl font-medium text-[#303030]">
+                          {Number(c.count).toLocaleString("ru-RU")}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </section>
           )}
 

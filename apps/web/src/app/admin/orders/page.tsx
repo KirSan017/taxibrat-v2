@@ -35,7 +35,7 @@ interface FeatureStatus {
 const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
   PENDING: { label: "Назначен", variant: "yellow" },
   ORDERED: { label: "Заказан", variant: "green" },
-  BANNED: { label: "Бан", variant: "red" },
+  BANNED: { label: "Упс, бан", variant: "red" },
   CANCEL_REQUESTED: { label: "Запрос отмены", variant: "yellow" },
   CANCELLED: { label: "Отменён", variant: "gray" },
   EXPIRED: { label: "Истёк", variant: "gray" },
@@ -230,7 +230,7 @@ export default function AdminOrdersPage() {
                       className="border-[#FA6868] text-[#FA6868]"
                       onClick={() => handleAction(o.id, "banned")}
                     >
-                      Бан
+                      Упс, бан
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => handleAction(o.id, "five-min")}>
                       +5 мин

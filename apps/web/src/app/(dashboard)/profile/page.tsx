@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { CameraCapture } from "@/components/ui/camera-capture";
 import { useAuth } from "@/lib/use-auth";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
@@ -44,13 +45,6 @@ interface ProfileForm {
 }
 
 type DocumentType = "licenseFront" | "licenseBack" | "faceWithLicense" | "stsFront" | "stsBack";
-const DOCUMENT_COLUMN: Record<DocumentType, string> = {
-  licenseFront: "licenseFrontUrl",
-  licenseBack: "licenseBackUrl",
-  faceWithLicense: "faceWithLicenseUrl",
-  stsFront: "stsFrontUrl",
-  stsBack: "stsBackUrl",
-};
 
 const EMPTY_FORM: ProfileForm = {
   lastName: "",
@@ -88,47 +82,69 @@ export default function ProfilePage() {
   });
   const [uploadingDoc, setUploadingDoc] = useState<DocumentType | null>(null);
   const [fieldError, setFieldError] = useState<Record<string, string>>({});
+  const [cameraTarget, setCameraTarget] = useState<DocumentType | "photo" | null>(null);
 
   const isFirstTime = user?.status === "PHONE_VERIFIED";
 
-  const handleDocumentChange = async (
-    documentType: DocumentType,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 4 * 1024 * 1024) {
+  const uploadDocumentBase64 = async (documentType: DocumentType, dataUrl: string) => {
+    // dataUrl is ~1.33x the raw bytes. 4MB raw ≈ ~5.3MB base64.
+    if (dataUrl.length > 6 * 1024 * 1024) {
       setToast({ type: "error", message: "Файл не более 4 МБ" });
       setTimeout(() => setToast(null), 3000);
       return;
     }
     const token = getAccessToken();
     if (!token) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = reader.result as string;
-      setDocs((prev) => ({ ...prev, [documentType]: dataUrl }));
-      setUploadingDoc(documentType);
-      try {
-        await api("/users/me/document", {
-          method: "POST",
-          token,
-          body: { documentType, base64: dataUrl },
-        });
-        setToast({ type: "success", message: "Документ загружен" });
-        setTimeout(() => setToast(null), 2500);
-      } catch (err: unknown) {
-        setToast({
-          type: "error",
-          message: err instanceof Error ? err.message : "Не удалось загрузить документ",
-        });
-        setTimeout(() => setToast(null), 3000);
-        setDocs((prev) => ({ ...prev, [documentType]: null }));
-      } finally {
-        setUploadingDoc(null);
-      }
-    };
-    reader.readAsDataURL(file);
+    setDocs((prev) => ({ ...prev, [documentType]: dataUrl }));
+    setUploadingDoc(documentType);
+    try {
+      await api("/users/me/document", {
+        method: "POST",
+        token,
+        body: { documentType, base64: dataUrl },
+      });
+      setToast({ type: "success", message: "Документ загружен" });
+      setTimeout(() => setToast(null), 2500);
+    } catch (err: unknown) {
+      setToast({
+        type: "error",
+        message: err instanceof Error ? err.message : "Не удалось загрузить документ",
+      });
+      setTimeout(() => setToast(null), 3000);
+      setDocs((prev) => ({ ...prev, [documentType]: null }));
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const uploadPhotoBase64 = async (dataUrl: string) => {
+    if (dataUrl.length > 3 * 1024 * 1024) {
+      setToast({ type: "error", message: "Фото не более 2 МБ" });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) return;
+    setPhotoPreview(dataUrl);
+    setUploadingPhoto(true);
+    try {
+      await api("/users/me/photo", {
+        method: "POST",
+        token,
+        body: { photoBase64: dataUrl },
+      });
+      setToast({ type: "success", message: "Фото обновлено" });
+      setTimeout(() => setToast(null), 2500);
+    } catch (err: unknown) {
+      setToast({
+        type: "error",
+        message: err instanceof Error ? err.message : "Не удалось загрузить фото",
+      });
+      setTimeout(() => setToast(null), 3000);
+      setPhotoPreview(null);
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   // Phone change flow
@@ -139,44 +155,6 @@ export default function ProfilePage() {
   const [phoneMethod, setPhoneMethod] = useState<"SMS" | "TELEGRAM">("SMS");
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [phoneError, setPhoneError] = useState("");
-
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setToast({ type: "error", message: "Фото не более 2 МБ" });
-      setTimeout(() => setToast(null), 3000);
-      return;
-    }
-    const token = getAccessToken();
-    if (!token) return;
-
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = reader.result as string;
-      setPhotoPreview(dataUrl);
-      setUploadingPhoto(true);
-      try {
-        await api("/users/me/photo", {
-          method: "POST",
-          token,
-          body: { photoBase64: dataUrl },
-        });
-        setToast({ type: "success", message: "Фото обновлено" });
-        setTimeout(() => setToast(null), 2500);
-      } catch (err: unknown) {
-        setToast({
-          type: "error",
-          message: err instanceof Error ? err.message : "Не удалось загрузить фото",
-        });
-        setTimeout(() => setToast(null), 3000);
-        setPhotoPreview(null);
-      } finally {
-        setUploadingPhoto(false);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handlePhoneChangeClick = () => {
     setNewPhone("");
@@ -466,6 +444,23 @@ export default function ProfilePage() {
         </div>
       )}
 
+      <CameraCapture
+        open={cameraTarget !== null}
+        onClose={() => setCameraTarget(null)}
+        onCapture={(dataUrl) => {
+          if (cameraTarget === "photo") {
+            void uploadPhotoBase64(dataUrl);
+          } else if (cameraTarget) {
+            void uploadDocumentBase64(cameraTarget as DocumentType, dataUrl);
+          }
+        }}
+        title={
+          cameraTarget === "photo"
+            ? "Сделайте фото профиля"
+            : "Сфотографируйте документ"
+        }
+      />
+
       <SuccessModal
         open={successOpen}
         onClose={() => {
@@ -513,17 +508,14 @@ export default function ProfilePage() {
               </svg>
             )}
           </div>
-          <label className="text-sm text-[#A1A1A1] cursor-pointer hover:text-[#303030] transition-colors">
-            {uploadingPhoto ? "Загрузка..." : "Ваше фото"}
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={handlePhotoChange}
-              disabled={uploadingPhoto}
-            />
-          </label>
+          <button
+            type="button"
+            onClick={() => setCameraTarget("photo")}
+            disabled={uploadingPhoto}
+            className="text-sm text-[#A1A1A1] hover:text-[#303030] transition-colors underline disabled:opacity-50"
+          >
+            {uploadingPhoto ? "Загрузка..." : "Сделать фото"}
+          </button>
         </div>
 
         {/* Name fields row */}
@@ -619,8 +611,10 @@ export default function ProfilePage() {
             ]).map((d) => {
               const url = docs[d.type];
               return (
-                <label
+                <button
                   key={d.type}
+                  type="button"
+                  onClick={() => setCameraTarget(d.type)}
                   className="relative border border-dashed border-[#E5E5E5] rounded-xl overflow-hidden flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A1A1A1] transition-colors min-h-[110px]"
                 >
                   {url ? (
@@ -629,10 +623,11 @@ export default function ProfilePage() {
                   ) : (
                     <>
                       <svg className="w-6 h-6 text-[#A1A1A1] mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
                       </svg>
                       <span className="text-[10px] text-[#A1A1A1] whitespace-pre-line leading-tight px-2">{d.label}</span>
+                      <span className="text-[10px] text-[#303030] mt-2 underline">Сделать фото</span>
                     </>
                   )}
                   {uploadingDoc === d.type && (
@@ -642,17 +637,10 @@ export default function ProfilePage() {
                   )}
                   {url && (
                     <div className="absolute bottom-1 right-1 bg-white/90 text-[9px] text-[#303030] rounded px-1.5 py-0.5">
-                      Заменить
+                      Переснять
                     </div>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={(e) => handleDocumentChange(d.type, e)}
-                  />
-                </label>
+                </button>
               );
             })}
           </div>
@@ -666,8 +654,10 @@ export default function ProfilePage() {
           ]).map((d) => {
             const url = docs[d.type];
             return (
-              <label
+              <button
                 key={d.type}
+                type="button"
+                onClick={() => setCameraTarget(d.type)}
                 className="relative border border-dashed border-[#E5E5E5] rounded-xl overflow-hidden flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#A1A1A1] transition-colors min-h-[90px]"
               >
                 {url ? (
@@ -676,10 +666,11 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     <svg className="w-6 h-6 text-[#A1A1A1] mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                      <circle cx="12" cy="13" r="4" />
                     </svg>
                     <span className="text-[10px] text-[#A1A1A1] whitespace-pre-line leading-tight px-2">{d.label}</span>
+                    <span className="text-[10px] text-[#303030] mt-2 underline">Сделать фото</span>
                   </>
                 )}
                 {uploadingDoc === d.type && (
@@ -689,17 +680,10 @@ export default function ProfilePage() {
                 )}
                 {url && (
                   <div className="absolute bottom-1 right-1 bg-white/90 text-[9px] text-[#303030] rounded px-1.5 py-0.5">
-                    Заменить
+                    Переснять
                   </div>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => handleDocumentChange(d.type, e)}
-                />
-              </label>
+              </button>
             );
           })}
         </div>

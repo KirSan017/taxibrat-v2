@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import { TICKET_TOPIC_LABELS } from "@/lib/labels";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -21,12 +22,50 @@ interface ManagerDetail {
   createdAt: string;
 }
 
+interface TicketByTopic {
+  topic: string;
+  total: number;
+  completed: number;
+  rejected?: number;
+}
+
+interface FirstResponseTime {
+  under30s: number;
+  s30To1m: number;
+  over1m: number;
+  avgSeconds?: number;
+}
+
+interface OrderResponseBuckets {
+  total?: number;
+  under1m: number;
+  m1To2: number;
+  m2To3: number;
+  over3m: number;
+  avgSeconds?: number;
+}
+
 interface ManagerStatsDetail {
-  ticketsTotal?: number;
-  ticketsCompleted?: number;
-  ticketsInProgress?: number;
-  pointsAwarded?: number;
-  [key: string]: unknown;
+  ticketsByTopic?: TicketByTopic[];
+  firstResponseTime?: FirstResponseTime;
+  orderResponseBuckets?: OrderResponseBuckets;
+  smRejections?: number;
+}
+
+function BarRow({ label, value, max }: { label: string; value: number; max: number }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <div className="w-24 text-[#A1A1A1] text-xs">{label}</div>
+      <div className="flex-1 h-6 bg-[#F4F4F4] rounded-md overflow-hidden relative">
+        <div
+          className="absolute inset-y-0 left-0 bg-[#F8D62E] transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="w-10 text-right text-[#303030] font-medium">{value}</div>
+    </div>
+  );
 }
 
 /* ── page ─────────────────────────────────────────────── */
@@ -113,17 +152,101 @@ export default function AdminManagerDetailPage() {
       </section>
 
       {stats && (
-        <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
-          <h2 className="text-sm font-medium text-[#303030] mb-4">Статистика</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Object.entries(stats).map(([k, v]) => (
-              <div key={k} className="border border-[#E5E5E5] rounded-xl p-3">
-                <p className="text-xs text-[#A1A1A1]">{k}</p>
-                <p className="text-lg font-medium text-[#303030]">{String(v ?? "—")}</p>
+        <div className="space-y-4">
+          {/* Тикеты по темам */}
+          {stats.ticketsByTopic && stats.ticketsByTopic.length > 0 && (
+            <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
+              <h2 className="text-sm font-medium text-[#303030] mb-4">Тикеты по темам</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#E5E5E5]">
+                      <th className="text-left text-xs text-[#A1A1A1] font-normal py-2">Тема</th>
+                      <th className="text-right text-xs text-[#A1A1A1] font-normal py-2">Всего</th>
+                      <th className="text-right text-xs text-[#A1A1A1] font-normal py-2">Завершено</th>
+                      <th className="text-right text-xs text-[#A1A1A1] font-normal py-2">Отклонено СМ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.ticketsByTopic.map((row) => (
+                      <tr key={row.topic} className="border-b border-[#F4F4F4] last:border-0">
+                        <td className="py-2 text-[#303030]">
+                          {TICKET_TOPIC_LABELS[row.topic] || row.topic}
+                        </td>
+                        <td className="py-2 text-right text-[#303030]">{row.total}</td>
+                        <td className="py-2 text-right text-[#303030]">{row.completed}</td>
+                        <td className="py-2 text-right text-[#303030]">{row.rejected ?? 0}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
+          )}
+
+          {/* Скорость ответа в чатах */}
+          {stats.firstResponseTime && (
+            <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
+              <h2 className="text-sm font-medium text-[#303030] mb-4">
+                Скорость ответа в чатах
+              </h2>
+              {(() => {
+                const fr = stats.firstResponseTime;
+                const max = Math.max(fr.under30s, fr.s30To1m, fr.over1m, 1);
+                return (
+                  <div className="space-y-2">
+                    <BarRow label="до 30 сек" value={fr.under30s} max={max} />
+                    <BarRow label="30 сек — 1 мин" value={fr.s30To1m} max={max} />
+                    <BarRow label="более 1 мин" value={fr.over1m} max={max} />
+                    {typeof fr.avgSeconds === "number" && fr.avgSeconds > 0 && (
+                      <p className="text-xs text-[#A1A1A1] mt-2">
+                        Среднее: {fr.avgSeconds} сек
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+            </section>
+          )}
+
+          {/* Время выполнения заказов По делам */}
+          {stats.orderResponseBuckets && (
+            <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
+              <h2 className="text-sm font-medium text-[#303030] mb-4">
+                Время выполнения заказов «По делам»
+              </h2>
+              {(() => {
+                const ob = stats.orderResponseBuckets;
+                const max = Math.max(ob.under1m, ob.m1To2, ob.m2To3, ob.over3m, 1);
+                return (
+                  <div className="space-y-2">
+                    <BarRow label="до 1 мин" value={ob.under1m} max={max} />
+                    <BarRow label="1 — 2 мин" value={ob.m1To2} max={max} />
+                    <BarRow label="2 — 3 мин" value={ob.m2To3} max={max} />
+                    <BarRow label="более 3 мин" value={ob.over3m} max={max} />
+                    {typeof ob.avgSeconds === "number" && ob.avgSeconds > 0 && (
+                      <p className="text-xs text-[#A1A1A1] mt-2">
+                        Среднее: {ob.avgSeconds} сек
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+            </section>
+          )}
+
+          {/* Количество доработок от СМ */}
+          {typeof stats.smRejections === "number" && (
+            <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
+              <h2 className="text-sm font-medium text-[#303030] mb-4">
+                Количество доработок от СМ
+              </h2>
+              <p className="text-5xl font-medium text-[#303030]">
+                {stats.smRejections}
+              </p>
+            </section>
+          )}
+        </div>
       )}
     </div>
   );
