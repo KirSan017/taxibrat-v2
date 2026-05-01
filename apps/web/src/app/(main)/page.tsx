@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/use-auth";
@@ -365,8 +366,8 @@ export default function HomePage() {
                     href={`/parks/${park.id}`}
                     className="flex-none w-[335px] h-[362px] snap-start bg-white border border-[#F7F7F7] rounded-[20px] hover:shadow-md transition-shadow relative overflow-hidden shadow-[0_20px_30px_rgba(0,0,0,0.04)]"
                   >
-                    {/* Top row: stars + rating */}
-                    <div className="flex items-center justify-between mb-[38px]">
+                    {/* Card layout */}
+                    <div className="absolute left-[30px] top-[30px] flex h-[28px] w-[192px] items-center justify-between">
                       <div className="flex items-center gap-[2px]">
                         {[...Array(5)].map((_, i) => (
                           <svg
@@ -382,29 +383,52 @@ export default function HomePage() {
                       <span className="text-[20px] font-medium text-[#303030] leading-[26px]">{rating.toFixed(2)}</span>
                     </div>
                     {/* Name + class */}
-                    <div className="mb-[16px] flex items-center gap-[10px]">
-                      <h3 className="text-[20px] font-medium text-[#303030] leading-[26px] truncate max-w-[180px]">{displayName}</h3>
-                      <Badge variant={isBusinessClass ? "yellow" : "gray"}>
+                    <div className="absolute left-[30px] top-[68px] flex h-[34px] items-center gap-[10px]">
+                      <Image
+                        src="/figma/logo-icon.png"
+                        alt=""
+                        width={34}
+                        height={34}
+                        className="h-[34px] w-[34px] rounded-full"
+                      />
+                      <h3 className="max-w-[80px] truncate text-[20px] font-medium leading-[26px] text-[#303030]">{displayName}</h3>
+                      <Badge
+                        variant={isBusinessClass ? "yellow" : "gray"}
+                        className="h-[11px] min-w-[54px] rounded-[10px] px-[5px] py-0 text-[8px] font-normal leading-[10px]"
+                      >
                         {classLabel(park.driverClass)}
                       </Badge>
                     </div>
                     {/* Details list */}
-                    <div className="space-y-[10px] text-[13px] text-[#A1A1A1]">
-                      <div className="flex justify-between">
-                        <span>Комиссия таксопарка</span>
-                        <span className="text-[#A1A1A1]">{commission}%</span>
+                    <div className="absolute left-[30px] top-[122px] w-[275px] text-[13px] leading-[17px] text-[#A2A2A2]">
+                      <div className="flex h-[29px] items-start justify-between border-b border-[#F7F7F7]">
+                        <span className="max-w-[180px] truncate text-[#3BB560]">
+                          {rating.toFixed(2)} {classLabel(park.driverClass)}
+                        </span>
+                        <span className="text-right">{park.deposit.toLocaleString("ru-RU")} руб</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex h-[39px] items-center justify-between border-b border-[#F7F7F7]">
+                        <span>Комиссия таксопарка</span>
+                        <span>{commission}%</span>
+                      </div>
+                      <div className="flex h-[27px] items-end justify-between">
                         <span>Залог</span>
-                        <span className="text-[#A1A1A1]">
+                        <span className="text-right">
                           {park.deposit.toLocaleString("ru-RU")} руб
                         </span>
                       </div>
                     </div>
-                    {/* Button bottom */}
+                    <div className="absolute left-[30px] top-[235px] h-[44px] w-[115px] rounded-[10px] bg-[#FAFAFA] px-[15px] py-[7px]">
+                      <div className="text-[10px] leading-[13px] text-[#D1D0D0]">Обновлено</div>
+                      <div className="text-[13px] leading-[17px] text-[#A2A2A2]">26.02.25</div>
+                    </div>
+                    <div className="absolute left-[150px] top-[235px] h-[44px] w-[155px] rounded-[10px] bg-[#FAFAFA] px-[15px] py-[7px]">
+                      <div className="truncate text-[10px] leading-[13px] text-[#D1D0D0]">Спасибо за обновление</div>
+                      <div className="truncate text-[13px] leading-[17px] text-[#A2A2A2]">Таксибрат</div>
+                    </div>
                     <button
                       type="button"
-                      className="absolute bottom-[30px] left-[30px] right-[30px] h-[42px] rounded-[10px] bg-[#303030] text-white text-[14px] font-medium hover:bg-[#303030]/90 transition-colors"
+                      className="absolute left-[30px] top-[283.61px] h-[42px] w-[275px] rounded-[10px] bg-[#303030] text-[14px] font-medium leading-[18px] tracking-[-0.01em] text-white hover:bg-[#303030]/90 transition-colors"
                     >
                       Подробнее
                     </button>
