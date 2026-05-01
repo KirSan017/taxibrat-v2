@@ -1,0 +1,298 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "Таксибрат" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: Таксибрат
+      - navigation [ref=e6]:
+        - link "Главная" [ref=e7] [cursor=pointer]:
+          - /url: /
+        - link "Таксопарки" [ref=e8] [cursor=pointer]:
+          - /url: /parks
+        - link "По делам без 9%" [ref=e9] [cursor=pointer]:
+          - /url: /no9
+        - button "Подключение к такси" [ref=e10]
+        - link "Выкуп" [ref=e11] [cursor=pointer]:
+          - /url: /buyout
+        - button "Проверка по базе" [ref=e12]
+      - generic [ref=e14]:
+        - button "Регистрация" [ref=e134]:
+          - img [ref=e135]
+          - text: Регистрация
+        - button "Вход" [ref=e138]:
+          - img [ref=e139]
+          - text: Вход
+  - main [ref=e15]:
+    - generic [ref=e17]:
+      - generic:
+        - generic [ref=e19]:
+          - paragraph [ref=e20]: Сервис для каждого таксиста
+          - heading "Выбери лучший таксопарк у себя на районе за 2 минуты" [level=1] [ref=e21]
+          - paragraph [ref=e22]: Мы ваш верный спутник помощи работы в такси, проходите проверки на баны, влияйте на рейтинг таксопарков. А так же зарабатывайте «баллы дружбы» и тратьте их на платные фишки нашего сервиса
+          - generic [ref=e23]:
+            - button "Зарегистрироваться" [ref=e24]
+            - generic [ref=e25]: всего 10 сек
+        - generic [ref=e27]:
+          - generic [ref=e28]: "616"
+          - generic [ref=e29]: пользователей уже с нами
+        - generic [ref=e30]: «Таксибрат дал заказ и я получил промокод на 6 часов без комиссии, крутая фишка, спасибо!»
+        - generic [ref=e31]: «Спасибо Таксибрату, что помог создать повышенной спрос»
+        - generic [ref=e32]: Таксопарк придрался к маленькой точке на бампере и снял 10 000 руб. Спасибо таксибрату, что помог!
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]: "15"
+          - paragraph [ref=e38]:
+            - text: Таксопарков проверено
+            - text: в Москве и МО
+        - generic [ref=e39]:
+          - link "Подобрать лучший" [ref=e40] [cursor=pointer]:
+            - /url: /parks
+          - button "Следующий" [ref=e41]:
+            - img [ref=e42]
+      - generic [ref=e44]:
+        - link "2.55 Бизнес-Класс Комфорт+ Комиссия таксопарка 3.9% Залог 22 064 руб Подробнее" [ref=e142] [cursor=pointer]:
+          - /url: /parks/b63423c4-00fb-47a5-9f1e-673511b90092
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - img [ref=e145]
+              - img [ref=e147]
+              - img [ref=e149]
+              - img [ref=e151]
+              - img [ref=e153]
+            - generic [ref=e155]: "2.55"
+          - generic [ref=e156]:
+            - heading "Бизнес-Класс" [level=3] [ref=e157]
+            - generic [ref=e158]: Комфорт+
+          - generic [ref=e159]:
+            - generic [ref=e160]:
+              - generic [ref=e161]: Комиссия таксопарка
+              - generic [ref=e162]: 3.9%
+            - generic [ref=e163]:
+              - generic [ref=e164]: Залог
+              - generic [ref=e165]: 22 064 руб
+          - button "Подробнее" [ref=e166]
+        - link "2.52 Шоколад Комфорт Комиссия таксопарка 4.13% Залог 18 884 руб Подробнее" [ref=e167] [cursor=pointer]:
+          - /url: /parks/d95b9ff0-0a06-49ed-b5bb-f63b2a0d3065
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - img [ref=e170]
+              - img [ref=e172]
+              - img [ref=e174]
+              - img [ref=e176]
+              - img [ref=e178]
+            - generic [ref=e180]: "2.52"
+          - generic [ref=e181]:
+            - heading "Шоколад" [level=3] [ref=e182]
+            - generic [ref=e183]: Комфорт
+          - generic [ref=e184]:
+            - generic [ref=e185]:
+              - generic [ref=e186]: Комиссия таксопарка
+              - generic [ref=e187]: 4.13%
+            - generic [ref=e188]:
+              - generic [ref=e189]: Залог
+              - generic [ref=e190]: 18 884 руб
+          - button "Подробнее" [ref=e191]
+        - link "2.36 Стрела Эконом Комиссия таксопарка 5.34% Залог 29 907 руб Подробнее" [ref=e192] [cursor=pointer]:
+          - /url: /parks/b7b565d9-aa07-45e1-8979-66ebd9bc46d7
+          - generic [ref=e193]:
+            - generic [ref=e194]:
+              - img [ref=e195]
+              - img [ref=e197]
+              - img [ref=e199]
+              - img [ref=e201]
+              - img [ref=e203]
+            - generic [ref=e205]: "2.36"
+          - generic [ref=e206]:
+            - heading "Стрела" [level=3] [ref=e207]
+            - generic [ref=e208]: Эконом
+          - generic [ref=e209]:
+            - generic [ref=e210]:
+              - generic [ref=e211]: Комиссия таксопарка
+              - generic [ref=e212]: 5.34%
+            - generic [ref=e213]:
+              - generic [ref=e214]: Залог
+              - generic [ref=e215]: 29 907 руб
+          - button "Подробнее" [ref=e216]
+        - link "2.28 Метеор Эконом Комиссия таксопарка 3.23% Залог 12 685 руб Подробнее" [ref=e217] [cursor=pointer]:
+          - /url: /parks/cc0caf87-9a14-452a-93ef-3cf1fea8eb83
+          - generic [ref=e218]:
+            - generic [ref=e219]:
+              - img [ref=e220]
+              - img [ref=e222]
+              - img [ref=e224]
+              - img [ref=e226]
+              - img [ref=e228]
+            - generic [ref=e230]: "2.28"
+          - generic [ref=e231]:
+            - heading "Метеор" [level=3] [ref=e232]
+            - generic [ref=e233]: Эконом
+          - generic [ref=e234]:
+            - generic [ref=e235]:
+              - generic [ref=e236]: Комиссия таксопарка
+              - generic [ref=e237]: 3.23%
+            - generic [ref=e238]:
+              - generic [ref=e239]: Залог
+              - generic [ref=e240]: 12 685 руб
+          - button "Подробнее" [ref=e241]
+        - link "2.02 Премиум Такси Эконом Комиссия таксопарка 7.69% Залог 16 508 руб Подробнее" [ref=e242] [cursor=pointer]:
+          - /url: /parks/a4b2d6dc-d184-4cfa-b7e7-d1cc438dc811
+          - generic [ref=e243]:
+            - generic [ref=e244]:
+              - img [ref=e245]
+              - img [ref=e247]
+              - img [ref=e249]
+              - img [ref=e251]
+              - img [ref=e253]
+            - generic [ref=e255]: "2.02"
+          - generic [ref=e256]:
+            - heading "Премиум Такси" [level=3] [ref=e257]
+            - generic [ref=e258]: Эконом
+          - generic [ref=e259]:
+            - generic [ref=e260]:
+              - generic [ref=e261]: Комиссия таксопарка
+              - generic [ref=e262]: 7.69%
+            - generic [ref=e263]:
+              - generic [ref=e264]: Залог
+              - generic [ref=e265]: 16 508 руб
+          - button "Подробнее" [ref=e266]
+        - link "2.24 Столица Комфорт+ Комиссия таксопарка 6.63% Залог 7 267 руб Подробнее" [ref=e267] [cursor=pointer]:
+          - /url: /parks/5b97f370-a6e2-443f-b1f1-81f66f0d74ac
+          - generic [ref=e268]:
+            - generic [ref=e269]:
+              - img [ref=e270]
+              - img [ref=e272]
+              - img [ref=e274]
+              - img [ref=e276]
+              - img [ref=e278]
+            - generic [ref=e280]: "2.24"
+          - generic [ref=e281]:
+            - heading "Столица" [level=3] [ref=e282]
+            - generic [ref=e283]: Комфорт+
+          - generic [ref=e284]:
+            - generic [ref=e285]:
+              - generic [ref=e286]: Комиссия таксопарка
+              - generic [ref=e287]: 6.63%
+            - generic [ref=e288]:
+              - generic [ref=e289]: Залог
+              - generic [ref=e290]: 7 267 руб
+          - button "Подробнее" [ref=e291]
+        - link "2.34 Гермес Комфорт Комиссия таксопарка 5.7% Залог 7 831 руб Подробнее" [ref=e292] [cursor=pointer]:
+          - /url: /parks/b22deda4-0ddf-49ac-8aa1-78cdde6d3172
+          - generic [ref=e293]:
+            - generic [ref=e294]:
+              - img [ref=e295]
+              - img [ref=e297]
+              - img [ref=e299]
+              - img [ref=e301]
+              - img [ref=e303]
+            - generic [ref=e305]: "2.34"
+          - generic [ref=e306]:
+            - heading "Гермес" [level=3] [ref=e307]
+            - generic [ref=e308]: Комфорт
+          - generic [ref=e309]:
+            - generic [ref=e310]:
+              - generic [ref=e311]: Комиссия таксопарка
+              - generic [ref=e312]: 5.7%
+            - generic [ref=e313]:
+              - generic [ref=e314]: Залог
+              - generic [ref=e315]: 7 831 руб
+          - button "Подробнее" [ref=e316]
+        - link "2.22 Драйв Комфорт Комиссия таксопарка 4.69% Залог 21 374 руб Подробнее" [ref=e317] [cursor=pointer]:
+          - /url: /parks/14e4c274-66e0-4e65-9527-9a4f64101e78
+          - generic [ref=e318]:
+            - generic [ref=e319]:
+              - img [ref=e320]
+              - img [ref=e322]
+              - img [ref=e324]
+              - img [ref=e326]
+              - img [ref=e328]
+            - generic [ref=e330]: "2.22"
+          - generic [ref=e331]:
+            - heading "Драйв" [level=3] [ref=e332]
+            - generic [ref=e333]: Комфорт
+          - generic [ref=e334]:
+            - generic [ref=e335]:
+              - generic [ref=e336]: Комиссия таксопарка
+              - generic [ref=e337]: 4.69%
+            - generic [ref=e338]:
+              - generic [ref=e339]: Залог
+              - generic [ref=e340]: 21 374 руб
+          - button "Подробнее" [ref=e341]
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - heading "Получите заказ «По делам» в любом месте за 2 мин, без 9%" [level=3] [ref=e56]
+          - list [ref=e57]:
+            - listitem [ref=e58]: 1 — Укажите точки А и Б, класс такси
+            - listitem [ref=e59]: 2 — Вызовем ваше такси за 2 мин
+            - listitem [ref=e60]: 3 — Выполните заказ или повысьте спрос
+          - paragraph [ref=e62]: Выполнив заказ — получите 5 звезд и промокод на 6 часов без комиссии!
+        - link "Вызвать такси" [ref=e64] [cursor=pointer]:
+          - /url: /no9
+          - button "Вызвать такси" [ref=e65]
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - heading "Выкуп автомобилей" [level=3] [ref=e68]:
+            - text: Выкуп
+            - text: автомобилей
+          - list [ref=e69]:
+            - listitem [ref=e70]: 1 — Выберите авто по параметрам
+            - listitem [ref=e71]: 2 — Найдите лучшую цену и условия в городе
+            - listitem [ref=e72]: 3 — Оставьте заявку
+            - listitem [ref=e73]: 4 — Наш менеджер сопроводит вас до полного выкупа авто
+        - link "Посмотреть авто" [ref=e75] [cursor=pointer]:
+          - /url: /buyout
+          - button "Посмотреть авто" [ref=e76]
+      - generic [ref=e77]:
+        - generic [ref=e78]:
+          - heading "Проверка по базе таксопарков" [level=3] [ref=e79]:
+            - text: Проверка по базе
+            - text: таксопарков
+          - list [ref=e80]:
+            - listitem [ref=e81]: 1 — Отправьте запрос на проверку (10 секунд)
+            - listitem [ref=e82]: 2 — Дадим ответ в течении 1 часа
+            - listitem [ref=e83]: 3 — Проконсультируем в непростых ситуациях
+        - button "Проверить по базе" [ref=e85]
+      - generic [ref=e86]:
+        - generic [ref=e87]:
+          - heading "Подключим вас к такси" [level=3] [ref=e88]:
+            - text: Подключим
+            - text: вас к такси
+          - generic [ref=e89]:
+            - generic [ref=e90]: Комиссия — 1,5%
+            - generic [ref=e91]: Вывод — моментальный
+        - generic [ref=e92]:
+          - button "Подключиться" [ref=e93]
+          - generic [ref=e94]: за 2 мин
+    - generic [ref=e97]:
+      - generic [ref=e98]:
+        - heading "Зарегистрируйтесь сейчас и получите 100 баллов дружбына заказ «По делам, без 9%» и проверку в базе таксопарков" [level=2] [ref=e99]
+        - paragraph [ref=e100]: Со временем количество баллов для новых участников будет уменьшаться.
+        - generic [ref=e101]:
+          - button "Зарегистрироваться" [ref=e102]
+          - button "Войти" [ref=e103]
+      - generic [ref=e104]:
+        - img [ref=e106]
+        - paragraph [ref=e108]: Как получить «баллы дружбы»?
+        - list [ref=e109]:
+          - listitem [ref=e110]: Зарегистрируйтесь — 100 б
+          - listitem [ref=e111]: Приведите друга — 200 б вам и 100 б другу
+          - listitem [ref=e112]: Отправили на проверку таксопарк — 200 баллов
+          - listitem [ref=e113]: Подключились к такси — 150 баллов
+          - listitem [ref=e114]: Взяли такси в аренду себе или другу — 300 баллов
+          - listitem [ref=e115]: Взяли авто в выкуп себе или другу — 1000 баллов
+  - contentinfo [ref=e116]:
+    - generic [ref=e118]:
+      - navigation [ref=e119]:
+        - generic [ref=e120]: © 2025 Таксибрат - Сервис для водителей такси №1
+        - link "Техподдержка" [ref=e121] [cursor=pointer]:
+          - /url: /support
+        - link "Политика конфиденциальности" [ref=e122] [cursor=pointer]:
+          - /url: /privacy
+        - link "Сотрудничество" [ref=e123] [cursor=pointer]:
+          - /url: /cooperation
+      - generic [ref=e124]: Разработка danilsmg.ru
+  - button "Open Next.js Dev Tools" [ref=e130] [cursor=pointer]:
+    - img [ref=e131]
+  - alert [ref=e342]

@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 interface LogoProps {
   className?: string;
   href?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "home";
   variant?: "auto" | "light" | "dark";
 }
 
@@ -15,6 +15,7 @@ const SIZE_MAP = {
   sm: { icon: 36, text: "text-[18px]" },
   md: { icon: 44, text: "text-[22px] md:text-[24px]" },
   lg: { icon: 56, text: "text-[28px]" },
+  home: { icon: 46, text: "text-[19.6px]" },
 };
 
 export function Logo({
@@ -28,7 +29,7 @@ export function Logo({
 
   // Auto: detect dark header pages (home has dark hero)
   const isDarkHeader = variant === "dark" || (variant === "auto" && pathname === "/");
-  const textColor = isDarkHeader ? "text-white" : "text-[#1F1F1F]";
+  const textColor = isDarkHeader ? "text-[#F8D62E]" : "text-[#1F1F1F]";
 
   return (
     <Link href={href} className={`inline-flex items-center gap-[10px] ${className}`}>

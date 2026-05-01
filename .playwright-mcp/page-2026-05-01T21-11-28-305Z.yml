@@ -1,0 +1,135 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "Таксибрат" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: Таксибрат
+      - navigation [ref=e6]:
+        - link "Главная" [ref=e7] [cursor=pointer]:
+          - /url: /
+        - link "Таксопарки" [ref=e8] [cursor=pointer]:
+          - /url: /parks
+        - link "По делам без 9%" [ref=e9] [cursor=pointer]:
+          - /url: /no9
+        - button "Подключение к такси" [ref=e10]
+        - link "Выкуп" [ref=e11] [cursor=pointer]:
+          - /url: /buyout
+        - button "Проверка по базе" [ref=e12]
+      - generic [ref=e13]:
+        - button "Войти" [ref=e14]
+        - button "Регистрация" [ref=e15]
+  - main [ref=e16]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - paragraph [ref=e21]: Сервис для каждого таксиста
+        - heading "Выбери лучший таксопарк у себя на районе за 2 минуты" [level=1] [ref=e22]
+        - paragraph [ref=e23]: Мы ваш верный спутник помощи работы в такси, проходите проверки на баны, влияйте на рейтинг таксопарков. А так же зарабатывайте «баллы дружбы» и тратьте их на платные фишки нашего сервиса
+        - generic [ref=e24]:
+          - button "Зарегистрироваться" [ref=e25]
+          - generic [ref=e26]: всего 10 сек
+      - generic [ref=e28]:
+        - generic [ref=e29]: 143 125
+        - generic [ref=e30]: пользователей уже с нами
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]: "148"
+          - paragraph [ref=e36]:
+            - text: Таксопарков проверено
+            - text: в Москве и МО
+        - generic [ref=e37]:
+          - link "Подобрать лучший" [ref=e38] [cursor=pointer]:
+            - /url: /parks
+          - button "Следующий" [ref=e39]:
+            - img [ref=e40]
+      - generic [ref=e42]: Пока нет парков в каталоге
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - heading "Получите заказ «По делам» в любом месте за 2 мин, без 9%" [level=3] [ref=e48]
+          - list [ref=e49]:
+            - listitem [ref=e50]: 1 — Укажите точки А и Б, класс такси
+            - listitem [ref=e51]: 2 — Вызовем ваше такси за 2 мин
+            - listitem [ref=e52]: 3 — Выполните заказ или повысьте спрос
+          - paragraph [ref=e54]: Выполнив заказ — получите 5 звезд и промокод на 6 часов без комиссии!
+        - link "Вызвать такси" [ref=e56] [cursor=pointer]:
+          - /url: /no9
+          - button "Вызвать такси" [ref=e57]
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - heading "Выкуп автомобилей" [level=3] [ref=e60]:
+            - text: Выкуп
+            - text: автомобилей
+          - list [ref=e61]:
+            - listitem [ref=e62]: 1 — Выберите авто по параметрам
+            - listitem [ref=e63]: 2 — Найдите лучшую цену и условия в городе
+            - listitem [ref=e64]: 3 — Оставьте заявку
+            - listitem [ref=e65]: 4 — Наш менеджер сопроводит вас до полного выкупа авто
+        - link "Посмотреть авто" [ref=e67] [cursor=pointer]:
+          - /url: /buyout
+          - button "Посмотреть авто" [ref=e68]
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - heading "Проверка по базе таксопарков" [level=3] [ref=e71]:
+            - text: Проверка по базе
+            - text: таксопарков
+          - list [ref=e72]:
+            - listitem [ref=e73]: 1 — Отправьте запрос на проверку (10 секунд)
+            - listitem [ref=e74]: 2 — Дадим ответ в течении 1 часа
+            - listitem [ref=e75]: 3 — Проконсультируем в непростых ситуациях
+        - button "Проверить по базе" [ref=e77]
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - heading "Подключим вас к такси" [level=3] [ref=e80]:
+            - text: Подключим
+            - text: вас к такси
+          - generic [ref=e81]:
+            - generic [ref=e82]: Комиссия — 1,5%
+            - generic [ref=e83]: Вывод — моментальный
+        - generic [ref=e84]:
+          - button "Подключиться" [ref=e85]
+          - generic [ref=e86]: за 2 мин
+    - generic [ref=e89]:
+      - generic [ref=e90]:
+        - heading "Зарегистрируйтесь сейчас и получите 100 баллов дружбына заказ «По делам, без 9%» и проверку в базе таксопарков" [level=2] [ref=e91]
+        - paragraph [ref=e92]: Со временем количество баллов для новых участников будет уменьшаться.
+        - generic [ref=e93]:
+          - button "Зарегистрироваться" [ref=e94]
+          - button "Войти" [ref=e95]
+      - generic [ref=e96]:
+        - img [ref=e98]
+        - paragraph [ref=e100]: Как получить «баллы дружбы»?
+        - list [ref=e101]:
+          - listitem [ref=e102]: Зарегистрируйтесь — 100 б
+          - listitem [ref=e103]: Приведите друга — 200 б вам и 100 б другу
+          - listitem [ref=e104]: Отправили на проверку таксопарк — 200 баллов
+          - listitem [ref=e105]: Подключились к такси — 150 баллов
+          - listitem [ref=e106]: Взяли такси в аренду себе или другу — 300 баллов
+          - listitem [ref=e107]: Взяли авто в выкуп себе или другу — 1000 баллов
+  - contentinfo [ref=e108]:
+    - generic [ref=e109]:
+      - generic [ref=e110]:
+        - generic [ref=e111]:
+          - link "Таксибрат" [ref=e112] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e113]: Таксибрат
+          - paragraph [ref=e114]: Честный рейтинг таксопарков Москвы и МО
+        - navigation [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e117]: Сервис
+            - link "Таксопарки" [ref=e118] [cursor=pointer]:
+              - /url: /parks
+            - link "Выкуп авто" [ref=e119] [cursor=pointer]:
+              - /url: /buyout
+            - link "По делам, без 9%" [ref=e120] [cursor=pointer]:
+              - /url: /no9
+          - generic [ref=e121]:
+            - generic [ref=e122]: Компания
+            - link "Сотрудничество" [ref=e123] [cursor=pointer]:
+              - /url: /cooperation
+            - link "Политика конфиденциальности" [ref=e124] [cursor=pointer]:
+              - /url: /privacy
+            - link "Оферта" [ref=e125] [cursor=pointer]:
+              - /url: /terms
+      - paragraph [ref=e127]: © 2026 Таксибрат. Все права защищены.
+  - alert [ref=e128]

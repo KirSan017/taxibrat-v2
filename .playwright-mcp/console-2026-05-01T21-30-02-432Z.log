@@ -1,0 +1,43 @@
+[     238ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[     277ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[   69769ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[   69961ms] [LOG] [Fast Refresh] done in 242ms @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[   70069ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[   70197ms] [LOG] [Fast Refresh] done in 234ms @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  175083ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  175463ms] [LOG] [Fast Refresh] done in 456ms @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  175571ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  175838ms] [LOG] [Fast Refresh] done in 367ms @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  176011ms] ReferenceError: Badge is not defined
+    at eval (http://localhost:3001/_next/static/chunks/apps_web_src_0bcn4je._.js?id=%255Bproject%255D%252Fapps%252Fweb%252Fsrc%252Fapp%252F%2528main%2529%252Fpage.tsx+%255Bapp-client%255D+%2528ecmascript%2529:643:379)
+    at Array.map (<anonymous>)
+    at HomePage (http://localhost:3001/_next/static/chunks/apps_web_src_0bcn4je._.js?id=%255Bproject%255D%252Fapps%252Fweb%252Fsrc%252Fapp%252F%2528main%2529%252Fpage.tsx+%255Bapp-client%255D+%2528ecmascript%2529:581:45)
+    at Object.react_stack_bottom_frame (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:15037:24)
+    at renderWithHooks (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:6081:21)
+    at beginWork (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:965:74)
+    at performUnitOfWork (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:9555:97)
+    at workLoopSync (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:9449:40)
+    at renderRootSync (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:9061:186)
+    at performSyncWorkOnRoot (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:10179:316)
+    at processRootScheduleInMicrotask (http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:10200:106)
+    at http://localhost:3001/_next/static/chunks/0_9e_next_dist_compiled_react-dom_0.0ptbi._.js:10274:158
+[  176210ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  176463ms] [LOG] [Fast Refresh] done in 359ms @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  184219ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  184541ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  184664ms] [LOG] [Fast Refresh] done in 423ms @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  184774ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  185518ms] [LOG] [Fast Refresh] done in 853ms @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  185908ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  185938ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  186101ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/api/public/points-config:0
+[  186121ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/api/catalog/homepage?limit=8:0
+[  186126ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/api/public/stats:0
+[  186141ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/api/public/banner:0
+[  186144ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/api/public/points-review:0
+[  186208ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431
+[  186296ms] [LOG] [Fast Refresh] done in 189ms @ http://localhost:3001/_next/static/chunks/0_9e_next_dist_0dwcpb1._.js:2431

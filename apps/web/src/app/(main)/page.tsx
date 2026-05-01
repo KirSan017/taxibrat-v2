@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { api } from "@/lib/api-client";
 import { useAuth } from "@/lib/use-auth";
@@ -228,19 +227,20 @@ export default function HomePage() {
   return (
     <>
       {/* ══════ HERO — dark #1F1F1F per Figma ══════ */}
-      <section className="bg-[#1F1F1F] relative overflow-hidden">
-        <div className="relative max-w-[1600px] mx-auto px-[24px] md:px-[100px] pt-[80px] pb-[60px] md:pt-[140px] md:pb-[93px]">
-          <div className="grid md:grid-cols-[560px_1fr] gap-10 md:gap-[40px] items-center">
+      <section className="bg-[#1F1F1F] relative overflow-hidden md:h-[642px]">
+        <div className="relative max-w-[1600px] mx-auto h-full px-[24px] md:px-[100px] pt-[80px] pb-[60px] md:pt-0 md:pb-0">
+          <div className="hidden md:block absolute w-[1078px] h-[852px] left-[253px] top-[473px] bg-[#575757] blur-[200px]" />
+          <div className="grid md:block gap-10 items-center">
             {/* Left — headline, desc, CTA */}
-            <div className="relative z-10 max-w-[560px]">
+            <div className="relative z-10 max-w-[690px] md:absolute md:left-[100px] md:top-[106px] md:w-[690px]">
               <p className="text-[16px] md:text-[20px] font-medium text-[#F8D62E] leading-[26px]">
                 Сервис для каждого таксиста
               </p>
-              <h1 className="mt-[24px] text-[40px] md:text-[56px] leading-[1.08] font-medium text-white tracking-[-0.02em]">
+              <h1 className="mt-[30px] text-[40px] md:text-[60px] leading-[1.08] md:leading-[60px] font-medium text-white tracking-[-0.02em] md:tracking-normal">
                 Выбери лучший таксопарк у&nbsp;себя на&nbsp;районе{" "}
                 <span className="text-[#F8D62E]">за 2&nbsp;минуты</span>
               </h1>
-              <p className="mt-[24px] md:mt-[40px] text-[14px] leading-[22px] font-normal text-white/80 max-w-[460px]">
+              <p className="mt-[30px] text-[14px] leading-[22px] font-normal tracking-[-0.01em] text-white max-w-[416px]">
                 Мы ваш верный спутник помощи работы в&nbsp;такси, проходите проверки на&nbsp;баны, влияйте на&nbsp;рейтинг таксопарков. А&nbsp;так&nbsp;же зарабатывайте «баллы дружбы» и&nbsp;тратьте их на&nbsp;платные фишки нашего сервиса
               </p>
               <div className="mt-[32px] md:mt-[40px] flex items-center gap-[10px]">
@@ -258,24 +258,34 @@ export default function HomePage() {
             </div>
 
             {/* Right — BIG illustration with counter overlay, extends outside container */}
-            <div className="relative w-full md:-mr-[160px] lg:-mr-[240px]">
+            <div className="relative z-10 mt-[56px] w-full md:mt-0 md:absolute md:left-[741px] md:top-[54px] md:w-[859px]">
               {/* Counter overlay (Figma: 287x118 @ top-left corner) */}
-              <div className="absolute -top-[30px] left-[10px] md:top-[40px] md:left-[80px] z-20 bg-[#F8D62E] rounded-[20px] w-[220px] md:w-[287px] px-[28px] md:px-[40px] py-[14px] md:py-[22px] shadow-xl">
-                <div className="text-[40px] md:text-[60px] font-medium leading-[1] text-[#303030] tracking-tight">
+              <div className="absolute left-[-5px] top-[52px] z-20 hidden h-[118px] w-[287px] rounded-[20px] bg-[#F8D62E] px-[40px] pt-[18px] md:block">
+                <div className="text-[60px] font-medium leading-[60px] text-[#303030] tracking-tight">
                   {publicStats ? publicStats.users.toLocaleString("ru-RU") : "143 125"}
                 </div>
-                <div className="mt-[6px] text-[11px] md:text-[14px] leading-[18px] font-normal text-[#303030]">
+                <div className="mt-0 text-[14px] leading-[22px] font-normal tracking-[-0.01em] text-[#303030]">
                   пользователей уже с&nbsp;нами
                 </div>
               </div>
               <Image
                 src="/figma/hero.png"
                 alt=""
-                width={1600}
-                height={780}
+                width={2123}
+                height={1039}
                 priority
-                className="w-full h-auto relative z-10 scale-[1.15] md:scale-[1.25] origin-center"
+                className="w-full h-auto relative z-10"
               />
+            </div>
+
+            <div className="hidden md:block absolute left-[1318px] top-[117px] z-20 w-[222px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
+              «Таксибрат дал заказ и я получил промокод на 6 часов без комиссии, крутая фишка, спасибо!»
+            </div>
+            <div className="hidden md:block absolute left-[1108px] top-[300px] z-20 w-[236px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
+              «Спасибо Таксибрату, что помог создать повышенной спрос»
+            </div>
+            <div className="hidden md:block absolute left-[1182px] top-[510px] z-20 w-[230px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
+              Таксопарк придрался к маленькой точке на бампере и снял 10 000 руб. Спасибо таксибрату, что помог!
             </div>
           </div>
         </div>
@@ -298,11 +308,11 @@ export default function HomePage() {
 
       {/* ══════ PARKS SLIDER — 148 stat + cards ══════ */}
       <section className="bg-white">
-        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pt-[100px] md:pt-[193px] pb-[80px] md:pb-[100px]">
+        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pt-[100px] pb-[80px] md:pb-[90px]">
           {/* Stats row */}
-          <div className="flex flex-col md:flex-row md:items-center gap-[32px] md:gap-0 mb-[40px] md:mb-[60px]">
+          <div className="flex flex-col md:flex-row md:items-center gap-[32px] md:gap-0 mb-[40px] md:mb-[39px]">
             <div className="flex items-center gap-[30px] md:gap-[30px] flex-1">
-              <span className="text-[90px] md:text-[139px] font-medium leading-[0.85] text-[#F8D62E] tracking-[-0.04em]">
+              <span className="md:w-[227px] md:shrink-0 text-[90px] md:text-[139px] font-medium leading-[0.85] text-[#F8D62E] tracking-[-0.04em]">
                 {publicStats?.parks ?? 148}
               </span>
               <p className="text-[24px] md:text-[50px] font-medium text-[#303030] leading-[1.1] tracking-[-0.02em] max-w-[600px]">
@@ -330,7 +340,7 @@ export default function HomePage() {
 
           {/* Park cards horizontal scroll (335x362 each, r=20, gap 20) */}
           {parksLoading ? (
-            <div className="flex gap-[20px] overflow-x-auto pb-4 -mx-6 px-6">
+            <div className="flex gap-[20px] overflow-x-auto -mx-6 px-6">
               {[...Array(4)].map((_, i) => (
                 <div
                   key={i}
@@ -343,7 +353,7 @@ export default function HomePage() {
               Пока нет парков в каталоге
             </div>
           ) : (
-            <div className="flex gap-[20px] overflow-x-auto pb-4 -mx-6 px-6 md:-mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex gap-[20px] overflow-x-auto -mx-6 px-6 md:-mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide">
               {parks.map((park) => {
                 const rating = typeof park.rating === "string" ? parseFloat(park.rating) : park.rating;
                 const commission = typeof park.parkCommission === "string" ? parseFloat(park.parkCommission) : park.parkCommission;
@@ -353,7 +363,7 @@ export default function HomePage() {
                   <Link
                     key={park.id}
                     href={`/parks/${park.id}`}
-                    className="flex-none w-[335px] h-[362px] snap-start bg-white border border-[#EFEFEF] rounded-[20px] p-[30px] hover:shadow-md transition-shadow relative"
+                    className="flex-none w-[335px] h-[362px] snap-start bg-white border border-[#F7F7F7] rounded-[20px] hover:shadow-md transition-shadow relative overflow-hidden shadow-[0_20px_30px_rgba(0,0,0,0.04)]"
                   >
                     {/* Top row: stars + rating */}
                     <div className="flex items-center justify-between mb-[38px]">
@@ -361,7 +371,7 @@ export default function HomePage() {
                         {[...Array(5)].map((_, i) => (
                           <svg
                             key={i}
-                            className={`w-[14px] h-[28px] ${i < Math.round(rating) ? "text-[#F8D62E]" : "text-[#E5E5E5]"}`}
+                            className={`w-[28px] h-[28px] ${i < Math.round(rating) ? "text-[#F8D62E]" : "text-[#F2F2F2]"}`}
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -403,12 +413,15 @@ export default function HomePage() {
               })}
             </div>
           )}
+          <div className="hidden md:block mt-[50px] h-[20px] w-full rounded-full bg-[#F2F2F2]">
+            <div className="h-[20px] w-[190px] rounded-full bg-[#B0B0B0]" />
+          </div>
         </div>
       </section>
 
       {/* ══════ FEATURES GRID 2x2 (4 cards 690x442, gap 20) ══════ */}
       <section className="bg-white">
-        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pb-[40px] md:pb-[60px]">
+        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pb-[20px]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-[20px]">
             {DEFAULT_FEATURES().map((f, i) => {
               const btnContent = (
@@ -463,8 +476,8 @@ export default function HomePage() {
 
       {/* ══════ CTA BOTTOM (yellow 1400x442, r=20, pad 50) ══════ */}
       <section className="bg-white">
-        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pb-[60px] md:pb-[100px]">
-          <div className="bg-[#F8D62E] rounded-[20px] p-[30px] md:p-[50px] grid md:grid-cols-[1fr_401px] gap-[30px] md:gap-[125px] items-start">
+        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pb-[50px]">
+          <div className="bg-[#F8D62E] rounded-[20px] p-[30px] md:p-[50px] grid md:grid-cols-[1fr_401px] gap-[30px] md:gap-[125px] items-start md:h-[442px] overflow-hidden">
             {/* Left */}
             <div>
               <h2 className="text-[24px] md:text-[34px] font-semibold leading-[1.25] text-[#303030] tracking-[-0.01em] max-w-[658px]">

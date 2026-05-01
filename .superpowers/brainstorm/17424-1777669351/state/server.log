@@ -1,0 +1,4 @@
+{"type":"server-started","port":49680,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:49680","screen_dir":"C:\\Users\\Professional\\Projects\\taxibrat-v2\\.superpowers\\brainstorm\\17424-1777669351\\content","state_dir":"C:\\Users\\Professional\\Projects\\taxibrat-v2\\.superpowers\\brainstorm\\17424-1777669351\\state"}
+{"type":"screen-added","file":"C:\\Users\\Professional\\Projects\\taxibrat-v2\\.superpowers\\brainstorm\\17424-1777669351\\content\\figma-source-check.html"}
+{"source":"user-event","type":"click","text":"B\n    \n      Нужна живая Figma-ссылка\n      Если PNG устарел, пришлите URL файла или конкретного node. Тогда снимем актуальный контекст из Figma.","choice":"need-live-figma","id":null,"timestamp":1777669501430}
+{"type":"screen-added","file":"C:\\Users\\Professional\\Projects\\taxibrat-v2\\.superpowers\\brainstorm\\17424-1777669351\\content\\home-before-vs-figma.html"}

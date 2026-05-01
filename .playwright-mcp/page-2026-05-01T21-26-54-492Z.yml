@@ -1,0 +1,130 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "Таксибрат" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: Таксибрат
+      - navigation [ref=e6]:
+        - link "Главная" [ref=e7] [cursor=pointer]:
+          - /url: /
+        - link "Таксопарки" [ref=e8] [cursor=pointer]:
+          - /url: /parks
+        - link "По делам без 9%" [ref=e9] [cursor=pointer]:
+          - /url: /no9
+        - button "Подключение к такси" [ref=e10]
+        - link "Выкуп" [ref=e11] [cursor=pointer]:
+          - /url: /buyout
+        - button "Проверка по базе" [ref=e12]
+      - generic [ref=e14]:
+        - button "Регистрация" [ref=e134]:
+          - img [ref=e135]
+          - text: Регистрация
+        - button "Вход" [ref=e138]:
+          - img [ref=e139]
+          - text: Вход
+  - main [ref=e15]:
+    - generic [ref=e17]:
+      - generic:
+        - generic [ref=e19]:
+          - paragraph [ref=e20]: Сервис для каждого таксиста
+          - heading "Выбери лучший таксопарк у себя на районе за 2 минуты" [level=1] [ref=e21]
+          - paragraph [ref=e22]: Мы ваш верный спутник помощи работы в такси, проходите проверки на баны, влияйте на рейтинг таксопарков. А так же зарабатывайте «баллы дружбы» и тратьте их на платные фишки нашего сервиса
+          - generic [ref=e23]:
+            - button "Зарегистрироваться" [ref=e24]
+            - generic [ref=e25]: всего 10 сек
+        - generic [ref=e27]:
+          - generic [ref=e28]: 143 125
+          - generic [ref=e29]: пользователей уже с нами
+        - generic [ref=e30]: «Таксибрат дал заказ и я получил промокод на 6 часов без комиссии, крутая фишка, спасибо!»
+        - generic [ref=e31]: «Спасибо Таксибрату, что помог создать повышенной спрос»
+        - generic [ref=e32]: Таксопарк придрался к маленькой точке на бампере и снял 10 000 руб. Спасибо таксибрату, что помог!
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]: "148"
+          - paragraph [ref=e38]:
+            - text: Таксопарков проверено
+            - text: в Москве и МО
+        - generic [ref=e39]:
+          - link "Подобрать лучший" [ref=e40] [cursor=pointer]:
+            - /url: /parks
+          - button "Следующий" [ref=e41]:
+            - img [ref=e42]
+      - generic [ref=e44]: Пока нет парков в каталоге
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - heading "Получите заказ «По делам» в любом месте за 2 мин, без 9%" [level=3] [ref=e56]
+          - list [ref=e57]:
+            - listitem [ref=e58]: 1 — Укажите точки А и Б, класс такси
+            - listitem [ref=e59]: 2 — Вызовем ваше такси за 2 мин
+            - listitem [ref=e60]: 3 — Выполните заказ или повысьте спрос
+          - paragraph [ref=e62]: Выполнив заказ — получите 5 звезд и промокод на 6 часов без комиссии!
+        - link "Вызвать такси" [ref=e64] [cursor=pointer]:
+          - /url: /no9
+          - button "Вызвать такси" [ref=e65]
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - heading "Выкуп автомобилей" [level=3] [ref=e68]:
+            - text: Выкуп
+            - text: автомобилей
+          - list [ref=e69]:
+            - listitem [ref=e70]: 1 — Выберите авто по параметрам
+            - listitem [ref=e71]: 2 — Найдите лучшую цену и условия в городе
+            - listitem [ref=e72]: 3 — Оставьте заявку
+            - listitem [ref=e73]: 4 — Наш менеджер сопроводит вас до полного выкупа авто
+        - link "Посмотреть авто" [ref=e75] [cursor=pointer]:
+          - /url: /buyout
+          - button "Посмотреть авто" [ref=e76]
+      - generic [ref=e77]:
+        - generic [ref=e78]:
+          - heading "Проверка по базе таксопарков" [level=3] [ref=e79]:
+            - text: Проверка по базе
+            - text: таксопарков
+          - list [ref=e80]:
+            - listitem [ref=e81]: 1 — Отправьте запрос на проверку (10 секунд)
+            - listitem [ref=e82]: 2 — Дадим ответ в течении 1 часа
+            - listitem [ref=e83]: 3 — Проконсультируем в непростых ситуациях
+        - button "Проверить по базе" [ref=e85]
+      - generic [ref=e86]:
+        - generic [ref=e87]:
+          - heading "Подключим вас к такси" [level=3] [ref=e88]:
+            - text: Подключим
+            - text: вас к такси
+          - generic [ref=e89]:
+            - generic [ref=e90]: Комиссия — 1,5%
+            - generic [ref=e91]: Вывод — моментальный
+        - generic [ref=e92]:
+          - button "Подключиться" [ref=e93]
+          - generic [ref=e94]: за 2 мин
+    - generic [ref=e97]:
+      - generic [ref=e98]:
+        - heading "Зарегистрируйтесь сейчас и получите 100 баллов дружбына заказ «По делам, без 9%» и проверку в базе таксопарков" [level=2] [ref=e99]
+        - paragraph [ref=e100]: Со временем количество баллов для новых участников будет уменьшаться.
+        - generic [ref=e101]:
+          - button "Зарегистрироваться" [ref=e102]
+          - button "Войти" [ref=e103]
+      - generic [ref=e104]:
+        - img [ref=e106]
+        - paragraph [ref=e108]: Как получить «баллы дружбы»?
+        - list [ref=e109]:
+          - listitem [ref=e110]: Зарегистрируйтесь — 100 б
+          - listitem [ref=e111]: Приведите друга — 200 б вам и 100 б другу
+          - listitem [ref=e112]: Отправили на проверку таксопарк — 200 баллов
+          - listitem [ref=e113]: Подключились к такси — 150 баллов
+          - listitem [ref=e114]: Взяли такси в аренду себе или другу — 300 баллов
+          - listitem [ref=e115]: Взяли авто в выкуп себе или другу — 1000 баллов
+  - contentinfo [ref=e116]:
+    - generic [ref=e118]:
+      - navigation [ref=e119]:
+        - generic [ref=e120]: © 2025 Таксибрат - Сервис для водителей такси №1
+        - link "Техподдержка" [ref=e121] [cursor=pointer]:
+          - /url: /support
+        - link "Политика конфиденциальности" [ref=e122] [cursor=pointer]:
+          - /url: /privacy
+        - link "Сотрудничество" [ref=e123] [cursor=pointer]:
+          - /url: /cooperation
+      - generic [ref=e124]: Разработка danilsmg.ru
+  - button "Open Next.js Dev Tools" [ref=e130] [cursor=pointer]:
+    - img [ref=e131]
+  - alert [ref=e142]

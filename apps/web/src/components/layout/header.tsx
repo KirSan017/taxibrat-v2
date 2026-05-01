@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, LogIn, Menu, UserPlus, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { AuthModal } from "../auth/auth-modal";
 import { ConfirmModal } from "../ui/confirm-modal";
@@ -108,44 +108,69 @@ export function Header() {
   const navTextColor = isHome
     ? "text-white hover:text-[#F8D62E]"
     : "text-[#303030] hover:text-[#A1A1A1]";
+  const navLinkClass = isHome
+    ? `text-[14px] leading-[22px] font-normal tracking-[-0.01em] transition-colors ${navTextColor}`
+    : `text-sm font-medium transition-colors ${navTextColor}`;
 
   return (
     <>
       <header className={`w-full ${headerBg}`}>
-        <div className="max-w-[1600px] mx-auto px-6 h-[72px] flex items-center justify-between">
+        <div
+          className={
+            isHome
+              ? "relative max-w-[1600px] mx-auto px-6 md:px-[100px] h-[72px] md:h-[104px] flex md:block items-center justify-between md:pt-[29px]"
+              : "max-w-[1600px] mx-auto px-6 h-[72px] flex items-center justify-between"
+          }
+        >
           {/* Logo */}
-          <Logo href={user ? "/dashboard" : "/"} size="md" />
+          <Logo
+            href={user ? "/dashboard" : "/"}
+            size={isHome ? "home" : "md"}
+            className={isHome ? "md:absolute md:left-[100px] md:top-[29px]" : ""}
+          />
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-            <Link href={user ? "/dashboard" : "/"} className={`text-sm font-medium transition-colors ${navTextColor}`}>
+          <nav
+            className={
+              isHome
+                ? "hidden md:flex items-center gap-[20px] absolute left-[300px] top-[39px]"
+                : "hidden md:flex items-center gap-6 lg:gap-8"
+            }
+          >
+            <Link href={user ? "/dashboard" : "/"} className={`${navLinkClass} ${isHome ? "opacity-50" : ""}`}>
               Главная
             </Link>
-            <Link href="/parks" className={`text-sm font-medium transition-colors ${navTextColor}`}>
+            <Link href="/parks" className={navLinkClass}>
               Таксопарки
             </Link>
-            <Link href="/no9" className={`text-sm font-medium transition-colors ${navTextColor}`}>
+            <Link href="/no9" className={navLinkClass}>
               По делам без 9%
             </Link>
             <button
               onClick={handleMenuClick("taxi-connect")}
-              className={`text-sm font-medium transition-colors ${navTextColor}`}
+              className={navLinkClass}
             >
               Подключение к такси
             </button>
-            <Link href="/buyout" className={`text-sm font-medium transition-colors ${navTextColor}`}>
+            <Link href="/buyout" className={navLinkClass}>
               Выкуп
             </Link>
             <button
               onClick={handleMenuClick("base-check")}
-              className={`text-sm font-medium transition-colors ${navTextColor}`}
+              className={navLinkClass}
             >
               Проверка по базе
             </button>
           </nav>
 
           {/* Auth area */}
-          <div className="hidden md:flex items-center gap-3">
+          <div
+            className={
+              isHome
+                ? "hidden md:flex items-center absolute right-[100px] top-[29px]"
+                : "hidden md:flex items-center gap-3"
+            }
+          >
             {loading ? (
               <div className="h-9 w-24 rounded bg-gray-100 animate-pulse" />
             ) : user ? (
@@ -190,6 +215,25 @@ export function Header() {
                   Выйти
                 </button>
               </>
+            ) : isHome ? (
+              <div className="flex h-[46px] w-[222px] items-center justify-center gap-[20px] rounded-[15px] bg-[#F8D62E] px-[13px] py-[11px] text-[#303030]">
+                <button
+                  type="button"
+                  onClick={() => setAuthOpen(true)}
+                  className="inline-flex h-[24px] items-center gap-[7px] text-[14px] leading-[22px] font-normal tracking-[-0.01em]"
+                >
+                  <UserPlus className="h-[24px] w-[24px] stroke-[2]" />
+                  Регистрация
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthOpen(true)}
+                  className="inline-flex h-[24px] items-center gap-[6px] text-[14px] leading-[22px] font-normal tracking-[-0.01em]"
+                >
+                  <LogIn className="h-[24px] w-[24px] stroke-[2]" />
+                  Вход
+                </button>
+              </div>
             ) : (
               <>
                 <Button variant="outline" size="sm" onClick={() => setAuthOpen(true)}>
@@ -209,9 +253,9 @@ export function Header() {
             aria-label={mobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
           >
             {mobileMenuOpen ? (
-              <X className="w-6 h-6 text-[#303030]" />
+              <X className={`w-6 h-6 ${isHome ? "text-white" : "text-[#303030]"}`} />
             ) : (
-              <Menu className="w-6 h-6 text-[#303030]" />
+              <Menu className={`w-6 h-6 ${isHome ? "text-white" : "text-[#303030]"}`} />
             )}
           </button>
         </div>

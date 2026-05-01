@@ -1,0 +1,41 @@
+<h2>Главная: текущая верстка vs Figma</h2>
+<p class="subtitle">Слева локальный скрин с <code>localhost:3001</code>, справа Figma node <code>48:1554</code>. Список таксопарков локально сейчас не загружен из API, поэтому карточный блок сверяется по стилям и размерам, не по пустому состоянию.</p>
+
+<div class="split" style="align-items:flex-start;">
+  <div class="mockup">
+    <div class="mockup-header">Local before</div>
+    <div class="mockup-body" style="height:720px; overflow:auto; background:#fff;">
+      <img src="/files/local-home-before.png" alt="Local homepage before" style="width:100%; display:block;">
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">Figma target</div>
+    <div class="mockup-body" style="height:720px; overflow:auto; background:#fff;">
+      <img src="/files/figma-home-scale1.png" alt="Figma homepage target" style="width:100%; display:block;">
+    </div>
+  </div>
+</div>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="header-hero" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Header + hero</h3>
+      <p>В Figma dark hero заканчивается на 746px; локально блок выше. Header должен быть с отступом 100px, желтым auth-pill и желтым текстом логотипа.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="sections-spacing" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>Вертикальные позиции секций</h3>
+      <p>Figma: stats top 846px, features top 1527px, CTA top 2451px, footer line 2943px. Локальный скрин длиннее из-за hero/footer/API-empty state.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="footer" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Footer</h3>
+      <p>В Figma footer компактный 17px ряд без большого логотипного блока; локально footer занимает заметно больше высоты.</p>
+    </div>
+  </div>
+</div>

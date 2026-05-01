@@ -1,0 +1,31 @@
+<h2>Проверка источника Figma для главной</h2>
+<p class="subtitle">В проекте уже есть локальный референс <code>figma-home-ref.png</code>. Нужно подтвердить, что именно он является эталоном для pixel perfect.</p>
+
+<div class="cards">
+  <div class="card" data-choice="local-figma-ref" onclick="toggleSelect(this)">
+    <div class="card-image" style="height:520px; overflow:auto; background:#f5f5f5;">
+      <img src="/files/figma-home-ref.png" alt="Figma homepage reference" style="width:100%; display:block;">
+    </div>
+    <div class="card-body">
+      <h3>A. Использовать локальный Figma-референс</h3>
+      <p>Сравниваем текущую главную с этим PNG и правим только визуальный слой.</p>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="need-live-figma" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Нужна живая Figma-ссылка</h3>
+      <p>Если PNG устарел, пришлите URL файла или конкретного node. Тогда снимем актуальный контекст из Figma.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="other-ref" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Другой эталон</h3>
+      <p>Можно взять другой локальный файл или скрин из Figma, если главная должна соответствовать не этому изображению.</p>
+    </div>
+  </div>
+</div>

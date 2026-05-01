@@ -4,7 +4,7 @@ import {
   NotFoundException,
   ConflictException,
 } from "@nestjs/common";
-import { eq, sql, ilike, and, ne } from "drizzle-orm";
+import { eq, sql, ilike, and, ne, inArray } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import { taxiParks, parkClasses } from "@taxibrat/db";
 import { CreateParkDto, UpdateParkDto, AuditAction, AuditEntity } from "@taxibrat/shared";
@@ -136,7 +136,7 @@ export class ParksService {
           hasAny: sql<boolean>`bool_or(${parkClasses.hasAvailableCars})`,
         })
         .from(parkClasses)
-        .where(sql`${parkClasses.parkId} = ANY(${parkIds})`)
+        .where(inArray(parkClasses.parkId, parkIds))
         .groupBy(parkClasses.parkId);
       for (const r of rows) {
         availMap.set(r.parkId as string, Boolean(r.hasAny));

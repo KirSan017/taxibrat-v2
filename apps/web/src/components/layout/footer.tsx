@@ -1,7 +1,36 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Logo } from "./logo";
 
 export function Footer() {
+  const pathname = usePathname();
+
+  if (pathname === "/") {
+    return (
+      <footer className="w-full bg-white">
+        <div className="max-w-[1600px] mx-auto px-[24px] md:px-[100px] pb-[35px]">
+          <div className="flex flex-col gap-4 text-[13px] leading-[17px] md:flex-row md:items-center md:justify-between">
+            <nav className="flex flex-col gap-3 md:flex-row md:items-center md:gap-[39px]">
+              <span className="text-[#A2A2A2]">© 2025 Таксибрат - Сервис для водителей такси №1</span>
+              <Link href="/support" className="text-[#303030] transition-colors hover:text-[#A2A2A2]">
+                Техподдержка
+              </Link>
+              <Link href="/privacy" className="text-[#303030] transition-colors hover:text-[#A2A2A2]">
+                Политика конфиденциальности
+              </Link>
+              <Link href="/cooperation" className="text-[#303030] transition-colors hover:text-[#A2A2A2]">
+                Сотрудничество
+              </Link>
+            </nav>
+            <span className="text-[#303030] md:text-right">Разработка danilsmg.ru</span>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="w-full border-t border-[#E5E5E5] bg-white">
       <div className="max-w-[1600px] mx-auto px-6 py-10">
