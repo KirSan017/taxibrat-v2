@@ -5,7 +5,6 @@ import {
   Post,
   Body,
   UseGuards,
-  UsePipes,
   BadRequestException,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
@@ -30,10 +29,9 @@ export class UsersController {
   }
 
   @Patch("me")
-  @UsePipes(new ZodValidationPipe(updateProfileSchema))
   updateProfile(
     @CurrentUser() user: JwtPayload,
-    @Body() dto: UpdateProfileDto,
+    @Body(new ZodValidationPipe(updateProfileSchema)) dto: UpdateProfileDto,
   ) {
     if (!user?.sub) {
       console.error("PATCH /users/me: user.sub is undefined. user =", JSON.stringify(user));

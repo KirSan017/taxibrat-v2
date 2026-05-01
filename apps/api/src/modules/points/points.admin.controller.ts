@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards, UsePipes } from "@nestjs/common";
+import { Controller, Get, Post, Body, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -14,10 +14,9 @@ export class PointsAdminController {
   constructor(private pointsService: PointsService) {}
 
   @Post("adjust")
-  @UsePipes(new ZodValidationPipe(adjustPointsSchema))
   adjust(
     @CurrentUser() user: JwtPayload,
-    @Body() dto: AdjustPointsDto,
+    @Body(new ZodValidationPipe(adjustPointsSchema)) dto: AdjustPointsDto,
   ) {
     return this.pointsService.manualAdjust(user.sub, dto.userId, dto.amount, dto.description);
   }

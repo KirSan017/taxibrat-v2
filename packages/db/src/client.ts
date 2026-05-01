@@ -51,7 +51,14 @@ const schema = {
 };
 
 export function createDb(url: string) {
-  const client = postgres(url);
+  // Supabase pooler в session mode ограничен 15 соединениями.
+  // Держим пул узким + быстро отпускаем idle-коннекты, чтобы не упереться в EMAXCONNSESSION.
+  const client = postgres(url, {
+    max: 5,
+    idle_timeout: 20,
+    max_lifetime: 60 * 30,
+    prepare: false,
+  });
   return drizzle(client, { schema });
 }
 
