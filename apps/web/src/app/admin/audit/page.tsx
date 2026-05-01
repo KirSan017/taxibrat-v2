@@ -2,12 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_INPUT,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PAGE_SUBTITLE,
+  ADMIN_PRIMARY_BTN,
+  ADMIN_SELECT,
+  ADMIN_TABLE_CELL,
+  ADMIN_TABLE_HEADER,
+  ADMIN_TABLE_ROW,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -48,6 +57,13 @@ const ACTION_LABELS: Record<string, string> = {
   STATUS_CHANGE: "Смена статуса",
 };
 
+const ACTION_STYLES: Record<string, string> = {
+  CREATE: "bg-[#E8F7EE] text-[#3BB560]",
+  UPDATE: "bg-[#FEF7DA] text-[#9A7C00]",
+  DELETE: "bg-[#FDE8E8] text-[#FA6868]",
+  STATUS_CHANGE: "bg-[#E8F0FE] text-[#3D7BD9]",
+};
+
 function entityLink(entity: string, entityId: string | null): string | null {
   if (!entityId) return null;
   switch (entity) {
@@ -79,7 +95,6 @@ function formatValue(v: unknown): string {
 }
 
 function DiffView({ oldValue, newValue }: { oldValue: unknown; newValue: unknown }) {
-  // Both объекты — покажем diff по ключам
   if (
     oldValue && typeof oldValue === "object" && !Array.isArray(oldValue) &&
     newValue && typeof newValue === "object" && !Array.isArray(newValue)
@@ -94,21 +109,23 @@ function DiffView({ oldValue, newValue }: { oldValue: unknown; newValue: unknown
     }
 
     return (
-      <div className="space-y-1 text-xs">
+      <div className="space-y-1.5 text-xs">
         {changed.map((k) => (
-          <div key={k} className="flex flex-wrap gap-1">
-            <span className="font-medium text-[#303030]">{k}:</span>
-            <span className="text-[#A1A1A1]">было</span>
-            <span className="text-[#FA6868]">{formatValue(ov[k])}</span>
-            <span className="text-[#A1A1A1]">стало</span>
-            <span className="text-[#303030]">{formatValue(nv[k])}</span>
+          <div key={k} className="flex flex-wrap items-baseline gap-1.5">
+            <span className="font-semibold text-[#1F1F1F]">{k}:</span>
+            <span className="px-1.5 py-0.5 rounded bg-[#FDE8E8] text-[#FA6868] line-through">
+              {formatValue(ov[k])}
+            </span>
+            <span className="text-[#A1A1A1]">→</span>
+            <span className="px-1.5 py-0.5 rounded bg-[#E8F7EE] text-[#3BB560]">
+              {formatValue(nv[k])}
+            </span>
           </div>
         ))}
       </div>
     );
   }
 
-  // oldValue только
   if (oldValue != null && (newValue == null || newValue === undefined)) {
     return (
       <div className="text-xs">
@@ -118,12 +135,11 @@ function DiffView({ oldValue, newValue }: { oldValue: unknown; newValue: unknown
     );
   }
 
-  // newValue только
   if (newValue != null && (oldValue == null || oldValue === undefined)) {
     return (
       <div className="text-xs">
         <span className="text-[#A1A1A1]">стало: </span>
-        <span className="text-[#303030]">{formatValue(newValue)}</span>
+        <span className="text-[#3BB560]">{formatValue(newValue)}</span>
       </div>
     );
   }
@@ -183,116 +199,170 @@ export default function AdminAuditPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-medium text-[#303030] mb-6">Архив изменений ({total})</h1>
+      {/* ── Page header ── */}
+      <div className="mb-6">
+        <p className="text-xs text-[#A1A1A1] uppercase tracking-wider font-medium">Журнал</p>
+        <h1 className={`${ADMIN_PAGE_TITLE} mt-2 flex items-center gap-3`}>
+          Архив изменений
+          <span className="inline-flex items-center justify-center min-w-[36px] h-[28px] px-2.5 rounded-full text-xs font-semibold bg-[#F2F2F2] text-[#1F1F1F]">
+            {total}
+          </span>
+        </h1>
+        <p className={ADMIN_PAGE_SUBTITLE}>История действий пользователей в системе</p>
+      </div>
 
-      <form onSubmit={handleSearch} className="flex flex-wrap gap-3 mb-6">
-        <div className="w-[180px]">
-          <label className="block text-xs text-[#A1A1A1] mb-1">Сущность</label>
-          <select
-            value={entityFilter}
-            onChange={(e) => setEntityFilter(e.target.value)}
-            className="h-[40px] w-full px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
-          >
-            <option value="">Все</option>
-            {Object.entries(ENTITY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
+      {/* ── Filter card ── */}
+      <form onSubmit={handleSearch} className={`${ADMIN_CARD} p-5 mb-5`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              Сущность
+            </label>
+            <select
+              value={entityFilter}
+              onChange={(e) => setEntityFilter(e.target.value)}
+              className={ADMIN_SELECT}
+            >
+              <option value="">Все</option>
+              {Object.entries(ENTITY_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              ID актора
+            </label>
+            <input
+              value={actorIdFilter}
+              onChange={(e) => setActorIdFilter(e.target.value)}
+              className={ADMIN_INPUT}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              Поиск
+            </label>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Имя, фраза, ID..."
+              className={ADMIN_INPUT}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              От
+            </label>
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className={ADMIN_INPUT}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              До
+            </label>
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className={ADMIN_INPUT}
+            />
+          </div>
         </div>
-        <div className="w-[220px]">
-          <label className="block text-xs text-[#A1A1A1] mb-1">ID актора</label>
-          <Input value={actorIdFilter} onChange={(e) => setActorIdFilter(e.target.value)} />
-        </div>
-        <div className="w-[260px]">
-          <label className="block text-xs text-[#A1A1A1] mb-1">Поиск по значениям</label>
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Имя, фраза, ID..."
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-[#A1A1A1] mb-1">От</label>
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-[#A1A1A1] mb-1">До</label>
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
-          />
-        </div>
-        <div className="flex items-end">
-          <Button type="submit" size="sm">Искать</Button>
+        <div className="mt-4">
+          <button type="submit" className={ADMIN_PRIMARY_BTN}>
+            Применить фильтры
+          </button>
         </div>
       </form>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#E5E5E5]">
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Дата</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Актор</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Действие</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Сущность</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Объект</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Изменения</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Загрузка...</td></tr>
-            ) : entries.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-12 text-center text-sm text-[#A1A1A1]">Записей нет</td></tr>
-            ) : entries.map((e) => {
-              const link = entityLink(e.entity, e.entityId);
-              return (
-                <tr key={e.id} className="border-b border-[#E5E5E5] last:border-0 align-top">
-                  <td className="px-4 py-3 text-[#A1A1A1] whitespace-nowrap">
-                    {new Date(e.createdAt).toLocaleString("ru-RU")}
-                  </td>
-                  <td className="px-4 py-3 text-[#303030] font-mono text-xs">
-                    {e.actorId?.slice(0, 8) || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-[#303030]">
-                    {ACTION_LABELS[e.action] || e.action}
-                  </td>
-                  <td className="px-4 py-3 text-[#303030]">
-                    {ENTITY_LABELS[e.entity] || e.entity}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs">
-                    {link ? (
-                      <Link href={link} className="text-[#303030] underline hover:no-underline">
-                        {e.entityId?.slice(0, 8) || "—"}
-                      </Link>
-                    ) : (
-                      <span className="text-[#A1A1A1]">{e.entityId?.slice(0, 8) || "—"}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 max-w-[400px]">
-                    <DiffView oldValue={e.oldValue} newValue={e.newValue} />
+      {/* ── Table ── */}
+      <div className={`${ADMIN_CARD} overflow-hidden`}>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className={ADMIN_TABLE_HEADER}>Дата</th>
+                <th className={ADMIN_TABLE_HEADER}>Актор</th>
+                <th className={ADMIN_TABLE_HEADER}>Действие</th>
+                <th className={ADMIN_TABLE_HEADER}>Сущность</th>
+                <th className={ADMIN_TABLE_HEADER}>Объект</th>
+                <th className={ADMIN_TABLE_HEADER}>Изменения</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-16 text-center text-sm text-[#A1A1A1]">
+                    Загрузка...
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ) : entries.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-16 text-center text-sm text-[#A1A1A1]">
+                    Записей нет
+                  </td>
+                </tr>
+              ) : (
+                entries.map((e) => {
+                  const link = entityLink(e.entity, e.entityId);
+                  return (
+                    <tr key={e.id} className={`${ADMIN_TABLE_ROW} align-top`}>
+                      <td className={`${ADMIN_TABLE_CELL} text-[#A1A1A1] whitespace-nowrap`}>
+                        {new Date(e.createdAt).toLocaleString("ru-RU")}
+                      </td>
+                      <td className={`${ADMIN_TABLE_CELL} font-mono text-xs`}>
+                        {e.actorId?.slice(0, 8) || "—"}
+                      </td>
+                      <td className={ADMIN_TABLE_CELL}>
+                        <span
+                          className={`inline-flex items-center px-2.5 h-[24px] rounded-full text-[11px] font-medium ${
+                            ACTION_STYLES[e.action] || "bg-[#F2F2F2] text-[#A1A1A1]"
+                          }`}
+                        >
+                          {ACTION_LABELS[e.action] || e.action}
+                        </span>
+                      </td>
+                      <td className={ADMIN_TABLE_CELL}>
+                        {ENTITY_LABELS[e.entity] || e.entity}
+                      </td>
+                      <td className={`${ADMIN_TABLE_CELL} font-mono text-xs`}>
+                        {link ? (
+                          <Link
+                            href={link}
+                            className="text-[#1F1F1F] underline hover:no-underline"
+                          >
+                            {e.entityId?.slice(0, 8) || "—"}
+                          </Link>
+                        ) : (
+                          <span className="text-[#A1A1A1]">{e.entityId?.slice(0, 8) || "—"}</span>
+                        )}
+                      </td>
+                      <td className={`${ADMIN_TABLE_CELL} max-w-[420px]`}>
+                        <DiffView oldValue={e.oldValue} newValue={e.newValue} />
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-5">
         <Pagination
           currentPage={page}
           totalPages={Math.max(1, Math.ceil(total / 50))}

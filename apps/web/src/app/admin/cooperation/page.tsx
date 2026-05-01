@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_OUTLINE_BTN,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PAGE_SUBTITLE,
+  ADMIN_PILL_ACTIVE,
+  ADMIN_PILL_BASE,
+  ADMIN_PILL_INACTIVE,
+  statusBadgeClass,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -40,7 +48,7 @@ export default function AdminCooperationPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState<"ALL" | "UNREAD">("ALL");
+  const [filter, setFilter] = useState<"ALL" | "UNREAD" | "READ">("ALL");
 
   const load = () => {
     const token = getAccessToken();
@@ -51,6 +59,7 @@ export default function AdminCooperationPage() {
     params.set("page", String(page));
     params.set("limit", String(LIMIT));
     if (filter === "UNREAD") params.set("isRead", "false");
+    if (filter === "READ") params.set("isRead", "true");
     api<CooperationListResponse>(`/admin/cooperation?${params.toString()}`, { token })
       .then((res) => {
         setRequests(res.data || []);
@@ -84,43 +93,49 @@ export default function AdminCooperationPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-medium text-[#303030] mb-6">
-        Заявки на сотрудничество ({total})
-        {unread > 0 && (
-          <span className="ml-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#FA6868] text-white">
-            {unread} непрочитанных
+      {/* ── Page header ── */}
+      <div className="mb-6">
+        <p className="text-xs text-[#A1A1A1] uppercase tracking-wider font-medium">Входящие</p>
+        <h1 className={`${ADMIN_PAGE_TITLE} mt-2 flex items-center gap-3 flex-wrap`}>
+          Заявки на сотрудничество
+          <span className="inline-flex items-center justify-center min-w-[36px] h-[28px] px-2.5 rounded-full text-xs font-semibold bg-[#F2F2F2] text-[#1F1F1F]">
+            {total}
           </span>
-        )}
-      </h1>
+          {unread > 0 && (
+            <span className="inline-flex items-center px-2.5 h-[26px] rounded-full text-xs font-semibold bg-[#FA6868] text-white">
+              {unread} новых
+            </span>
+          )}
+        </h1>
+        <p className={ADMIN_PAGE_SUBTITLE}>Запросы от потенциальных партнёров и клиентов</p>
+      </div>
 
-      <div className="flex gap-2 mb-6">
-        {(["ALL", "UNREAD"] as const).map((f) => (
+      {/* ── Filter pills ── */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {(["ALL", "UNREAD", "READ"] as const).map((f) => (
           <button
             key={f}
+            type="button"
             onClick={() => setFilter(f)}
-            className={`px-3 py-2 rounded-lg text-xs transition-colors ${
-              filter === f
-                ? "bg-[#303030] text-white"
-                : "bg-gray-100 text-[#A1A1A1] hover:bg-gray-200"
+            className={`${ADMIN_PILL_BASE} ${
+              filter === f ? ADMIN_PILL_ACTIVE : ADMIN_PILL_INACTIVE
             }`}
           >
-            {f === "ALL" ? "Все" : "Непрочитанные"}
+            {f === "ALL" ? "Все" : f === "UNREAD" ? "Непрочитанные" : "Прочитанные"}
           </button>
         ))}
       </div>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
       {loading ? (
-        <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
-          Загрузка...
-        </div>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>Загрузка...</div>
       ) : requests.length === 0 ? (
-        <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>
           Заявок нет
         </div>
       ) : (
@@ -128,32 +143,36 @@ export default function AdminCooperationPage() {
           {requests.map((r) => (
             <div
               key={r.id}
-              className={`bg-white border rounded-xl p-4 ${
-                r.isRead ? "border-[#E5E5E5]" : "border-[#F8D62E] bg-[#F8D62E]/5"
+              className={`bg-white rounded-[20px] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 border transition-all ${
+                r.isRead ? "border-[#EFEFEF]" : "border-[#F8D62E] bg-[#FFFBE6]"
               }`}
             >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div>
-                  <h3 className="text-sm font-medium text-[#303030]">{r.name}</h3>
-                  <p className="text-xs text-[#A1A1A1] mt-0.5">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[15px] font-semibold text-[#1F1F1F]">{r.name}</h3>
+                  <p className="text-xs text-[#A1A1A1] mt-1">
                     {r.phone ? `Тел.: ${r.phone}` : ""}
                     {r.phone && r.email ? " · " : ""}
                     {r.email ? `Email: ${r.email}` : ""}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {!r.isRead && <Badge variant="yellow">Новая</Badge>}
+                <div className="flex items-center gap-2 shrink-0">
+                  {!r.isRead && <span className={statusBadgeClass("yellow")}>Новая</span>}
                   <span className="text-[11px] text-[#A1A1A1]">
                     {new Date(r.createdAt).toLocaleString("ru-RU")}
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-[#303030] whitespace-pre-line">{r.message}</p>
+              <p className="text-sm text-[#5E5E5E] whitespace-pre-line">{r.message}</p>
               {!r.isRead && (
-                <div className="mt-3">
-                  <Button size="sm" variant="outline" onClick={() => markRead(r.id)}>
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => markRead(r.id)}
+                    className={`${ADMIN_OUTLINE_BTN} h-[36px] px-4 text-xs`}
+                  >
                     Отметить прочитанной
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
@@ -161,7 +180,7 @@ export default function AdminCooperationPage() {
         </div>
       )}
 
-      <div className="mt-4">
+      <div className="mt-5">
         <Pagination
           currentPage={page}
           totalPages={Math.max(1, Math.ceil(total / LIMIT))}

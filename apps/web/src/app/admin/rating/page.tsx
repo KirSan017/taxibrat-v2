@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_INPUT,
+  ADMIN_OUTLINE_BTN,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PAGE_SUBTITLE,
+  ADMIN_PRIMARY_BTN,
+  ADMIN_SECTION_TITLE,
+  ADMIN_SELECT,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -74,7 +83,7 @@ const WEIGHT_LABEL: Record<WeightLevel, string> = {
 export default function AdminRatingPage() {
   const { user } = useAuth();
   const [weights, setWeights] = useState<Weight[]>([]);
-  const [config, setConfig] = useState<Config | null>(null);
+  const [, setConfig] = useState<Config | null>(null);
   const [revenue, setRevenue] = useState<Revenue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -218,7 +227,7 @@ export default function AdminRatingPage() {
   }
 
   return (
-    <div className="max-w-[900px]">
+    <div>
       <SuccessModal
         open={!!successMsg}
         onClose={() => setSuccessMsg("")}
@@ -226,24 +235,45 @@ export default function AdminRatingPage() {
         description={successMsg}
       />
 
-      <h1 className="text-xl font-medium text-[#303030] mb-6">Настройки рейтинга</h1>
+      {/* ── Page header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <div>
+          <p className="text-xs text-[#A1A1A1] uppercase tracking-wider font-medium">
+            Алгоритм
+          </p>
+          <h1 className={`${ADMIN_PAGE_TITLE} mt-2`}>Настройки рейтинга</h1>
+          <p className={ADMIN_PAGE_SUBTITLE}>
+            Коэффициенты, веса параметров и доходность классов
+          </p>
+        </div>
+        <button type="button" onClick={recalcAll} className={ADMIN_PRIMARY_BTN}>
+          Пересчитать рейтинги
+        </button>
+      </div>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-[#A1A1A1]">Загрузка...</p>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>Загрузка...</div>
       ) : (
-        <div className="space-y-6">
-          {/* Config */}
-          <section className="bg-white border border-[#E5E5E5] rounded-xl p-5">
-            <h2 className="text-sm font-medium text-[#303030] mb-2">Коэффициенты (должны в сумме давать 1.0)</h2>
+        <div className="space-y-5">
+          {/* ── Coefficients ── */}
+          <section className={`${ADMIN_CARD} p-5 md:p-6`}>
+            <div className="mb-4">
+              <h2 className={ADMIN_SECTION_TITLE}>Коэффициенты</h2>
+              <p className="text-xs text-[#A1A1A1] mt-1">
+                Сумма коэффициентов цены и параметров должна быть ровно 1.0
+              </p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-[#A1A1A1] mb-1">Коэфф. цены</label>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Коэфф. цены
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -251,11 +281,13 @@ export default function AdminRatingPage() {
                   max="1"
                   value={priceCoef}
                   onChange={(e) => setPriceCoef(e.target.value)}
-                  className="w-full h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+                  className={ADMIN_INPUT}
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#A1A1A1] mb-1">Коэфф. параметров</label>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Коэфф. параметров
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -263,15 +295,19 @@ export default function AdminRatingPage() {
                   max="1"
                   value={paramsCoef}
                   onChange={(e) => setParamsCoef(e.target.value)}
-                  className="w-full h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+                  className={ADMIN_INPUT}
                 />
               </div>
             </div>
 
-            <h3 className="text-xs text-[#A1A1A1] mt-5 mb-2">Комиссии Яндекс-агрегатора</h3>
+            <h3 className="text-sm font-semibold text-[#1F1F1F] mt-6 mb-4">
+              Комиссии Яндекс-агрегатора
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-[#A1A1A1] mb-1">Комиссия Яндекса (%)</label>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Комиссия Яндекса (%)
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -279,11 +315,13 @@ export default function AdminRatingPage() {
                   max="100"
                   value={yandexComm}
                   onChange={(e) => setYandexComm(e.target.value)}
-                  className="w-full h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+                  className={ADMIN_INPUT}
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#A1A1A1] mb-1">Комиссия Яндекса эконом (%)</label>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Комиссия Яндекса эконом (%)
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -291,56 +329,29 @@ export default function AdminRatingPage() {
                   max="100"
                   value={yandexCommEconomy}
                   onChange={(e) => setYandexCommEconomy(e.target.value)}
-                  className="w-full h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+                  className={ADMIN_INPUT}
                 />
               </div>
             </div>
-
-            <Button size="sm" className="mt-3" onClick={saveConfig}>Сохранить коэффициенты</Button>
-          </section>
-
-          {/* Weights */}
-          <section className="bg-white border border-[#E5E5E5] rounded-xl p-5">
-            <h2 className="text-sm font-medium text-[#303030] mb-3">Веса параметров (20 шт.)</h2>
-            <p className="text-[11px] text-[#A1A1A1] mb-3">
-              «Макс. промодней в классе» — вспомогательное значение, не учитывается в рейтинге.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {weights.filter((w) => w.paramName !== "maxPromoDaysInClass").map((w) => (
-                <div
-                  key={w.paramName}
-                  className="flex items-center justify-between gap-3 border border-[#E5E5E5] rounded-lg px-3 py-2"
-                >
-                  <span className="text-xs text-[#303030]">
-                    {PARAM_LABELS[w.paramName] || w.paramName}
-                  </span>
-                  <select
-                    value={weightEdits[w.paramName] || w.weight}
-                    onChange={(e) =>
-                      setWeightEdits((prev) => ({
-                        ...prev,
-                        [w.paramName]: e.target.value as WeightLevel,
-                      }))
-                    }
-                    className="h-[32px] px-2 border border-[#E5E5E5] rounded-lg text-xs bg-white"
-                  >
-                    {WEIGHT_OPTIONS.map((o) => (
-                      <option key={o} value={o}>{WEIGHT_LABEL[o]}</option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+            <div className="mt-5">
+              <button type="button" onClick={saveConfig} className={ADMIN_OUTLINE_BTN}>
+                Сохранить коэффициенты
+              </button>
             </div>
-            <Button size="sm" className="mt-3" onClick={saveWeights}>Сохранить веса</Button>
           </section>
 
-          {/* Revenue */}
-          <section className="bg-white border border-[#E5E5E5] rounded-xl p-5">
-            <h2 className="text-sm font-medium text-[#303030] mb-3">Доходность по классам (₽/день)</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* ── Revenue ── */}
+          <section className={`${ADMIN_CARD} p-5 md:p-6`}>
+            <div className="mb-4">
+              <h2 className={ADMIN_SECTION_TITLE}>Доходность по классам</h2>
+              <p className="text-xs text-[#A1A1A1] mt-1">
+                Средний дневной заработок по тарифам, ₽/день
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {revenue.map((r) => (
                 <div key={r.driverClass}>
-                  <label className="block text-xs text-[#A1A1A1] mb-1">
+                  <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
                     {CLASS_LABELS[r.driverClass] || r.driverClass}
                   </label>
                   <input
@@ -353,22 +364,61 @@ export default function AdminRatingPage() {
                         [r.driverClass]: Number(e.target.value),
                       }))
                     }
-                    className="w-full h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+                    className={ADMIN_INPUT}
                   />
                 </div>
               ))}
             </div>
-            <Button size="sm" className="mt-3" onClick={saveRevenue}>Сохранить доходность</Button>
+            <div className="mt-5">
+              <button type="button" onClick={saveRevenue} className={ADMIN_OUTLINE_BTN}>
+                Сохранить доходность
+              </button>
+            </div>
           </section>
 
-          {/* Recalculate */}
-          <section className="bg-white border border-[#E5E5E5] rounded-xl p-5">
-            <h2 className="text-sm font-medium text-[#303030] mb-2">Пересчёт рейтингов</h2>
-            <p className="text-xs text-[#A1A1A1] mb-3">
-              Рейтинги пересчитываются автоматически при изменении настроек. Кнопка ниже
-              принудительно запускает полный пересчёт.
-            </p>
-            <Button size="sm" onClick={recalcAll}>Пересчитать все рейтинги</Button>
+          {/* ── Weights ── */}
+          <section className={`${ADMIN_CARD} p-5 md:p-6`}>
+            <div className="mb-4">
+              <h2 className={ADMIN_SECTION_TITLE}>Веса параметров</h2>
+              <p className="text-xs text-[#A1A1A1] mt-1">
+                Влияние каждого параметра на итоговый рейтинг класса
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {weights
+                .filter((w) => w.paramName !== "maxPromoDaysInClass")
+                .map((w) => (
+                  <div
+                    key={w.paramName}
+                    className="flex items-center justify-between gap-3 border border-[#EFEFEF] rounded-[12px] px-4 py-2.5 hover:border-[#E5E5E5] transition-colors"
+                  >
+                    <span className="text-sm text-[#1F1F1F] truncate">
+                      {PARAM_LABELS[w.paramName] || w.paramName}
+                    </span>
+                    <select
+                      value={weightEdits[w.paramName] || w.weight}
+                      onChange={(e) =>
+                        setWeightEdits((prev) => ({
+                          ...prev,
+                          [w.paramName]: e.target.value as WeightLevel,
+                        }))
+                      }
+                      className={`${ADMIN_SELECT} h-[36px] w-[130px] text-xs`}
+                    >
+                      {WEIGHT_OPTIONS.map((o) => (
+                        <option key={o} value={o}>
+                          {WEIGHT_LABEL[o]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+            </div>
+            <div className="mt-5">
+              <button type="button" onClick={saveWeights} className={ADMIN_OUTLINE_BTN}>
+                Сохранить веса
+              </button>
+            </div>
           </section>
         </div>
       )}

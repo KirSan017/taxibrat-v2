@@ -3,14 +3,22 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_INPUT,
+  ADMIN_OUTLINE_BTN,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PRIMARY_BTN,
+  ADMIN_SECTION_TITLE,
+  ADMIN_SELECT,
+  ADMIN_TEXTAREA,
+  statusBadgeClass,
+} from "@/components/admin/admin-styles";
 
 interface Buyout {
   id: string;
@@ -31,11 +39,34 @@ interface Buyout {
   createdAt: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
-  DRAFT: { label: "Черновик", variant: "gray" },
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: "yellow" | "grey" | "green" | "red" | "blue" }
+> = {
+  DRAFT: { label: "Черновик", variant: "grey" },
   PENDING_REVIEW: { label: "На проверке", variant: "yellow" },
   ACTIVE: { label: "Активно", variant: "green" },
-  ARCHIVED: { label: "Архив", variant: "red" },
+  ARCHIVED: { label: "Архив", variant: "grey" },
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  title: "Название",
+  price: "Цена",
+  brandName: "Марка",
+  modelName: "Модель",
+  year: "Год выпуска",
+  mileage: "Пробег",
+  vin7: "VIN (7 симв.)",
+  description: "Описание",
+  ownerType: "Тип владельца",
+  ownerName: "Владелец",
+  ownerPhone: "Телефон владельца",
+  ownerContact: "Доп. контакт",
+  ownerAddress: "Адрес",
+  status: "Статус",
+  createdAt: "Создано",
+  updatedAt: "Обновлено",
+  isAdvertised: "Реклама",
 };
 
 export default function AdminBuyoutDetailPage() {
@@ -70,9 +101,7 @@ export default function AdminBuyoutDetailPage() {
 
   const canModerate = user?.role === "ADMIN" || user?.role === "SUPER_MANAGER";
   const canEdit =
-    user?.role === "ADMIN" ||
-    user?.role === "SUPER_MANAGER" ||
-    user?.role === "MANAGER";
+    user?.role === "ADMIN" || user?.role === "SUPER_MANAGER" || user?.role === "MANAGER";
 
   const load = () => {
     if (!id || !user) return;
@@ -114,7 +143,6 @@ export default function AdminBuyoutDetailPage() {
     if (!token) return;
     setApproveSaving(true);
     try {
-      // Save owner fields first via PATCH
       await api(`/admin/buyout/${id}`, {
         method: "PATCH",
         token,
@@ -152,11 +180,7 @@ export default function AdminBuyoutDetailPage() {
         ownerPhone: editForm.ownerPhone || undefined,
       };
       if (editForm.price) body.price = Number(editForm.price);
-      await api(`/admin/buyout/${id}`, {
-        method: "PATCH",
-        token,
-        body,
-      });
+      await api(`/admin/buyout/${id}`, { method: "PATCH", token, body });
       setEditOpen(false);
       setSuccessMsg("Объявление сохранено");
       load();
@@ -184,24 +208,29 @@ export default function AdminBuyoutDetailPage() {
     }
   };
 
-  if (loading && !item) return <div className="text-sm text-[#A1A1A1]">Загрузка...</div>;
+  if (loading && !item) {
+    return <div className="text-sm text-[#A1A1A1]">Загрузка...</div>;
+  }
 
   if (error && !item) {
     return (
       <div>
         <p className="text-sm text-[#FA6868]">{error}</p>
-        <Link href="/admin/buyout" className="text-xs text-[#303030] underline mt-2 inline-block">К списку</Link>
+        <Link href="/admin/buyout" className="text-xs text-[#1F1F1F] underline mt-2 inline-block">
+          К списку
+        </Link>
       </div>
     );
   }
 
   if (!item) return null;
 
-  const status = STATUS_CONFIG[item.status] || { label: item.status, variant: "gray" as const };
-  const title = item.title || `${item.brandName || ""} ${item.modelName || ""}`.trim() || "Без названия";
+  const status = STATUS_CONFIG[item.status] || { label: item.status, variant: "grey" as const };
+  const title =
+    item.title || `${item.brandName || ""} ${item.modelName || ""}`.trim() || "Без названия";
 
   return (
-    <div className="max-w-[900px]">
+    <div className="max-w-[1100px]">
       <RejectModal
         open={rejectOpen}
         onClose={() => setRejectOpen(false)}
@@ -215,150 +244,215 @@ export default function AdminBuyoutDetailPage() {
         description={successMsg}
       />
 
-      <Link href="/admin/buyout" className="text-xs text-[#A1A1A1] inline-flex items-center gap-1 hover:text-[#303030]">
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <Link
+        href="/admin/buyout"
+        className="inline-flex items-center gap-1.5 text-xs text-[#A1A1A1] hover:text-[#1F1F1F] transition-colors mb-4"
+      >
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
         К списку
       </Link>
 
-      <div className="flex items-start justify-between gap-3 mt-2 mb-6">
-        <div>
-          <h1 className="text-2xl font-medium text-[#303030]">{title}</h1>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant={status.variant}>{status.label}</Badge>
-            {item.price != null && (
-              <span className="text-sm text-[#303030]">{item.price.toLocaleString("ru-RU")} ₽</span>
+      {/* ── Header ── */}
+      <div className={`${ADMIN_CARD} p-6 mb-5`}>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className={ADMIN_PAGE_TITLE}>{title}</h1>
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <span className={statusBadgeClass(status.variant)}>{status.label}</span>
+              {item.price != null && (
+                <span className="text-lg font-semibold text-[#1F1F1F]">
+                  {item.price.toLocaleString("ru-RU")} ₽
+                </span>
+              )}
+              <span className="text-xs text-[#A1A1A1]">
+                Создано {new Date(item.createdAt).toLocaleDateString("ru-RU")}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-2 flex-wrap shrink-0">
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => setEditOpen(true)}
+                className={`${ADMIN_OUTLINE_BTN} h-[40px]`}
+              >
+                Редактировать
+              </button>
+            )}
+            {canModerate && item.status === "PENDING_REVIEW" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setApproveOpen(true)}
+                  className="inline-flex items-center justify-center h-[40px] px-4 rounded-[10px] bg-[#3BB560] text-white text-sm font-medium hover:bg-[#2FA350] transition-colors"
+                >
+                  Одобрить
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRejectOpen(true)}
+                  className="inline-flex items-center justify-center h-[40px] px-4 rounded-[10px] border border-[#FA6868] text-[#FA6868] text-sm font-medium hover:bg-[#FA6868] hover:text-white transition-colors"
+                >
+                  Отклонить
+                </button>
+              </>
             )}
           </div>
-        </div>
-
-        <div className="flex gap-2 flex-wrap">
-          {canEdit && (
-            <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
-              Редактировать
-            </Button>
-          )}
-          {canModerate && item.status === "PENDING_REVIEW" && (
-            <>
-              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setApproveOpen(true)}>
-                Одобрить
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-[#FA6868] text-[#FA6868]"
-                onClick={() => setRejectOpen(true)}
-              >
-                Отклонить
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
       {item.rejectionReason && item.status === "DRAFT" && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
-          <p className="text-xs font-medium text-[#FA6868] mb-1">Причина отказа</p>
-          <p className="text-sm text-[#303030]">{item.rejectionReason}</p>
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-5">
+          <p className="text-[10px] text-[#FA6868] uppercase tracking-wider font-semibold mb-1">
+            Причина отказа
+          </p>
+          <p className="text-sm text-[#1F1F1F]">{item.rejectionReason}</p>
         </div>
       )}
 
-      <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
-        <h2 className="text-sm font-medium text-[#303030] mb-4">Данные объявления</h2>
-        <div className="space-y-3 text-sm">
+      {/* ── Details ── */}
+      <section className={`${ADMIN_CARD} p-5 md:p-6`}>
+        <h2 className={`${ADMIN_SECTION_TITLE} mb-5`}>Данные объявления</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
           {Object.entries(item).map(([k, v]) => {
             if (v == null || typeof v === "object") return null;
+            if (k === "id") return null;
+            const label = FIELD_LABELS[k] || k;
             return (
-              <div key={k} className="flex justify-between border-b border-[#E5E5E5] pb-2">
-                <span className="text-[#A1A1A1]">{k}</span>
-                <span className="text-[#303030]">{String(v)}</span>
+              <div
+                key={k}
+                className="border-b border-[#F2F2F2] pb-3 last:border-0"
+              >
+                <p className="text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider">
+                  {label}
+                </p>
+                <p className="text-sm text-[#1F1F1F] mt-1 break-all">{String(v)}</p>
               </div>
             );
           })}
         </div>
       </section>
 
-      {/* Approve modal with owner fields */}
+      {/* Approve modal */}
       {approveOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/30" onClick={() => !approveSaving && setApproveOpen(false)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-[520px]">
-            <h3 className="text-lg font-medium text-[#303030] mb-2">Одобрение объявления</h3>
-            <p className="text-xs text-[#A1A1A1] mb-4">Заполните контактные данные владельца перед одобрением.</p>
-            <div className="space-y-3">
-              <Input
-                label="ФИО/название"
-                value={ownerForm.ownerName}
-                onChange={(e) => setOwnerForm((p) => ({ ...p, ownerName: e.target.value }))}
-              />
-              <Input
-                label="Телефон"
-                value={ownerForm.ownerPhone}
-                onChange={(e) => setOwnerForm((p) => ({ ...p, ownerPhone: e.target.value }))}
-              />
-              <Input
-                label="Контакт (доп.)"
-                value={ownerForm.ownerContact}
-                onChange={(e) => setOwnerForm((p) => ({ ...p, ownerContact: e.target.value }))}
-              />
-              <Input
-                label="Адрес"
-                value={ownerForm.ownerAddress}
-                onChange={(e) => setOwnerForm((p) => ({ ...p, ownerAddress: e.target.value }))}
-              />
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !approveSaving && setApproveOpen(false)}
+          />
+          <div className="relative bg-white rounded-[20px] p-6 md:p-8 w-full max-w-[520px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+            <h3 className="text-[18px] font-semibold text-[#1F1F1F] mb-2">
+              Одобрение объявления
+            </h3>
+            <p className="text-xs text-[#A1A1A1] mb-5">
+              Заполните контактные данные владельца перед одобрением.
+            </p>
+            <div className="space-y-4">
+              {[
+                { key: "ownerName", label: "ФИО / название" },
+                { key: "ownerPhone", label: "Телефон" },
+                { key: "ownerContact", label: "Контакт (доп.)" },
+                { key: "ownerAddress", label: "Адрес" },
+              ].map((f) => (
+                <div key={f.key}>
+                  <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                    {f.label}
+                  </label>
+                  <input
+                    value={ownerForm[f.key as keyof typeof ownerForm]}
+                    onChange={(e) =>
+                      setOwnerForm((p) => ({ ...p, [f.key]: e.target.value }))
+                    }
+                    className={ADMIN_INPUT}
+                  />
+                </div>
+              ))}
             </div>
-            <div className="flex gap-2 mt-5">
-              <Button variant="outline" className="flex-1" onClick={() => setApproveOpen(false)} disabled={approveSaving}>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setApproveOpen(false)}
+                disabled={approveSaving}
+                className={`${ADMIN_OUTLINE_BTN} flex-1`}
+              >
                 Отмена
-              </Button>
-              <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={handleApproveSubmit} disabled={approveSaving}>
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveSubmit}
+                disabled={approveSaving}
+                className="flex-1 inline-flex items-center justify-center h-[44px] px-6 rounded-[10px] bg-[#3BB560] text-white text-sm font-medium hover:bg-[#2FA350] transition-colors disabled:opacity-50"
+              >
                 {approveSaving ? "Сохранение..." : "Одобрить"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit modal with full form */}
+      {/* Edit modal */}
       {editOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/30" onClick={() => !editSaving && setEditOpen(false)} />
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-[640px] max-h-[85vh] overflow-y-auto">
-            <h3 className="text-lg font-medium text-[#303030] mb-4">Редактировать объявление</h3>
-            <div className="space-y-3">
-              <Input
-                label="Название"
-                value={editForm.title}
-                onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-              />
-              <Input
-                label="Цена, ₽"
-                type="number"
-                value={editForm.price}
-                onChange={(e) => setEditForm((p) => ({ ...p, price: e.target.value }))}
-              />
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !editSaving && setEditOpen(false)}
+          />
+          <div className="relative bg-white rounded-[20px] p-6 md:p-8 w-full max-w-[640px] max-h-[85vh] overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+            <h3 className="text-[18px] font-semibold text-[#1F1F1F] mb-5">
+              Редактировать объявление
+            </h3>
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#303030] mb-1.5">Описание</label>
-                <textarea
-                  rows={4}
-                  value={editForm.description}
-                  onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                  className="w-full px-4 py-3 border border-[#E5E5E5] rounded-lg text-sm outline-none focus:border-[#303030] resize-none"
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Название
+                </label>
+                <input
+                  value={editForm.title}
+                  onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                  className={ADMIN_INPUT}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#303030] mb-1.5">Тип владельца</label>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Цена, ₽
+                </label>
+                <input
+                  type="number"
+                  value={editForm.price}
+                  onChange={(e) => setEditForm((p) => ({ ...p, price: e.target.value }))}
+                  className={ADMIN_INPUT}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Описание
+                </label>
+                <textarea
+                  rows={4}
+                  value={editForm.description}
+                  onChange={(e) =>
+                    setEditForm((p) => ({ ...p, description: e.target.value }))
+                  }
+                  className={ADMIN_TEXTAREA}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Тип владельца
+                </label>
                 <select
                   value={editForm.ownerType}
                   onChange={(e) => setEditForm((p) => ({ ...p, ownerType: e.target.value }))}
-                  className="w-full h-[49px] px-4 border border-[#E5E5E5] rounded-lg text-sm bg-white"
+                  className={ADMIN_SELECT}
                 >
                   <option value="">—</option>
                   <option value="INDIVIDUAL">Физ лицо</option>
@@ -367,34 +461,43 @@ export default function AdminBuyoutDetailPage() {
                   <option value="BANK">Банк</option>
                 </select>
               </div>
-              <Input
-                label="Владелец: ФИО/название"
-                value={editForm.ownerName}
-                onChange={(e) => setEditForm((p) => ({ ...p, ownerName: e.target.value }))}
-              />
-              <Input
-                label="Владелец: телефон"
-                value={editForm.ownerPhone}
-                onChange={(e) => setEditForm((p) => ({ ...p, ownerPhone: e.target.value }))}
-              />
-              <Input
-                label="Владелец: доп. контакт"
-                value={editForm.ownerContact}
-                onChange={(e) => setEditForm((p) => ({ ...p, ownerContact: e.target.value }))}
-              />
-              <Input
-                label="Владелец: адрес"
-                value={editForm.ownerAddress}
-                onChange={(e) => setEditForm((p) => ({ ...p, ownerAddress: e.target.value }))}
-              />
+              {[
+                { key: "ownerName", label: "Владелец: ФИО / название" },
+                { key: "ownerPhone", label: "Владелец: телефон" },
+                { key: "ownerContact", label: "Владелец: доп. контакт" },
+                { key: "ownerAddress", label: "Владелец: адрес" },
+              ].map((f) => (
+                <div key={f.key}>
+                  <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                    {f.label}
+                  </label>
+                  <input
+                    value={editForm[f.key as keyof typeof editForm] as string}
+                    onChange={(e) =>
+                      setEditForm((p) => ({ ...p, [f.key]: e.target.value }))
+                    }
+                    className={ADMIN_INPUT}
+                  />
+                </div>
+              ))}
             </div>
-            <div className="flex gap-2 mt-5">
-              <Button variant="outline" className="flex-1" onClick={() => setEditOpen(false)} disabled={editSaving}>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                disabled={editSaving}
+                className={`${ADMIN_OUTLINE_BTN} flex-1`}
+              >
                 Отмена
-              </Button>
-              <Button className="flex-1" onClick={handleEditSubmit} disabled={editSaving}>
+              </button>
+              <button
+                type="button"
+                onClick={handleEditSubmit}
+                disabled={editSaving}
+                className={`${ADMIN_PRIMARY_BTN} flex-1`}
+              >
                 {editSaving ? "Сохранение..." : "Сохранить"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

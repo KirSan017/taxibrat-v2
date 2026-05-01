@@ -3,15 +3,23 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { AddressInput } from "@/components/ui/address-input";
-import { Badge } from "@/components/ui/badge";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_INPUT,
+  ADMIN_OUTLINE_BTN,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PRIMARY_BTN,
+  ADMIN_SECTION_TITLE,
+  ADMIN_SELECT,
+  ADMIN_TEXTAREA,
+  statusBadgeClass,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -34,7 +42,6 @@ interface ParkClass {
   id: string;
   driverClass: string;
   name?: string | null;
-  // 18 parameters from schema
   parkCommission?: string | number | null;
   withdrawalCommission?: string | number | null;
   transferCommission?: string | number | null;
@@ -77,11 +84,14 @@ interface Vehicle {
   modelName?: string | null;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "gray" | "green" | "red" | "yellow" }> = {
-  DRAFT: { label: "Черновик", variant: "gray" },
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: "grey" | "green" | "red" | "yellow" | "blue" }
+> = {
+  DRAFT: { label: "Черновик", variant: "grey" },
   PENDING_REVIEW: { label: "На проверке СМ", variant: "yellow" },
   ACTIVE: { label: "Активен", variant: "green" },
-  ARCHIVED: { label: "Архив", variant: "red" },
+  ARCHIVED: { label: "Архив", variant: "grey" },
 };
 
 /* ── page ─────────────────────────────────────────────── */
@@ -140,7 +150,10 @@ export default function AdminParkEditPage() {
         const vehiclesMap: Record<string, Vehicle[]> = {};
         for (const cls of classesData || []) {
           try {
-            const vs = await api<Vehicle[]>(`/admin/parks/${parkId}/classes/${cls.id}/vehicles`, { token });
+            const vs = await api<Vehicle[]>(
+              `/admin/parks/${parkId}/classes/${cls.id}/vehicles`,
+              { token },
+            );
             vehiclesMap[cls.id] = Array.isArray(vs) ? vs : [];
           } catch {
             vehiclesMap[cls.id] = [];
@@ -247,7 +260,7 @@ export default function AdminParkEditPage() {
     return (
       <div>
         <p className="text-sm text-[#FA6868]">{error}</p>
-        <Link href="/admin/parks" className="text-xs text-[#303030] underline mt-2 inline-block">
+        <Link href="/admin/parks" className="text-xs text-[#1F1F1F] underline mt-2 inline-block">
           К списку таксопарков
         </Link>
       </div>
@@ -256,12 +269,12 @@ export default function AdminParkEditPage() {
 
   if (!park) return null;
 
-  const status = STATUS_CONFIG[park.status] || { label: park.status, variant: "gray" as const };
+  const status = STATUS_CONFIG[park.status] || { label: park.status, variant: "grey" as const };
   const isManager = user?.role === "MANAGER";
   const isSmOrAdmin = user?.role === "ADMIN" || user?.role === "SUPER_MANAGER";
 
   return (
-    <div className="max-w-[900px]">
+    <div className="max-w-[1100px]">
       <RejectModal
         open={rejectOpen}
         onClose={() => setRejectOpen(false)}
@@ -276,134 +289,196 @@ export default function AdminParkEditPage() {
         description={successMsg}
       />
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-6">
-        <div>
-          <Link href="/admin/parks" className="text-xs text-[#A1A1A1] inline-flex items-center gap-1 hover:text-[#303030]">
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            К списку
-          </Link>
-          <h1 className="text-2xl font-medium text-[#303030] mt-1">{park.name}</h1>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant={status.variant}>{status.label}</Badge>
-            {park.isAdvertised && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#F8D62E] text-[#303030]">
-                Реклама
-              </span>
+      <Link
+        href="/admin/parks"
+        className="inline-flex items-center gap-1.5 text-xs text-[#A1A1A1] hover:text-[#1F1F1F] transition-colors mb-4"
+      >
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        К списку таксопарков
+      </Link>
+
+      {/* ── Header ── */}
+      <div className={`${ADMIN_CARD} p-6 mb-5`}>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className={ADMIN_PAGE_TITLE}>{park.name}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className={statusBadgeClass(status.variant)}>{status.label}</span>
+              {park.isAdvertised && (
+                <span className="inline-flex items-center px-2.5 h-[26px] rounded-full text-[11px] font-semibold bg-[#F8D62E] text-[#1F1F1F]">
+                  Реклама
+                </span>
+              )}
+              {park.rating != null && (
+                <span className="text-xs text-[#A1A1A1]">
+                  Рейтинг: <span className="text-[#1F1F1F] font-medium">{park.rating}</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-2 flex-wrap shrink-0">
+            {isManager && park.status === "DRAFT" && (
+              <button
+                type="button"
+                onClick={handleSubmitForReview}
+                className={ADMIN_PRIMARY_BTN}
+              >
+                Отправить на проверку СМ
+              </button>
+            )}
+            {isSmOrAdmin && park.status === "PENDING_REVIEW" && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleApprove}
+                  className="inline-flex items-center justify-center h-[44px] px-6 rounded-[10px] bg-[#3BB560] text-white text-sm font-medium hover:bg-[#2FA350] transition-colors"
+                >
+                  Одобрить
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRejectOpen(true)}
+                  className="inline-flex items-center justify-center h-[44px] px-6 rounded-[10px] border border-[#FA6868] text-[#FA6868] text-sm font-medium hover:bg-[#FA6868] hover:text-white transition-colors"
+                >
+                  Отклонить
+                </button>
+              </>
             )}
           </div>
-        </div>
-
-        <div className="flex gap-2 flex-wrap">
-          {isManager && park.status === "DRAFT" && (
-            <Button size="sm" onClick={handleSubmitForReview}>
-              Отправить на проверку СМ
-            </Button>
-          )}
-          {isSmOrAdmin && park.status === "PENDING_REVIEW" && (
-            <>
-              <Button
-                size="sm"
-                className="bg-green-600 hover:bg-green-700"
-                onClick={handleApprove}
-              >
-                Одобрить
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-[#FA6868] text-[#FA6868]"
-                onClick={() => setRejectOpen(true)}
-              >
-                Отклонить
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
-      {/* Basic info */}
-      <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mb-4">
-        <h2 className="text-sm font-medium text-[#303030] mb-4">Основные данные</h2>
+      {/* ── Basic info ── */}
+      <section className={`${ADMIN_CARD} p-5 md:p-6 mb-5`}>
+        <h2 className={`${ADMIN_SECTION_TITLE} mb-5`}>Основные данные</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Название*"
-            value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-          />
-          <Input
-            label="Город"
-            value={form.city}
-            onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
-          />
-          <AddressInput
-            label="Адрес"
-            value={form.address}
-            onChange={(v) => setForm((p) => ({ ...p, address: v }))}
-          />
-          <Input
-            label="Часы работы"
-            value={form.workingHours}
-            onChange={(e) => setForm((p) => ({ ...p, workingHours: e.target.value }))}
-          />
-          <Input
-            label="Телефон"
-            value={form.phone}
-            onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-          />
-          <Input
-            label="Email"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-          />
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              Название*
+            </label>
+            <input
+              value={form.name}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+              className={ADMIN_INPUT}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              Город
+            </label>
+            <input
+              value={form.city}
+              onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
+              className={ADMIN_INPUT}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              Адрес
+            </label>
+            <AddressInput
+              value={form.address}
+              onChange={(v) => setForm((p) => ({ ...p, address: v }))}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              Часы работы
+            </label>
+            <input
+              value={form.workingHours}
+              onChange={(e) => setForm((p) => ({ ...p, workingHours: e.target.value }))}
+              className={ADMIN_INPUT}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              Телефон
+            </label>
+            <input
+              value={form.phone}
+              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+              className={ADMIN_INPUT}
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+              Email
+            </label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+              className={ADMIN_INPUT}
+            />
+          </div>
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium text-[#303030] mb-1.5">Описание</label>
+          <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+            Описание
+          </label>
           <textarea
             rows={4}
             value={form.description}
             onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-            className="w-full px-4 py-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] outline-none focus:border-[#303030] resize-none transition-colors"
+            className={ADMIN_TEXTAREA}
           />
         </div>
 
         {user?.role === "ADMIN" && (
-          <label className="flex items-center gap-2 mt-4">
-            <input
-              type="checkbox"
-              checked={form.isAdvertised}
-              onChange={(e) => setForm((p) => ({ ...p, isAdvertised: e.target.checked }))}
-            />
-            <span className="text-sm text-[#303030]">Рекламный парк</span>
+          <label className="flex items-center justify-between gap-2 mt-5 py-3 border-t border-[#F2F2F2] cursor-pointer">
+            <span className="text-sm font-medium text-[#1F1F1F]">Рекламный парк</span>
+            <button
+              type="button"
+              onClick={() => setForm((p) => ({ ...p, isAdvertised: !p.isAdvertised }))}
+              className={`relative inline-flex items-center h-7 w-12 rounded-full transition-colors ${
+                form.isAdvertised ? "bg-[#F8D62E]" : "bg-[#E5E5E5]"
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transform transition ${
+                  form.isAdvertised ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
           </label>
         )}
 
-        <div className="flex gap-2 mt-6">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Сохранение..." : "Сохранить"}
-          </Button>
-          <Button variant="outline" onClick={() => router.push("/admin/parks")}>
+        <div className="flex gap-3 mt-6">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className={ADMIN_PRIMARY_BTN}
+          >
+            {saving ? "Сохранение..." : "Сохранить изменения"}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/admin/parks")}
+            className={ADMIN_OUTLINE_BTN}
+          >
             Отмена
-          </Button>
+          </button>
         </div>
       </section>
 
-      {/* Classes */}
-      <section className="bg-white border border-[#E5E5E5] rounded-xl p-6">
-        <h2 className="text-sm font-medium text-[#303030] mb-4">Классы и параметры</h2>
+      {/* ── Classes ── */}
+      <section className={`${ADMIN_CARD} p-5 md:p-6`}>
+        <h2 className={`${ADMIN_SECTION_TITLE} mb-5`}>Классы и параметры</h2>
         {classes.length === 0 ? (
-          <p className="text-sm text-[#A1A1A1]">У парка пока нет классов</p>
+          <p className="text-sm text-[#A1A1A1] py-6 text-center">У парка пока нет классов</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {classes.map((cls) => (
               <ClassAccordion
                 key={cls.id}
@@ -503,6 +578,7 @@ function ClassAccordion({
   const initial: Record<string, string> = {};
   PARAM_SECTIONS.forEach((s) =>
     s.fields.forEach((f) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const v = (cls as any)[f.key];
       initial[f.key] = v != null ? String(v) : "";
     }),
@@ -546,18 +622,24 @@ function ClassAccordion({
   const renderField = (field: (typeof PARAM_SECTIONS)[0]["fields"][0]) => {
     const v = values[field.key] ?? "";
 
-    if (field.type === "select1to5" || field.type === "select1to6" || field.type === "select1to3") {
+    if (
+      field.type === "select1to5" ||
+      field.type === "select1to6" ||
+      field.type === "select1to3"
+    ) {
       const max = field.type === "select1to6" ? 6 : field.type === "select1to3" ? 3 : 5;
       const opts = Array.from({ length: max }, (_, i) => i + 1);
       return (
         <select
           value={v}
           onChange={(e) => update(field.key, e.target.value)}
-          className="w-full h-[38px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
+          className={`${ADMIN_SELECT} h-[40px]`}
         >
           <option value="">—</option>
           {opts.map((n) => (
-            <option key={n} value={n}>{n}</option>
+            <option key={n} value={n}>
+              {n}
+            </option>
           ))}
         </select>
       );
@@ -569,20 +651,20 @@ function ClassAccordion({
         step={field.type === "decimal" ? "0.01" : "1"}
         value={v}
         onChange={(e) => update(field.key, e.target.value)}
-        className="w-full h-[38px] px-3 border border-[#E5E5E5] rounded-lg text-sm"
+        className={`${ADMIN_INPUT} h-[40px]`}
       />
     );
   };
 
   return (
-    <div className="border border-[#E5E5E5] rounded-xl">
+    <div className="border border-[#EFEFEF] rounded-[16px] overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#FAFAFA] transition-colors"
       >
         <div>
-          <h3 className="text-sm font-medium text-[#303030]">
+          <h3 className="text-sm font-semibold text-[#1F1F1F]">
             {cls.name || CLASS_LABELS[cls.driverClass] || cls.driverClass}
           </h3>
           <p className="text-[11px] text-[#A1A1A1] mt-0.5">
@@ -601,27 +683,29 @@ function ClassAccordion({
       </button>
 
       {open && (
-        <div className="px-4 pb-4 border-t border-[#E5E5E5] pt-4">
+        <div className="px-5 pb-5 border-t border-[#F2F2F2] pt-5">
           {err && (
-            <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-lg px-3 py-2 mb-3">
+            <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[10px] px-3 py-2 mb-3">
               <p className="text-xs text-[#FA6868]">{err}</p>
             </div>
           )}
           {ok && (
-            <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3">
-              <p className="text-xs text-green-700">Сохранено</p>
+            <div className="bg-[#E8F7EE] border border-[#3BB560]/30 rounded-[10px] px-3 py-2 mb-3">
+              <p className="text-xs text-[#3BB560]">Сохранено</p>
             </div>
           )}
 
           {PARAM_SECTIONS.map((section) => (
-            <div key={section.title} className="mb-4">
-              <h4 className="text-xs font-medium text-[#A1A1A1] uppercase tracking-wider mb-2">
+            <div key={section.title} className="mb-5">
+              <h4 className="text-[11px] font-semibold text-[#A1A1A1] uppercase tracking-wider mb-3">
                 {section.title}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {section.fields.map((f) => (
                   <div key={f.key}>
-                    <label className="block text-xs text-[#303030] mb-1">{f.label}</label>
+                    <label className="block text-xs text-[#1F1F1F] mb-1.5">
+                      {f.label}
+                    </label>
                     {renderField(f)}
                   </div>
                 ))}
@@ -630,23 +714,31 @@ function ClassAccordion({
           ))}
 
           <div className="flex gap-2 pt-2">
-            <Button size="sm" onClick={save} disabled={saving}>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className={`${ADMIN_PRIMARY_BTN} h-[40px]`}
+            >
               {saving ? "Сохранение..." : "Сохранить параметры"}
-            </Button>
+            </button>
           </div>
 
           {/* Vehicles */}
-          <div className="mt-5 pt-5 border-t border-[#E5E5E5]">
-            <h4 className="text-xs font-medium text-[#A1A1A1] uppercase tracking-wider mb-2">
+          <div className="mt-6 pt-5 border-t border-[#F2F2F2]">
+            <h4 className="text-[11px] font-semibold text-[#A1A1A1] uppercase tracking-wider mb-3">
               Автомобили ({vehicles.length})
             </h4>
             {vehicles.length === 0 ? (
               <p className="text-xs text-[#A1A1A1]">Нет автомобилей</p>
             ) : (
-              <ul className="space-y-1">
+              <ul className="space-y-1.5">
                 {vehicles.map((v) => (
-                  <li key={v.id} className="text-xs text-[#303030]">
-                    {v.brandName} {v.modelName} · {v.year} · {v.licensePlate || "—"}
+                  <li key={v.id} className="text-sm text-[#1F1F1F]">
+                    <span className="font-medium">
+                      {v.brandName} {v.modelName}
+                    </span>
+                    <span className="text-[#A1A1A1]"> · {v.year} · {v.licensePlate || "—"}</span>
                   </li>
                 ))}
               </ul>

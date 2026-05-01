@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_OUTLINE_BTN,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PAGE_SUBTITLE,
+  statusBadgeClass,
+  statusDotClass,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -32,23 +38,22 @@ interface FeatureStatus {
   activeOrders?: number;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: "yellow" | "grey" | "green" | "red" | "blue" }
+> = {
   PENDING: { label: "Назначен", variant: "yellow" },
   ORDERED: { label: "Заказан", variant: "green" },
   BANNED: { label: "Упс, бан", variant: "red" },
   CANCEL_REQUESTED: { label: "Запрос отмены", variant: "yellow" },
-  CANCELLED: { label: "Отменён", variant: "gray" },
-  EXPIRED: { label: "Истёк", variant: "gray" },
+  CANCELLED: { label: "Отменён", variant: "grey" },
+  EXPIRED: { label: "Истёк", variant: "grey" },
 };
 
 function minutesSince(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
 }
 
-/**
- * SLA countdown: visual elapsed since order was assigned.
- * Turns orange at 2 min, red at 3+ min.
- */
 function ElapsedTime({ assignedAt }: { assignedAt: string }) {
   const [elapsed, setElapsed] = useState(0);
 
@@ -63,15 +68,11 @@ function ElapsedTime({ assignedAt }: { assignedAt: string }) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   const color =
-    minutes >= 3
-      ? "text-[#FA6868]"
-      : minutes >= 2
-        ? "text-orange-500"
-        : "text-[#303030]";
+    minutes >= 3 ? "text-[#FA6868]" : minutes >= 2 ? "text-[#F59E0B]" : "text-[#1F1F1F]";
 
   return (
     <span
-      className={`font-mono text-sm font-medium tabular-nums ${color}`}
+      className={`font-mono text-sm font-semibold tabular-nums ${color}`}
       title="Время с момента назначения"
     >
       {minutes}:{seconds.toString().padStart(2, "0")}
@@ -133,129 +134,217 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const activeOrders = orders.filter((o) => o.status === "PENDING" || o.status === "CANCEL_REQUESTED");
+  const completedOrders = orders.filter(
+    (o) => o.status !== "PENDING" && o.status !== "CANCEL_REQUESTED",
+  );
+
   return (
     <div>
-      <h1 className="text-xl font-medium text-[#303030] mb-6">Заказы «По делам, без 9%»</h1>
+      {/* ── Page header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <div>
+          <p className="text-xs text-[#A1A1A1] uppercase tracking-wider font-medium">
+            Без 9% комиссии
+          </p>
+          <h1 className={`${ADMIN_PAGE_TITLE} mt-2 flex items-center gap-3`}>
+            Заказы «По делам»
+            {isAdmin && status && !status.enabled && (
+              <span className={statusBadgeClass("red")}>Сервис выключен</span>
+            )}
+          </h1>
+          <p className={ADMIN_PAGE_SUBTITLE}>
+            Активные заказы и история выполнения
+          </p>
+        </div>
+      </div>
 
+      {/* ── Status card (admin) ── */}
       {isAdmin && status && (
-        <div className="bg-white border border-[#E5E5E5] rounded-xl p-4 mb-6 flex gap-6">
+        <div className={`${ADMIN_CARD} p-5 mb-6 flex flex-wrap gap-6`}>
           <div>
-            <p className="text-xs text-[#A1A1A1]">Статус функции</p>
-            <p className={`text-sm font-medium ${status.enabled ? "text-green-600" : "text-[#FA6868]"}`}>
+            <p className="text-[10px] text-[#A1A1A1] uppercase tracking-wider font-medium">
+              Статус функции
+            </p>
+            <p
+              className={`text-sm font-semibold mt-1 ${
+                status.enabled ? "text-[#3BB560]" : "text-[#FA6868]"
+              }`}
+            >
+              <span className={statusDotClass(status.enabled ? "green" : "red")} />{" "}
               {status.enabled ? "Включена" : "Выключена"}
             </p>
           </div>
           {status.activeManagers !== undefined && (
             <div>
-              <p className="text-xs text-[#A1A1A1]">Активных менеджеров</p>
-              <p className="text-sm font-medium text-[#303030]">{status.activeManagers}</p>
+              <p className="text-[10px] text-[#A1A1A1] uppercase tracking-wider font-medium">
+                Активных менеджеров
+              </p>
+              <p className="text-sm font-semibold text-[#1F1F1F] mt-1">{status.activeManagers}</p>
             </div>
           )}
           {status.activeOrders !== undefined && (
             <div>
-              <p className="text-xs text-[#A1A1A1]">Активных заказов</p>
-              <p className="text-sm font-medium text-[#303030]">{status.activeOrders}</p>
+              <p className="text-[10px] text-[#A1A1A1] uppercase tracking-wider font-medium">
+                Активных заказов
+              </p>
+              <p className="text-sm font-semibold text-[#1F1F1F] mt-1">{status.activeOrders}</p>
             </div>
           )}
         </div>
       )}
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-[#A1A1A1] text-center py-12">Загрузка...</p>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>Загрузка...</div>
       ) : orders.length === 0 ? (
-        <div className="bg-white border border-[#E5E5E5] rounded-xl p-10 text-center">
-          <p className="text-sm text-[#A1A1A1]">Нет назначенных заказов</p>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>
+          Нет назначенных заказов
         </div>
       ) : (
-        <div className="space-y-3">
-          {orders.map((o) => {
-            const sc = STATUS_CONFIG[o.status] || { label: o.status, variant: "gray" as const };
-            const minsAgo = minutesSince(o.createdAt);
-            const canAct = o.status === "PENDING";
-            return (
-              <div key={o.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4 md:p-5">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <Badge variant={sc.variant}>{sc.label}</Badge>
-                      <span className="text-xs text-[#A1A1A1]">
-                        {new Date(o.createdAt).toLocaleString("ru-RU")}
-                      </span>
-                      <span className="text-xs text-[#A1A1A1]">· {minsAgo} мин. назад</span>
-                      {canAct && o.assignedAt && (
-                        <span className="inline-flex items-center gap-1 ml-auto px-2 py-0.5 rounded-md bg-gray-50 border border-[#E5E5E5]">
-                          <svg
-                            className="w-3.5 h-3.5 text-[#A1A1A1]"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
-                            <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <ElapsedTime assignedAt={o.assignedAt} />
+        <div className="space-y-6">
+          {/* Active section */}
+          {activeOrders.length > 0 && (
+            <section>
+              <h2 className="text-sm font-semibold text-[#1F1F1F] mb-3 flex items-center gap-2">
+                Активные
+                <span className="inline-flex items-center justify-center min-w-[24px] h-[20px] px-1.5 rounded-full text-[10px] font-semibold bg-[#F2F2F2] text-[#A1A1A1]">
+                  {activeOrders.length}
+                </span>
+              </h2>
+              <div className="space-y-3">
+                {activeOrders.map((o) => {
+                  const sc = STATUS_CONFIG[o.status] || { label: o.status, variant: "grey" as const };
+                  const minsAgo = minutesSince(o.createdAt);
+                  const canAct = o.status === "PENDING";
+                  return (
+                    <div key={o.id} className={`${ADMIN_CARD} p-4 md:p-5`}>
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <span className={statusBadgeClass(sc.variant)}>{sc.label}</span>
+                        <span className="text-xs text-[#A1A1A1]">
+                          {new Date(o.createdAt).toLocaleString("ru-RU")} · {minsAgo} мин. назад
                         </span>
+                        {canAct && o.assignedAt && (
+                          <span className="inline-flex items-center gap-1.5 ml-auto px-2.5 h-[28px] rounded-full bg-[#FAFAFA] border border-[#EFEFEF]">
+                            <svg
+                              className="w-3.5 h-3.5 text-[#A1A1A1]"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+                              <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            <ElapsedTime assignedAt={o.assignedAt} />
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5 mb-4">
+                        <div className="flex items-start gap-2.5">
+                          <svg className="w-4 h-4 text-[#3BB560] mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <circle cx="10" cy="10" r="4" />
+                          </svg>
+                          <span className="text-sm text-[#1F1F1F]">{o.pointFrom}</span>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <svg className="w-4 h-4 text-[#FA6868] mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <circle cx="10" cy="10" r="4" />
+                          </svg>
+                          <span className="text-sm text-[#1F1F1F]">{o.pointTo}</span>
+                        </div>
+                      </div>
+
+                      {canAct && (
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleAction(o.id, "ordered")}
+                            className="inline-flex items-center justify-center h-[40px] px-4 rounded-[10px] bg-[#3BB560] text-white text-sm font-medium hover:bg-[#2FA350] transition-colors"
+                          >
+                            Заказан
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAction(o.id, "banned")}
+                            className="inline-flex items-center justify-center h-[40px] px-4 rounded-[10px] border border-[#FA6868] text-[#FA6868] text-sm font-medium hover:bg-[#FA6868] hover:text-white transition-colors"
+                          >
+                            Упс, бан
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAction(o.id, "five-min")}
+                            className={`${ADMIN_OUTLINE_BTN} h-[40px] px-4`}
+                          >
+                            +5 мин
+                          </button>
+                        </div>
+                      )}
+
+                      {o.status === "CANCEL_REQUESTED" && (
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleAction(o.id, "confirm-cancel")}
+                            className="inline-flex items-center justify-center h-[40px] px-4 rounded-[10px] bg-[#FA6868] text-white text-sm font-medium hover:bg-[#E85555] transition-colors"
+                          >
+                            Подтвердить отмену
+                          </button>
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-start gap-2 mb-1">
-                      <svg className="w-4 h-4 text-green-500 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                        <circle cx="10" cy="10" r="4" />
-                      </svg>
-                      <span className="text-sm text-[#303030]">{o.pointFrom}</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <svg className="w-4 h-4 text-[#FA6868] mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                        <circle cx="10" cy="10" r="4" />
-                      </svg>
-                      <span className="text-sm text-[#303030]">{o.pointTo}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {canAct && (
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAction(o.id, "ordered")}>
-                      Заказано
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-[#FA6868] text-[#FA6868]"
-                      onClick={() => handleAction(o.id, "banned")}
-                    >
-                      Упс, бан
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleAction(o.id, "five-min")}>
-                      +5 мин
-                    </Button>
-                  </div>
-                )}
-
-                {o.status === "CANCEL_REQUESTED" && (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      className="bg-[#FA6868] hover:bg-[#E85858] text-white"
-                      onClick={() => handleAction(o.id, "confirm-cancel")}
-                    >
-                      Подтвердить отмену
-                    </Button>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            );
-          })}
+            </section>
+          )}
+
+          {/* Completed section */}
+          {completedOrders.length > 0 && (
+            <section>
+              <h2 className="text-sm font-semibold text-[#1F1F1F] mb-3 flex items-center gap-2">
+                Завершённые
+                <span className="inline-flex items-center justify-center min-w-[24px] h-[20px] px-1.5 rounded-full text-[10px] font-semibold bg-[#F2F2F2] text-[#A1A1A1]">
+                  {completedOrders.length}
+                </span>
+              </h2>
+              <div className="space-y-2">
+                {completedOrders.map((o) => {
+                  const sc = STATUS_CONFIG[o.status] || { label: o.status, variant: "grey" as const };
+                  return (
+                    <div key={o.id} className={`${ADMIN_CARD} p-4`}>
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className={statusBadgeClass(sc.variant)}>{sc.label}</span>
+                        <span className="text-xs text-[#A1A1A1]">
+                          {new Date(o.createdAt).toLocaleString("ru-RU")}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-sm text-[#A1A1A1]">
+                        <div className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3BB560] mt-2 shrink-0" />
+                          <span className="truncate">{o.pointFrom}</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#FA6868] mt-2 shrink-0" />
+                          <span className="truncate">{o.pointTo}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       )}
 
-      <div className="mt-4">
+      <div className="mt-5">
         <Pagination
           currentPage={page}
           totalPages={Math.max(1, Math.ceil(total / LIMIT))}

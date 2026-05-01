@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_INPUT,
+  ADMIN_OUTLINE_BTN,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PAGE_SUBTITLE,
+  ADMIN_PRIMARY_BTN,
+  ADMIN_TEXTAREA,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -143,60 +150,84 @@ export default function AdminNewsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         title="Удалить новость?"
-        description={deleteTarget ? `Новость «${deleteTarget.title}» будет удалена безвозвратно.` : ""}
+        description={
+          deleteTarget ? `Новость «${deleteTarget.title}» будет удалена безвозвратно.` : ""
+        }
         confirmLabel="Удалить"
         variant="warning"
       />
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-medium text-[#303030]">Новости</h1>
-        <Button size="sm" onClick={openCreate}>
-          + Новая новость
-        </Button>
+      {/* ── Page header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <div>
+          <p className="text-xs text-[#A1A1A1] uppercase tracking-wider font-medium">
+            Публикации
+          </p>
+          <h1 className={`${ADMIN_PAGE_TITLE} mt-2 flex items-center gap-3`}>
+            Новости
+            <span className="inline-flex items-center justify-center min-w-[36px] h-[28px] px-2.5 rounded-full text-xs font-semibold bg-[#F2F2F2] text-[#1F1F1F]">
+              {total}
+            </span>
+          </h1>
+          <p className={ADMIN_PAGE_SUBTITLE}>Лента новостей для пользователей сервиса</p>
+        </div>
+        <button type="button" onClick={openCreate} className={ADMIN_PRIMARY_BTN}>
+          + Создать новость
+        </button>
       </div>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-[#A1A1A1] text-center py-12">Загрузка...</p>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>Загрузка...</div>
       ) : items.length === 0 ? (
-        <div className="bg-white border border-[#E5E5E5] rounded-xl p-10 text-center">
-          <p className="text-sm text-[#A1A1A1]">Новостей пока нет</p>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>
+          Новостей пока нет
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4 md:p-5">
+            <div key={item.id} className={`${ADMIN_CARD} p-4 md:p-5`}>
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-[#303030]">{item.title}</h3>
+                  <h3 className="text-[15px] font-semibold text-[#1F1F1F]">{item.title}</h3>
                   <p className="text-xs text-[#A1A1A1] mt-0.5">
                     {new Date(item.createdAt).toLocaleDateString("ru-RU")}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(item)}>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(item)}
+                    className={`${ADMIN_OUTLINE_BTN} h-[36px] px-3 text-xs`}
+                  >
                     Редактировать
-                  </Button>
+                  </button>
                   {isAdmin && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-[#FA6868] text-[#FA6868]"
+                    <button
+                      type="button"
                       onClick={() => handleDelete(item)}
+                      className="inline-flex items-center justify-center h-[36px] px-3 rounded-[10px] border border-[#FA6868] text-[#FA6868] text-xs font-medium hover:bg-[#FA6868] hover:text-white transition-colors"
                     >
                       Удалить
-                    </Button>
+                    </button>
                   )}
                 </div>
               </div>
-              <p className="text-sm text-[#A1A1A1] line-clamp-2">{item.body}</p>
+              <p className="text-sm text-[#5E5E5E] line-clamp-2 whitespace-pre-line">
+                {item.body}
+              </p>
               {item.linkUrl && (
-                <a href={item.linkUrl} target="_blank" rel="noreferrer" className="text-xs text-[#303030] underline mt-2 inline-block">
+                <a
+                  href={item.linkUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-[#1F1F1F] underline mt-2 inline-block hover:no-underline"
+                >
                   {item.linkUrl}
                 </a>
               )}
@@ -205,7 +236,7 @@ export default function AdminNewsPage() {
         </div>
       )}
 
-      <div className="mt-4">
+      <div className="mt-5">
         <Pagination
           currentPage={page}
           totalPages={Math.max(1, Math.ceil(total / LIMIT))}
@@ -213,33 +244,42 @@ export default function AdminNewsPage() {
         />
       </div>
 
-      {/* Form modal */}
+      {/* ── Form modal ── */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30" onClick={() => !submitting && setShowForm(false)} />
-          <div className="relative bg-white rounded-2xl w-full max-w-lg p-6 md:p-8">
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !submitting && setShowForm(false)}
+          />
+          <div className="relative bg-white rounded-[20px] w-full max-w-lg p-6 md:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
             <button
               type="button"
               onClick={() => !submitting && setShowForm(false)}
-              className="absolute top-4 right-4 text-[#A1A1A1] hover:text-[#303030]"
+              className="absolute top-5 right-5 w-8 h-8 rounded-full hover:bg-[#F2F2F2] inline-flex items-center justify-center text-[#A1A1A1] hover:text-[#1F1F1F] transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
-            <h2 className="text-lg font-medium text-[#303030] mb-4">
+            <h2 className="text-[18px] font-semibold text-[#1F1F1F] mb-5">
               {editing ? "Редактировать новость" : "Новая новость"}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                label="Заголовок*"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                maxLength={200}
-              />
               <div>
-                <label className="block text-sm font-medium text-[#303030] mb-1.5">
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Заголовок*
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  maxLength={200}
+                  className={ADMIN_INPUT}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
                   Текст*
                 </label>
                 <textarea
@@ -247,23 +287,33 @@ export default function AdminNewsPage() {
                   rows={6}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  className="w-full px-4 py-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] outline-none focus:border-[#303030] resize-none"
+                  className={ADMIN_TEXTAREA}
                 />
               </div>
-              <Input
-                label="Ссылка"
-                type="url"
-                value={linkUrl}
-                onChange={(e) => setLinkUrl(e.target.value)}
-                placeholder="https://..."
-              />
-              <div className="flex gap-3">
-                <Button type="button" variant="outline" onClick={() => !submitting && setShowForm(false)} disabled={submitting}>
+              <div>
+                <label className="block text-[11px] font-medium text-[#A1A1A1] uppercase tracking-wider mb-1.5">
+                  Ссылка
+                </label>
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://..."
+                  className={ADMIN_INPUT}
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => !submitting && setShowForm(false)}
+                  disabled={submitting}
+                  className={`${ADMIN_OUTLINE_BTN} flex-1`}
+                >
                   Отмена
-                </Button>
-                <Button type="submit" disabled={submitting}>
+                </button>
+                <button type="submit" disabled={submitting} className={`${ADMIN_PRIMARY_BTN} flex-1`}>
                   {submitting ? "Сохранение..." : editing ? "Обновить" : "Создать"}
-                </Button>
+                </button>
               </div>
             </form>
           </div>

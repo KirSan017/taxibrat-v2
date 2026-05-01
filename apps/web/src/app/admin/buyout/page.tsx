@@ -2,15 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { RejectModal } from "@/components/ui/reject-modal";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_INPUT,
+  ADMIN_OUTLINE_BTN,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PAGE_SUBTITLE,
+  ADMIN_PILL_ACTIVE,
+  ADMIN_PILL_BASE,
+  ADMIN_PILL_INACTIVE,
+  ADMIN_PRIMARY_BTN,
+  statusBadgeClass,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -31,11 +40,14 @@ interface BuyoutResponse {
   total: number;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "yellow" | "gray" | "green" | "red" }> = {
-  DRAFT: { label: "Черновик", variant: "gray" },
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: "yellow" | "grey" | "green" | "red" | "blue" }
+> = {
+  DRAFT: { label: "Черновик", variant: "grey" },
   PENDING_REVIEW: { label: "На проверке", variant: "yellow" },
   ACTIVE: { label: "Активно", variant: "green" },
-  ARCHIVED: { label: "Архив", variant: "red" },
+  ARCHIVED: { label: "Архив", variant: "grey" },
 };
 
 const OWNER_LABELS: Record<string, string> = {
@@ -168,74 +180,93 @@ export default function AdminBuyoutPage() {
         description={successMsg}
       />
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-medium text-[#303030]">Выкуп авто</h1>
-        <Link href="/admin/buyout/add">
-          <Button size="sm">+ Новое объявление</Button>
+      {/* ── Page header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <div>
+          <p className="text-xs text-[#A1A1A1] uppercase tracking-wider font-medium">Объявления</p>
+          <h1 className={`${ADMIN_PAGE_TITLE} mt-2 flex items-center gap-3`}>
+            Выкуп авто
+            <span className="inline-flex items-center justify-center min-w-[36px] h-[28px] px-2.5 rounded-full text-xs font-semibold bg-[#F2F2F2] text-[#1F1F1F]">
+              {total}
+            </span>
+          </h1>
+          <p className={ADMIN_PAGE_SUBTITLE}>Модерация и публикация объявлений выкупа</p>
+        </div>
+        <Link href="/admin/buyout/add" className={ADMIN_PRIMARY_BTN}>
+          + Добавить
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="w-full sm:w-[300px]">
-          <Input
-            placeholder="Поиск по названию..."
+      {/* ── Filter pills ── */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {(["ALL", "DRAFT", "PENDING_REVIEW", "ACTIVE", "ARCHIVED"] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setStatusFilter(s)}
+            className={`${ADMIN_PILL_BASE} ${
+              statusFilter === s ? ADMIN_PILL_ACTIVE : ADMIN_PILL_INACTIVE
+            }`}
+          >
+            {s === "ALL" ? "Все" : STATUS_CONFIG[s]?.label || s}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Search ── */}
+      <div className="mb-5 flex flex-wrap gap-2">
+        <div className="relative w-full sm:max-w-[360px]">
+          <svg
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A1A1A1] pointer-events-none"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Поиск по марке, модели..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            className={`${ADMIN_INPUT} pl-11`}
           />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {(["ALL", "PENDING_REVIEW", "ACTIVE", "ARCHIVED"] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-2 rounded-lg text-xs transition-colors whitespace-nowrap ${
-                statusFilter === s
-                  ? "bg-[#303030] text-white"
-                  : "bg-gray-100 text-[#A1A1A1] hover:bg-gray-200"
-              }`}
-            >
-              {s === "ALL" ? "Все" : STATUS_CONFIG[s]?.label || s}
-            </button>
-          ))}
         </div>
       </div>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
-      <div className="mb-4">
-        <Pagination
-          currentPage={page}
-          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
-          onPageChange={setPage}
-        />
-      </div>
-
       {/* List */}
       {loading ? (
-        <p className="text-sm text-[#A1A1A1] text-center py-12">Загрузка...</p>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>Загрузка...</div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white border border-[#E5E5E5] rounded-xl p-10 text-center">
-          <p className="text-sm text-[#A1A1A1]">Объявлений нет</p>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>
+          Объявлений нет
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((l) => {
-            const sc = STATUS_CONFIG[l.status] || { label: l.status, variant: "gray" as const };
-            const title = l.title || `${l.brandName || ""} ${l.modelName || ""}, ${l.year || ""}`.trim() || "Без названия";
+            const sc = STATUS_CONFIG[l.status] || { label: l.status, variant: "grey" as const };
+            const title =
+              l.title || `${l.brandName || ""} ${l.modelName || ""}, ${l.year || ""}`.trim() || "Без названия";
             return (
-              <div key={l.id} className="bg-white border border-[#E5E5E5] rounded-xl p-4 md:p-5">
+              <div key={l.id} className={`${ADMIN_CARD} p-4 md:p-5`}>
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Link href={`/admin/buyout/${l.id}`} className="text-sm font-medium text-[#303030] hover:underline">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <Link
+                        href={`/admin/buyout/${l.id}`}
+                        className="text-[15px] font-semibold text-[#1F1F1F] hover:underline"
+                      >
                         {title}
                       </Link>
-                      <Badge variant={sc.variant}>{sc.label}</Badge>
+                      <span className={statusBadgeClass(sc.variant)}>{sc.label}</span>
                     </div>
                     <p className="text-xs text-[#A1A1A1]">
                       {l.price != null ? `${l.price.toLocaleString("ru-RU")} ₽ · ` : ""}
@@ -247,28 +278,39 @@ export default function AdminBuyoutPage() {
                     <div className="flex flex-wrap gap-2">
                       {l.status === "PENDING_REVIEW" && (
                         <>
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleApprove(l.id)}>
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(l.id)}
+                            className="inline-flex items-center justify-center h-[40px] px-4 rounded-[10px] bg-[#3BB560] text-white text-sm font-medium hover:bg-[#2FA350] transition-colors"
+                          >
                             Одобрить
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-[#FA6868] text-[#FA6868]"
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => setRejectTarget(l.id)}
+                            className="inline-flex items-center justify-center h-[40px] px-4 rounded-[10px] border border-[#FA6868] text-[#FA6868] text-sm font-medium hover:bg-[#FA6868] hover:text-white transition-colors"
                           >
                             Отклонить
-                          </Button>
+                          </button>
                         </>
                       )}
                       {l.status === "ACTIVE" && (
-                        <Button size="sm" variant="outline" onClick={() => handleArchive(l.id)}>
+                        <button
+                          type="button"
+                          onClick={() => handleArchive(l.id)}
+                          className={`${ADMIN_OUTLINE_BTN} h-[40px] px-4`}
+                        >
                           В архив
-                        </Button>
+                        </button>
                       )}
                       {l.status === "ARCHIVED" && (
-                        <Button size="sm" variant="outline" onClick={() => handleRestore(l.id)}>
+                        <button
+                          type="button"
+                          onClick={() => handleRestore(l.id)}
+                          className={`${ADMIN_OUTLINE_BTN} h-[40px] px-4`}
+                        >
                           Восстановить
-                        </Button>
+                        </button>
                       )}
                     </div>
                   )}
@@ -278,6 +320,14 @@ export default function AdminBuyoutPage() {
           })}
         </div>
       )}
+
+      <div className="mt-5">
+        <Pagination
+          currentPage={page}
+          totalPages={Math.max(1, Math.ceil(total / LIMIT))}
+          onPageChange={setPage}
+        />
+      </div>
     </div>
   );
 }

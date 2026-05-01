@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
+import {
+  ADMIN_CARD,
+  ADMIN_INPUT,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PAGE_SUBTITLE,
+  ADMIN_PRIMARY_BTN,
+  ADMIN_SECTION_TITLE,
+  ADMIN_SELECT,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -41,12 +48,14 @@ const SETTING_LABELS: Record<string, string> = {
 
 interface Group {
   title: string;
+  description?: string;
   keys: string[];
 }
 
 const GROUPS: Group[] = [
   {
-    title: "Баллы — начисление",
+    title: "Баллы дружбы",
+    description: "Начисления баллов за действия пользователей",
     keys: [
       "points_registration",
       "points_park_check",
@@ -62,19 +71,18 @@ const GROUPS: Group[] = [
     ],
   },
   {
-    title: "Стоимости",
-    keys: [
-      "points_base_check_cost",
-      "points_order_no9_cost",
-      "points_order_cancel_cost",
-    ],
+    title: "Стоимости услуг",
+    description: "Сколько баллов списывается за платные действия",
+    keys: ["points_base_check_cost", "points_order_no9_cost", "points_order_cancel_cost"],
   },
   {
     title: "Функции",
+    description: "Включение и отключение функций сервиса",
     keys: ["no9_enabled", "no9_auto_disabled", "points_review_enabled", "points_review_date"],
   },
   {
     title: "Реклама",
+    description: "Баннеры и рекламные блоки",
     keys: ["banner_url"],
   },
 ];
@@ -101,7 +109,9 @@ export default function AdminSettingsPage() {
         const list = Array.isArray(res) ? res : res.data || [];
         setSettings(list);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Ошибка загрузки"))
+      .catch((err: unknown) =>
+        setError(err instanceof Error ? err.message : "Ошибка загрузки"),
+      )
       .finally(() => setLoading(false));
   };
 
@@ -145,7 +155,6 @@ export default function AdminSettingsPage() {
     }
   };
 
-  // Keys present in DB but not covered by any group: show as "Other"
   const groupedKeys = new Set(GROUPS.flatMap((g) => g.keys));
   const otherKeys = settings.filter((s) => !groupedKeys.has(s.key)).map((s) => s.key);
 
@@ -156,23 +165,31 @@ export default function AdminSettingsPage() {
     const isBool = BOOLEAN_KEYS.has(key);
 
     return (
-      <div key={key} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 py-3 border-b border-[#E5E5E5] last:border-0">
+      <div
+        key={key}
+        className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 py-3.5 border-b border-[#F2F2F2] last:border-0"
+      >
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-[#303030]">{label}</p>
+          <p className="text-sm font-medium text-[#1F1F1F]">{label}</p>
           <p className="text-[11px] text-[#A1A1A1] mt-0.5 break-all">{key}</p>
         </div>
-        <div className="w-full md:w-[260px] shrink-0">
+        <div className="w-full md:w-[280px] shrink-0">
           {isBool ? (
             <select
               value={value === "true" ? "true" : "false"}
               onChange={(e) => updateField(key, e.target.value)}
-              className="w-full h-[42px] px-3 border border-[#E5E5E5] rounded-lg text-sm text-[#303030] bg-white outline-none focus:border-[#303030]"
+              className={ADMIN_SELECT}
             >
               <option value="true">Включено</option>
               <option value="false">Выключено</option>
             </select>
           ) : (
-            <Input value={value} onChange={(e) => updateField(key, e.target.value)} />
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              className={ADMIN_INPUT}
+            />
           )}
         </div>
       </div>
@@ -188,37 +205,58 @@ export default function AdminSettingsPage() {
         description="Настройки успешно обновлены"
       />
 
-      <h1 className="text-xl font-medium text-[#303030] mb-1">Настройки сервиса</h1>
-      <p className="text-sm text-[#A1A1A1] mb-6">
-        Управление баллами дружбы, стоимостями и рекламными материалами
-      </p>
+      {/* ── Page header ── */}
+      <div className="mb-6">
+        <p className="text-xs text-[#A1A1A1] uppercase tracking-wider font-medium">
+          Конфигурация
+        </p>
+        <h1 className={`${ADMIN_PAGE_TITLE} mt-2`}>Настройки сервиса</h1>
+        <p className={ADMIN_PAGE_SUBTITLE}>
+          Управление баллами дружбы, стоимостями и рекламными материалами
+        </p>
+      </div>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-[#A1A1A1] text-center py-12">Загрузка...</p>
+        <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>Загрузка...</div>
       ) : (
         <>
-          {GROUPS.map((group) => (
-            <section key={group.title} className="bg-white border border-[#E5E5E5] rounded-xl p-5 md:p-6 mb-4">
-              <h2 className="text-sm font-medium text-[#303030] mb-3">{group.title}</h2>
-              <div>{group.keys.map(renderField)}</div>
-            </section>
-          ))}
-          {otherKeys.length > 0 && (
-            <section className="bg-white border border-[#E5E5E5] rounded-xl p-5 md:p-6 mb-4">
-              <h2 className="text-sm font-medium text-[#303030] mb-3">Прочие</h2>
-              <div>{otherKeys.map(renderField)}</div>
-            </section>
-          )}
-          <div className="mt-6">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Сохранение..." : "Сохранить"}
-            </Button>
+          <div className="space-y-5">
+            {GROUPS.map((group) => (
+              <section key={group.title} className={`${ADMIN_CARD} p-5 md:p-6`}>
+                <div className="mb-4">
+                  <h2 className={ADMIN_SECTION_TITLE}>{group.title}</h2>
+                  {group.description && (
+                    <p className="text-xs text-[#A1A1A1] mt-1">{group.description}</p>
+                  )}
+                </div>
+                <div>{group.keys.map(renderField)}</div>
+              </section>
+            ))}
+            {otherKeys.length > 0 && (
+              <section className={`${ADMIN_CARD} p-5 md:p-6`}>
+                <h2 className={ADMIN_SECTION_TITLE}>Прочее</h2>
+                <div className="mt-4">{otherKeys.map(renderField)}</div>
+              </section>
+            )}
+          </div>
+
+          <div className="mt-6 sticky bottom-4 z-10">
+            <div className={`${ADMIN_CARD} p-4 flex items-center justify-end`}>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className={ADMIN_PRIMARY_BTN}
+              >
+                {saving ? "Сохранение..." : "Сохранить изменения"}
+              </button>
+            </div>
           </div>
         </>
       )}
