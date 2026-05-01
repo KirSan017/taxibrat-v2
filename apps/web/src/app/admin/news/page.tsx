@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SuccessModal } from "@/components/ui/success-modal";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
@@ -35,6 +36,7 @@ export default function AdminNewsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<NewsItem | null>(null);
   const [successMsg, setSuccessMsg] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<NewsItem | null>(null);
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -109,16 +111,22 @@ export default function AdminNewsPage() {
     }
   };
 
-  const handleDelete = async (item: NewsItem) => {
-    if (!confirm(`Удалить новость «${item.title}»?`)) return;
+  const handleDelete = (item: NewsItem) => {
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     const token = getAccessToken();
     if (!token) return;
     try {
-      await api(`/admin/news/${item.id}`, { method: "DELETE", token });
+      await api(`/admin/news/${deleteTarget.id}`, { method: "DELETE", token });
       setSuccessMsg("Новость удалена");
       loadNews();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Не удалось удалить");
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -129,6 +137,15 @@ export default function AdminNewsPage() {
         onClose={() => setSuccessMsg("")}
         title="Готово"
         description={successMsg}
+      />
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Удалить новость?"
+        description={deleteTarget ? `Новость «${deleteTarget.title}» будет удалена безвозвратно.` : ""}
+        confirmLabel="Удалить"
+        variant="warning"
       />
 
       <div className="flex items-center justify-between mb-6">

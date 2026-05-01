@@ -31,6 +31,7 @@ export const buyoutListings = pgTable(
     ownerPhone: varchar("owner_phone", { length: 20 }),
     isAdvertised: boolean("is_advertised").notNull().default(false),
     status: buyoutStatusEnum("status").notNull().default("DRAFT"),
+    rejectionReason: text("rejection_reason"),
     createdById: uuid("created_by_id").references(() => users.id),
     reviewedById: uuid("reviewed_by_id").references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

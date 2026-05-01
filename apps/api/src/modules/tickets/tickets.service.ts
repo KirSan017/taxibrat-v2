@@ -66,9 +66,11 @@ export class TicketsService {
       .where(eq(users.id, userId))
       .limit(1);
 
-    const userName = user?.lastName && user?.firstName
-      ? `${user.lastName} ${user.firstName}`
-      : "Пользователь";
+    // Per ТЗ: формат "Фамилия И." (например, "Иванов В.")
+    const initial = user?.firstName ? `${user.firstName.charAt(0)}.` : "";
+    const userName = user?.lastName
+      ? `${user.lastName}${initial ? " " + initial : ""}`.trim()
+      : (user?.firstName || "Пользователь");
 
     const title = await this.generateTitle(
       dto.topic,

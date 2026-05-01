@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/use-auth";
 import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { Logo } from "@/components/layout/logo";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 
 /* ── nav items ─────────────────────────────────────────── */
 const NAV_ITEMS = [
@@ -51,6 +52,30 @@ export default function DashboardLayout({
   const { user, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [taxiConnectConfirmOpen, setTaxiConnectConfirmOpen] = useState(false);
+  const [taxiConnectLoading, setTaxiConnectLoading] = useState(false);
+  const [taxiConnectSuccess, setTaxiConnectSuccess] = useState(false);
+
+  const handleTaxiConnectSubmit = async () => {
+    setTaxiConnectLoading(true);
+    try {
+      await api("/tickets", {
+        method: "POST",
+        token: getAccessToken() ?? undefined,
+        body: {
+          topic: "TAXI_CONNECT",
+          body: "Хочу подключиться к такси. Помогите подобрать парк.",
+        },
+      });
+      setTaxiConnectConfirmOpen(false);
+      setTaxiConnectSuccess(true);
+      setTimeout(() => setTaxiConnectSuccess(false), 3000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTaxiConnectLoading(false);
+    }
+  };
 
   // Auth guard
   useEffect(() => {
@@ -94,6 +119,13 @@ export default function DashboardLayout({
             <Link href="/" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Главная</Link>
             <Link href="/parks" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Таксопарки</Link>
             <Link href="/no9" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">По делам, без 9%</Link>
+            <button
+              type="button"
+              onClick={() => setTaxiConnectConfirmOpen(true)}
+              className="text-sm font-medium text-[#303030] hover:text-[#A1A1A1] transition-colors"
+            >
+              Подключение к такси
+            </button>
             <Link href="/buyout" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Выкуп</Link>
             <Link href="/support/new?topic=USER_BASE_CHECK" className="text-sm text-[#303030] hover:text-[#A1A1A1] transition-colors">Проверка по базе таксопарков</Link>
           </nav>
@@ -158,6 +190,17 @@ export default function DashboardLayout({
                   {item.label}
                 </Link>
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setTaxiConnectConfirmOpen(true);
+                }}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[#A1A1A1] hover:text-[#303030] hover:bg-gray-50 transition-colors text-left"
+              >
+                <CarIcon className="w-5 h-5" />
+                Подключение к такси
+              </button>
             </nav>
           </div>
         )}
@@ -257,6 +300,25 @@ export default function DashboardLayout({
           })}
         </div>
       </nav>
+
+      {/* ══════ TAXI CONNECT MODAL ══════ */}
+      <ConfirmModal
+        open={taxiConnectConfirmOpen}
+        onClose={() => {
+          if (!taxiConnectLoading) setTaxiConnectConfirmOpen(false);
+        }}
+        onConfirm={handleTaxiConnectSubmit}
+        title="Подключение к такси"
+        description="Создать заявку на подключение к таксопарку? Менеджер свяжется с вами."
+        confirmLabel={taxiConnectLoading ? "Создаём..." : "Создать заявку"}
+      />
+
+      {/* ══════ TAXI CONNECT TOAST ══════ */}
+      {taxiConnectSuccess && (
+        <div className="fixed bottom-20 lg:bottom-8 right-4 z-50 bg-[#303030] text-white text-sm rounded-lg px-4 py-3 shadow-lg">
+          Заявка создана. Менеджер свяжется с вами.
+        </div>
+      )}
 
       {/* ══════ FOOTER ══════ */}
       <footer className="hidden lg:block border-t border-[#E5E5E5] mt-auto">

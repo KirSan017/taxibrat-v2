@@ -36,6 +36,12 @@ export class VisibilityService {
         (masked as any).addressHidden = true;
         (masked as any).phoneHidden = true;
         (masked as any).detailsBlurred = true;
+        // Per ТЗ: для анонима с парков с высоким рейтингом без рекламы скрываем
+        // также название, чтобы стимулировать регистрацию.
+        if (isHigh && !isAd) {
+          masked.parkName = null as any;
+          (masked as any).nameHidden = true;
+        }
       } else if (isHigh && !isAd) {
         // Auth + high rating + not advertised: hide name/address/phone
         masked.parkName = null as any;

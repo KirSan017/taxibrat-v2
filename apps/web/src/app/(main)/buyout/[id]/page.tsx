@@ -156,10 +156,10 @@ export default function BuyoutDetailPage() {
         method: "POST",
         token,
         body: {
-          topic: "BUYOUT",
-          relatedEntityType: undefined,
+          topic: "OTHER",
+          relatedEntityType: "VEHICLE",
           relatedEntityId: car.id,
-          body: `Вопрос по выкупу: ${car.title}`,
+          body: `Вопрос по объявлению ${car.title}`,
         },
       });
       setSuccess({

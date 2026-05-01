@@ -48,6 +48,8 @@ export class UsersAdminController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPER_MANAGER)
   async getDuplicates(@Param("id") id: string) {
     const user = await this.usersService.getById(id);
+    // ТЗ: дубли показываем только для неподтверждённого профиля
+    if (user.status === "ACTIVE") return [];
     if (!user.firstName || !user.lastName) return [];
     return this.usersService.findDuplicatesByName(user.firstName, user.lastName, id);
   }

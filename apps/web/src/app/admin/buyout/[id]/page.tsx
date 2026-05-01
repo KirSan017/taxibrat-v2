@@ -26,6 +26,7 @@ interface Buyout {
   ownerContact?: string | null;
   ownerAddress?: string | null;
   ownerPhone?: string | null;
+  rejectionReason?: string | null;
   [key: string]: unknown;
   createdAt: string;
 }
@@ -259,6 +260,13 @@ export default function AdminBuyoutDetailPage() {
       {error && (
         <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
+        </div>
+      )}
+
+      {item.rejectionReason && item.status === "DRAFT" && (
+        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+          <p className="text-xs font-medium text-[#FA6868] mb-1">Причина отказа</p>
+          <p className="text-sm text-[#303030]">{item.rejectionReason}</p>
         </div>
       )}
 

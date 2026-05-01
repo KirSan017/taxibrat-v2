@@ -45,6 +45,7 @@ export const listUsersSchema = z.object({
   status: z.nativeEnum(UserStatus).optional(),
   role: z.nativeEnum(UserRole).optional(),
   search: z.string().optional(),
+  sort: z.enum(["createdAt", "balance"]).optional(),
 });
 
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;

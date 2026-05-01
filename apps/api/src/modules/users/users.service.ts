@@ -7,7 +7,7 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { eq, and, ilike, or, sql, gt } from "drizzle-orm";
+import { eq, and, ilike, or, sql, gt, desc } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
 import { users, notifications, verificationCodes } from "@taxibrat/db";
 import {
@@ -244,18 +244,27 @@ export class UsersService {
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const [data, countResult] = await Promise.all([
+    const orderBy = dto.sort === "balance"
+      ? desc(users.friendshipPoints)
+      : users.createdAt;
+
+    const [data, countResult, balanceResult] = await Promise.all([
       this.db
         .select()
         .from(users)
         .where(where)
         .limit(dto.limit)
         .offset((dto.page - 1) * dto.limit)
-        .orderBy(users.createdAt),
+        .orderBy(orderBy),
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(users)
         .where(where),
+      this.db
+        .select({
+          totalBalance: sql<number>`coalesce(sum(${users.friendshipPoints}), 0)`,
+        })
+        .from(users),
     ]);
 
     // Apply visibility masking if viewer provided
@@ -272,6 +281,7 @@ export class UsersService {
     return {
       data: maskedData,
       total: Number(countResult[0].count),
+      totalBalance: Number(balanceResult[0]?.totalBalance ?? 0),
       page: dto.page,
       limit: dto.limit,
     };

@@ -72,9 +72,9 @@ export class BuyoutAdminController {
   reject(
     @Param("id") id: string,
     @CurrentUser() user: JwtPayload,
-    @Body(new ZodValidationPipe(rejectBuyoutSchema)) _dto: RejectBuyoutDto,
+    @Body(new ZodValidationPipe(rejectBuyoutSchema)) dto: RejectBuyoutDto,
   ) {
-    return this.buyoutService.reject(id, user.sub);
+    return this.buyoutService.reject(id, user.sub, dto.reason);
   }
 
   @Post(":id/archive")

@@ -171,7 +171,7 @@ export default function OrdersPage() {
                           Отменить заказ
                         </button>
                         <p className="text-[10px] text-[#A1A1A1] mt-1">
-                          До окончания бесплатной отмены: {Math.max(0, 10 - minsAgo)} мин.
+                          До окончания возможности отмены: {Math.max(0, 10 - minsAgo)} мин · Списание 15 баллов
                         </p>
                       </>
                     )}

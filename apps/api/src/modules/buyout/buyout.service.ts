@@ -196,11 +196,15 @@ export class BuyoutService {
     return updated;
   }
 
-  async reject(id: string, smId: string) {
+  async reject(id: string, smId: string, reason?: string) {
     const listing = await this.getById(id);
     const [updated] = await this.db
       .update(buyoutListings)
-      .set({ status: "DRAFT" as any, reviewedById: smId })
+      .set({
+        status: "DRAFT" as any,
+        reviewedById: smId,
+        rejectionReason: reason ?? null,
+      })
       .where(eq(buyoutListings.id, id))
       .returning();
 
@@ -209,8 +213,8 @@ export class BuyoutService {
       action: AuditAction.STATUS_CHANGE,
       entity: AuditEntity.BUYOUT_LISTING,
       entityId: id,
-      oldValue: { status: listing.status },
-      newValue: { status: "DRAFT" },
+      oldValue: { status: listing.status, rejectionReason: listing.rejectionReason },
+      newValue: { status: "DRAFT", rejectionReason: reason ?? null },
     });
 
     return updated;
@@ -275,20 +279,21 @@ export class BuyoutService {
     return ticket;
   }
 
-  async similar(id: string) {
+  async similar(id: string, limit = 8) {
     const listing = await this.getById(id);
+    // Per ТЗ: похожие — это объявления той же марки (и желательно года).
     const data = await this.db
       .select()
       .from(buyoutListings)
       .where(
         and(
           eq(buyoutListings.status, "ACTIVE" as any),
-          eq(buyoutListings.ownerType, listing.ownerType),
+          eq(buyoutListings.brandId, listing.brandId),
           sql`${buyoutListings.id} != ${id}`,
         ),
       )
       .orderBy(desc(buyoutListings.isAdvertised), desc(buyoutListings.price))
-      .limit(8);
+      .limit(limit);
 
     return data.map((d) => this.stripOwnerFields(d));
   }

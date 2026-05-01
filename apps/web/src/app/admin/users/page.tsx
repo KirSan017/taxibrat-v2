@@ -28,11 +28,13 @@ interface UserItem {
   createdAt: string;
   birthDate?: string | null;
   birthDateHidden?: boolean;
+  friendshipPoints?: number;
 }
 
 interface UsersResponse {
   data: UserItem[];
   total: number;
+  totalBalance?: number;
   page: number;
   limit: number;
 }
@@ -60,6 +62,8 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [sort, setSort] = useState<"createdAt" | "balance">("createdAt");
+  const [totalBalance, setTotalBalance] = useState(0);
   const [search, setSearch] = useState(initialSearch);
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
   const [rejectUser, setRejectUser] = useState<UserItem | null>(null);
@@ -95,10 +99,12 @@ export default function AdminUsersPage() {
     params.set("limit", String(LIMIT));
     if (statusFilter !== "ALL") params.set("status", statusFilter);
     if (search) params.set("search", search);
+    if (sort) params.set("sort", sort);
     api<UsersResponse>(`/admin/users?${params.toString()}`, { token })
       .then(async (res) => {
         setUsers(res.data || []);
         setTotal(res.total || 0);
+        setTotalBalance(res.totalBalance ?? 0);
         // Fetch duplicates count per user (best-effort)
         const token = getAccessToken();
         if (!token) return;
@@ -123,7 +129,7 @@ export default function AdminUsersPage() {
     if (!currentUser) return;
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, statusFilter, page]);
+  }, [currentUser, statusFilter, page, sort]);
 
   // Если на странице задан ?search=... — загрузить сразу с поиском
   useEffect(() => {
@@ -466,10 +472,15 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <h1 className="text-xl font-medium text-[#303030] mb-6">Пользователи ({total})</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+        <h1 className="text-xl font-medium text-[#303030]">Пользователи ({total})</h1>
+        <p className="text-sm text-[#A1A1A1]">
+          Общий баланс системы: <span className="text-[#303030] font-medium">{totalBalance.toLocaleString("ru-RU")}</span> б.
+        </p>
+      </div>
 
       {/* Filters */}
-      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 mb-6">
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 mb-6 flex-wrap">
         <div className="w-full sm:w-[300px]">
           <Input
             placeholder="Поиск по ФИО / телефону..."
@@ -478,6 +489,17 @@ export default function AdminUsersPage() {
           />
         </div>
         <Button size="sm" type="submit">Искать</Button>
+        <select
+          value={sort}
+          onChange={(e) => {
+            setSort(e.target.value as "createdAt" | "balance");
+            setPage(1);
+          }}
+          className="px-3 py-2 rounded-lg border border-[#E5E5E5] bg-white text-xs text-[#303030] focus:outline-none focus:border-[#303030]"
+        >
+          <option value="createdAt">По дате</option>
+          <option value="balance">По балансу</option>
+        </select>
         <div className="flex flex-wrap gap-2">
           {(["ALL", "PHONE_VERIFIED", "PENDING_REVIEW", "ACTIVE", "REJECTED"] as const).map((s) => (
             <button

@@ -1,13 +1,23 @@
-import { Injectable, Inject } from "@nestjs/common";
+import { Injectable, Inject, BadRequestException } from "@nestjs/common";
 import { eq, desc, sql } from "drizzle-orm";
 import type { Database } from "@taxibrat/db";
-import { ticketMessages, users } from "@taxibrat/db";
+import { ticketMessages, tickets, users } from "@taxibrat/db";
 
 @Injectable()
 export class MessagesService {
   constructor(@Inject("DATABASE") private db: Database) {}
 
   async create(ticketId: string, senderId: string, body: string, isSystem = false) {
+    if (!isSystem) {
+      const [ticket] = await this.db
+        .select({ status: tickets.status })
+        .from(tickets)
+        .where(eq(tickets.id, ticketId))
+        .limit(1);
+      if (ticket && (ticket.status === "COMPLETED" || ticket.status === "CANCELLED")) {
+        throw new BadRequestException("Тикет завершён, общение заблокировано");
+      }
+    }
     const [message] = await this.db
       .insert(ticketMessages)
       .values({ ticketId, senderId, body, isSystem })

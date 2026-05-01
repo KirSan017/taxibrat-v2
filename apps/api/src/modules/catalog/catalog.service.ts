@@ -168,26 +168,24 @@ export class CatalogService {
   }
 
   private applyPositioning(classes: any[]) {
-    // Super advertised always at position 2
+    // Per ТЗ: super-advertised park always at position 2 (index 1).
+    // All non-super-advertised parks (including regular advertised) appear
+    // in random order — advertising lifts a park into the visible window via
+    // the filter rules above, but does NOT determine final order on the page.
     const superAd = classes.filter((c: any) => c.isSuperAdvertised);
-    const ads = classes.filter((c: any) => c.isAdvertised && !c.isSuperAdvertised);
-    const regular = classes.filter((c: any) => !c.isAdvertised && !c.isSuperAdvertised);
+    const others = classes.filter((c: any) => !c.isSuperAdvertised);
 
-    // Shuffle non-advertised (per TZ: random order for non-promoted)
-    for (let i = regular.length - 1; i > 0; i--) {
+    // Shuffle ALL non-super
+    for (let i = others.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [regular[i], regular[j]] = [regular[j], regular[i]];
+      [others[i], others[j]] = [others[j], others[i]];
     }
 
-    // Combine: ads sorted by rating, then regular random
-    const combined = [...ads, ...regular];
-
-    // Insert super-ad at position 2 (index 1)
     if (superAd.length > 0) {
-      combined.splice(1, 0, ...superAd);
+      others.splice(1, 0, ...superAd);
     }
 
-    return combined;
+    return others;
   }
 
   async getClassDetail(classId: string) {

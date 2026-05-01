@@ -123,16 +123,24 @@ export class OverallStatsService {
       .from(users);
 
     let inPeriod = 0;
+    let inPeriodPhoneVerified = 0;
+    let inPeriodActive = 0;
     if (range.from || range.to) {
       const conditions = [];
       if (range.from) conditions.push(gte(users.createdAt, range.from));
       if (range.to) conditions.push(lte(users.createdAt, range.to));
 
       const [result] = await this.db
-        .select({ count: sql<number>`count(*)` })
+        .select({
+          count: sql<number>`count(*)`,
+          phoneVerified: sql<number>`count(*) filter (where ${users.status} = 'PHONE_VERIFIED')`,
+          active: sql<number>`count(*) filter (where ${users.status} = 'ACTIVE')`,
+        })
         .from(users)
         .where(and(...conditions));
       inPeriod = Number(result.count);
+      inPeriodPhoneVerified = Number(result.phoneVerified);
+      inPeriodActive = Number(result.active);
     }
 
     return {
@@ -140,6 +148,8 @@ export class OverallStatsService {
       phoneVerified: Number(totals.phoneVerified),
       active: Number(totals.active),
       inPeriod,
+      inPeriodPhoneVerified,
+      inPeriodActive,
     };
   }
 
