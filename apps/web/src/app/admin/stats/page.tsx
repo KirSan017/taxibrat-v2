@@ -5,6 +5,20 @@ import { api } from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuth } from "@/lib/use-auth";
 import { TICKET_TOPIC_LABELS, DRIVER_CLASS_LABELS } from "@/lib/labels";
+import {
+  ADMIN_CARD,
+  ADMIN_KPI_CARD,
+  ADMIN_KPI_LABEL,
+  ADMIN_KPI_VALUE,
+  ADMIN_LABEL,
+  ADMIN_PAGE_TITLE,
+  ADMIN_PAGE_SUBTITLE,
+  ADMIN_SECTION_TITLE,
+  ADMIN_SELECT,
+  ADMIN_TABLE_CELL,
+  ADMIN_TABLE_HEADER,
+  ADMIN_TABLE_ROW,
+} from "@/components/admin/admin-styles";
 
 /* ── types ────────────────────────────────────────────── */
 
@@ -47,7 +61,6 @@ interface OrdersPoint {
 type GroupBy = "day" | "week" | "month";
 
 const OVERALL_LABELS: Record<string, string> = {
-  // Top-level sections
   users: "Пользователи",
   points: "Баллы дружбы",
   tickets: "Тикеты по типам",
@@ -55,23 +68,18 @@ const OVERALL_LABELS: Record<string, string> = {
   parks: "Таксопарки",
   prices: "Цены по классам",
   buyouts: "Выкуп",
-  // Inner keys (users)
   total: "Всего",
   phoneVerified: "По телефону",
   active: "Активных",
   inPeriod: "За период",
-  // Inner keys (points)
   totalAwarded: "Начислено всего",
   totalSpent: "Списано всего",
-  totalBalance: "Текущий баланс системы",
-  // Inner keys (orders)
+  totalBalance: "Текущий баланс",
   ordered: "Заказанных",
   completed: "Завершённых",
   cancelled: "Отменённых",
   banned: "Теневой бан",
-  // Inner keys (parks)
   avgCommission: "Средняя комиссия",
-  // Generic
   open: "Открытых",
   pending: "Ожидающих",
   awarded: "Начислено",
@@ -92,10 +100,8 @@ function formatStatValue(value: unknown): string {
 
 function formatDateLabel(iso: string, groupBy: GroupBy) {
   const d = new Date(iso);
-  if (groupBy === "month") return d.toLocaleDateString("ru-RU", { year: "numeric", month: "short" });
-  if (groupBy === "week") {
-    return `${d.toLocaleDateString("ru-RU", { month: "short", day: "2-digit" })}`;
-  }
+  if (groupBy === "month")
+    return d.toLocaleDateString("ru-RU", { year: "numeric", month: "short" });
   return d.toLocaleDateString("ru-RU", { month: "short", day: "2-digit" });
 }
 
@@ -111,19 +117,23 @@ function BarChart({
   groupBy: GroupBy;
 }) {
   if (!data.length) {
-    return <p className="text-xs text-[#A1A1A1] py-6 text-center">Нет данных</p>;
+    return <p className="text-xs text-[#A1A1A1] py-12 text-center">Нет данных</p>;
   }
   const max = Math.max(...data.map((d) => Number(d[valueKey] ?? 0))) || 1;
   return (
-    <div className="flex items-end gap-1 h-[140px] mt-3">
+    <div className="flex items-end gap-1 h-[160px] mt-4">
       {data.map((d, i) => {
         const v = Number(d[valueKey] ?? 0);
-        const h = Math.max(2, Math.round((v / max) * 120));
+        const h = Math.max(2, Math.round((v / max) * 130));
         return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1 min-w-[20px]">
-            <span className="text-[9px] text-[#A1A1A1]">{v}</span>
-            <div className="w-full rounded-t" style={{ height: `${h}px`, backgroundColor: color }} title={`${d.date}: ${v}`} />
-            <span className="text-[9px] text-[#A1A1A1] rotate-[-30deg] whitespace-nowrap origin-left">
+          <div key={i} className="flex-1 flex flex-col items-center gap-1.5 min-w-[20px]">
+            <span className="text-[9px] text-[#A1A1A1] font-medium">{v}</span>
+            <div
+              className="w-full rounded-t-[4px]"
+              style={{ height: `${h}px`, backgroundColor: color }}
+              title={`${d.date}: ${v}`}
+            />
+            <span className="text-[9px] text-[#A1A1A1] rotate-[-30deg] whitespace-nowrap origin-left mt-1">
               {formatDateLabel(d.date as string, groupBy)}
             </span>
           </div>
@@ -133,9 +143,6 @@ function BarChart({
   );
 }
 
-/**
- * Grouped bar chart: 2 bars per date (две серии рядом).
- */
 function GroupedBarChart({
   data,
   seriesA,
@@ -148,7 +155,7 @@ function GroupedBarChart({
   groupBy: GroupBy;
 }) {
   if (!data.length) {
-    return <p className="text-xs text-[#A1A1A1] py-6 text-center">Нет данных</p>;
+    return <p className="text-xs text-[#A1A1A1] py-12 text-center">Нет данных</p>;
   }
   const max =
     Math.max(
@@ -157,37 +164,43 @@ function GroupedBarChart({
 
   return (
     <>
-      <div className="flex items-center gap-3 text-[11px] text-[#A1A1A1] mt-2">
+      <div className="flex items-center gap-4 text-[11px] text-[#A1A1A1] mt-3">
         <span className="inline-flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: seriesA.color }} />
+          <span
+            className="w-2.5 h-2.5 rounded-sm inline-block"
+            style={{ backgroundColor: seriesA.color }}
+          />
           {seriesA.label}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: seriesB.color }} />
+          <span
+            className="w-2.5 h-2.5 rounded-sm inline-block"
+            style={{ backgroundColor: seriesB.color }}
+          />
           {seriesB.label}
         </span>
       </div>
-      <div className="flex items-end gap-2 h-[140px] mt-2">
+      <div className="flex items-end gap-2 h-[160px] mt-3">
         {data.map((d, i) => {
           const va = Number(d[seriesA.key] ?? 0);
           const vb = Number(d[seriesB.key] ?? 0);
-          const ha = Math.max(2, Math.round((va / max) * 110));
-          const hb = Math.max(2, Math.round((vb / max) * 110));
+          const ha = Math.max(2, Math.round((va / max) * 130));
+          const hb = Math.max(2, Math.round((vb / max) * 130));
           return (
             <div key={i} className="flex-1 flex flex-col items-center gap-1 min-w-[30px]">
-              <div className="flex items-end gap-0.5 w-full justify-center h-[120px]">
+              <div className="flex items-end gap-0.5 w-full justify-center h-[140px]">
                 <div
-                  className="w-1/2 rounded-t"
+                  className="w-1/2 rounded-t-[4px]"
                   style={{ height: `${ha}px`, backgroundColor: seriesA.color }}
                   title={`${d.date} · ${seriesA.label}: ${va}`}
                 />
                 <div
-                  className="w-1/2 rounded-t"
+                  className="w-1/2 rounded-t-[4px]"
                   style={{ height: `${hb}px`, backgroundColor: seriesB.color }}
                   title={`${d.date} · ${seriesB.label}: ${vb}`}
                 />
               </div>
-              <span className="text-[9px] text-[#A1A1A1] rotate-[-30deg] whitespace-nowrap origin-left">
+              <span className="text-[9px] text-[#A1A1A1] rotate-[-30deg] whitespace-nowrap origin-left mt-1">
                 {formatDateLabel(d.date as string, groupBy)}
               </span>
             </div>
@@ -195,6 +208,54 @@ function GroupedBarChart({
         })}
       </div>
     </>
+  );
+}
+
+/* ── helper: KPI tile ─────────────────────────────────── */
+
+function KpiTile({
+  label,
+  value,
+  caption,
+  accent,
+}: {
+  label: string;
+  value: string | number;
+  caption?: string;
+  accent?: "yellow" | "green" | "red" | "blue" | "default";
+}) {
+  const accentClass =
+    accent === "yellow"
+      ? "bg-[#FEF7DA] text-[#9A7C00]"
+      : accent === "green"
+        ? "bg-[#E8F7EE] text-[#3BB560]"
+        : accent === "red"
+          ? "bg-[#FDE8E8] text-[#FA6868]"
+          : accent === "blue"
+            ? "bg-[#E8F0FE] text-[#3D7BD9]"
+            : "bg-[#F2F2F2] text-[#A1A1A1]";
+
+  return (
+    <div className={ADMIN_KPI_CARD}>
+      <div className="flex items-center justify-between">
+        <span className={ADMIN_KPI_LABEL}>{label}</span>
+        <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${accentClass}`}>
+          <svg
+            className="w-3.5 h-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+          >
+            <path d="M7 17l9.2-9.2M17 17V7H7" />
+          </svg>
+        </span>
+      </div>
+      <p className={ADMIN_KPI_VALUE}>
+        {typeof value === "number" ? value.toLocaleString("ru-RU") : value}
+      </p>
+      {caption && <p className="text-xs text-[#A1A1A1]">{caption}</p>}
+    </div>
   );
 }
 
@@ -262,36 +323,61 @@ export default function AdminStatsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, from, to, groupBy]);
 
+  // Top KPIs derived from overall
+  const topKpis = (() => {
+    if (!overall) return [];
+    const u = overall.users as { total?: number; phoneVerified?: number; active?: number; inPeriod?: number } | undefined;
+    const p = overall.parks as { total?: number; active?: number; draft?: number } | undefined;
+    const t = overall.tickets as { total?: number; open?: number; pending?: number } | undefined;
+    const o = overall.orders as { total?: number; ordered?: number; completed?: number } | undefined;
+    const pts = overall.points as { totalAwarded?: number; totalBalance?: number } | undefined;
+    return [
+      { label: "Пользователей", value: u?.total ?? 0, caption: u?.inPeriod ? `+${u.inPeriod} за период` : "из общего числа", accent: "green" as const },
+      { label: "Парков", value: p?.total ?? 0, caption: p?.active ? `${p.active} активных` : "В системе", accent: "yellow" as const },
+      { label: "Тикетов", value: t?.total ?? 0, caption: t?.open ? `${t.open} открыто` : "В обработке", accent: "blue" as const },
+      { label: "Заказов «По делам»", value: o?.total ?? 0, caption: o?.completed ? `${o.completed} завершено` : "Всего", accent: "default" as const },
+      { label: "Баллов начислено", value: pts?.totalAwarded ?? 0, caption: "Всего за период", accent: "red" as const },
+      { label: "Баланс системы", value: pts?.totalBalance ?? 0, caption: "Текущий", accent: "default" as const },
+    ];
+  })();
+
   return (
     <div>
-      <h1 className="text-xl font-medium text-[#303030] mb-6">Статистика</h1>
+      {/* ── Page header ── */}
+      <div className="mb-6">
+        <p className="text-xs text-[#A1A1A1] uppercase tracking-wider font-medium">Аналитика</p>
+        <h1 className={`${ADMIN_PAGE_TITLE} mt-2`}>Статистика</h1>
+        <p className={ADMIN_PAGE_SUBTITLE}>
+          Метрики, графики, активность команды
+        </p>
+      </div>
 
-      {/* Date range */}
-      <div className="flex gap-3 mb-6">
+      {/* ── Date range filters ── */}
+      <div className={`${ADMIN_CARD} p-4 md:p-5 mb-6 flex flex-wrap gap-4`}>
         <div>
-          <label className="block text-xs text-[#A1A1A1] mb-1">От</label>
+          <label className={ADMIN_LABEL}>От</label>
           <input
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
+            className="h-[44px] px-4 border border-[#E5E5E5] rounded-[10px] text-sm bg-white text-[#1F1F1F] focus:border-[#F8D62E] focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-xs text-[#A1A1A1] mb-1">До</label>
+          <label className={ADMIN_LABEL}>До</label>
           <input
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
+            className="h-[44px] px-4 border border-[#E5E5E5] rounded-[10px] text-sm bg-white text-[#1F1F1F] focus:border-[#F8D62E] focus:outline-none"
           />
         </div>
-        <div>
-          <label className="block text-xs text-[#A1A1A1] mb-1">Группировка</label>
+        <div className="min-w-[180px]">
+          <label className={ADMIN_LABEL}>Группировка</label>
           <select
             value={groupBy}
             onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-            className="h-[40px] px-3 border border-[#E5E5E5] rounded-lg text-sm bg-white"
+            className={ADMIN_SELECT}
           >
             <option value="day">По дням</option>
             <option value="week">По неделям</option>
@@ -301,7 +387,7 @@ export default function AdminStatsPage() {
       </div>
 
       {error && (
-        <div className="bg-[#FA6868]/10 border border-[#FA6868]/30 rounded-xl p-4 mb-4">
+        <div className="bg-[#FDE8E8] border border-[#FA6868]/30 rounded-[12px] p-4 mb-4">
           <p className="text-sm text-[#FA6868]">{error}</p>
         </div>
       )}
@@ -310,235 +396,260 @@ export default function AdminStatsPage() {
         <p className="text-sm text-[#A1A1A1] text-center py-12">Загрузка...</p>
       ) : (
         <>
-          {/* Overall */}
-          {isAdmin && overall && (
-            <section className="mb-8">
-              <h2 className="text-sm font-medium text-[#303030] mb-4">Общая статистика</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {Object.entries(overall).flatMap(([key, value]) => {
-                  // Специальные секции рендерятся отдельно ниже
-                  if (["parksTodayBreakdown", "usersCarBrands", "usersByCarClass"].includes(key)) {
-                    return [];
-                  }
-                  const label = OVERALL_LABELS[key] ?? key;
-
-                  // ARRAY (like tickets by topic, prices by class)
-                  if (Array.isArray(value)) {
-                    return [
-                      <section
-                        key={key}
-                        className="col-span-2 md:col-span-4 bg-white border border-[#E5E5E5] rounded-xl p-4"
-                      >
-                        <h3 className="text-sm font-medium text-[#303030] mb-3">{label}</h3>
-                        {value.length === 0 ? (
-                          <p className="text-xs text-[#A1A1A1]">Нет данных</p>
-                        ) : (
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {value.map((item: any, idx: number) => {
-                              const itemLabel = item.topic
-                                ? TICKET_TOPIC_LABELS[item.topic] ?? item.topic
-                                : item.driverClass
-                                ? DRIVER_CLASS_LABELS[item.driverClass] ?? item.driverClass
-                                : `Элемент ${idx + 1}`;
-                              const itemValue =
-                                item.total ?? item.avgRentPrice ?? item.avg ?? item.value ?? "—";
-                              return (
-                                <div key={idx} className="bg-[#F3F1E7] rounded-lg p-3">
-                                  <p className="text-xs text-[#A1A1A1] mb-1">{itemLabel}</p>
-                                  <p className="text-base font-medium text-[#303030]">
-                                    {typeof itemValue === "number"
-                                      ? itemValue.toLocaleString("ru-RU")
-                                      : String(itemValue)}
-                                  </p>
-                                  {item.completed !== undefined && (
-                                    <p className="text-[10px] text-[#A1A1A1] mt-1">
-                                      Завершено: {item.completed}
-                                    </p>
-                                  )}
-                                  {item.vehicleCount !== undefined && (
-                                    <p className="text-[10px] text-[#A1A1A1] mt-1">
-                                      Авто: {item.vehicleCount}
-                                    </p>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </section>,
-                    ];
-                  }
-
-                  // OBJECT (like users, orders)
-                  if (value && typeof value === "object") {
-                    return Object.entries(value as Record<string, unknown>).map(
-                      ([innerKey, innerValue]) => (
-                        <div
-                          key={`${key}.${innerKey}`}
-                          className="bg-white border border-[#E5E5E5] rounded-xl p-4"
-                        >
-                          <p className="text-xs text-[#A1A1A1] mb-1">
-                            {label} · {OVERALL_LABELS[innerKey] ?? innerKey}
-                          </p>
-                          <p className="text-xl font-medium text-[#303030]">
-                            {formatStatValue(innerValue)}
-                          </p>
-                        </div>
-                      ),
-                    );
-                  }
-
-                  // PRIMITIVE
-                  return [
-                    <div key={key} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
-                      <p className="text-xs text-[#A1A1A1] mb-1">{label}</p>
-                      <p className="text-xl font-medium text-[#303030]">
-                        {formatStatValue(value)}
-                      </p>
-                    </div>,
-                  ];
-                })}
-              </div>
-
-              {/* Таксопарков проверено сегодня */}
-              {overall.parksTodayBreakdown ? (() => {
-                const b = overall.parksTodayBreakdown as {
-                  total: number; draft: number; pendingReview: number; active: number;
-                };
-                return (
-                  <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mt-4">
-                    <h3 className="text-sm font-medium text-[#303030] mb-4">
-                      Таксопарков проверено сегодня
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div className="bg-[#F3F1E7] rounded-lg p-3">
-                        <p className="text-xs text-[#A1A1A1] mb-1">Всего за сегодня</p>
-                        <p className="text-xl font-medium text-[#303030]">{b.total}</p>
-                      </div>
-                      <div className="bg-[#F3F1E7] rounded-lg p-3">
-                        <p className="text-xs text-[#A1A1A1] mb-1">На проверке менеджера</p>
-                        <p className="text-xl font-medium text-[#303030]">{b.draft}</p>
-                      </div>
-                      <div className="bg-[#F3F1E7] rounded-lg p-3">
-                        <p className="text-xs text-[#A1A1A1] mb-1">На проверке СМ</p>
-                        <p className="text-xl font-medium text-[#303030]">{b.pendingReview}</p>
-                      </div>
-                      <div className="bg-[#F3F1E7] rounded-lg p-3">
-                        <p className="text-xs text-[#A1A1A1] mb-1">Активных (одобрено)</p>
-                        <p className="text-xl font-medium text-[#303030]">{b.active}</p>
-                      </div>
-                    </div>
-                  </section>
-                );
-              })() : null}
-
-              {/* Марки авто пользователей */}
-              {Array.isArray(overall.usersCarBrands) && (overall.usersCarBrands as any[]).length > 0 && (
-                <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mt-4">
-                  <h3 className="text-sm font-medium text-[#303030] mb-4">
-                    Марки авто пользователей
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {(overall.usersCarBrands as any[]).slice(0, 10).map((b, idx) => (
-                      <div key={idx} className="bg-[#F3F1E7] rounded-lg p-3">
-                        <p className="text-xs text-[#A1A1A1] mb-1">{b.brandName}</p>
-                        <p className="text-base font-medium text-[#303030]">
-                          {Number(b.count).toLocaleString("ru-RU")}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Пользователи по классу авто */}
-              {Array.isArray(overall.usersByCarClass) && (overall.usersByCarClass as any[]).length > 0 && (
-                <section className="bg-white border border-[#E5E5E5] rounded-xl p-6 mt-4">
-                  <h3 className="text-sm font-medium text-[#303030] mb-4">
-                    Пользователи по классу авто
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {(overall.usersByCarClass as any[]).map((c, idx) => (
-                      <div key={idx} className="bg-[#F3F1E7] rounded-lg p-3">
-                        <p className="text-xs text-[#A1A1A1] mb-1">
-                          {DRIVER_CLASS_LABELS[c.carClass] ?? c.carClass ?? "—"}
-                        </p>
-                        <p className="text-xl font-medium text-[#303030]">
-                          {Number(c.count).toLocaleString("ru-RU")}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+          {/* ── Top KPI Cards ── */}
+          {isAdmin && overall && topKpis.length > 0 && (
+            <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+              {topKpis.map((k) => (
+                <KpiTile key={k.label} {...k} />
+              ))}
             </section>
           )}
 
-          {/* Charts */}
+          {/* ── Charts ── */}
           {isAdmin && (
-            <section className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
-                <h3 className="text-sm font-medium text-[#303030] mb-1">Пользователи</h3>
-                <p className="text-xs text-[#A1A1A1]">Верифицированы и активны</p>
+            <section className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className={`${ADMIN_CARD} p-5`}>
+                <h3 className={ADMIN_SECTION_TITLE}>Пользователи</h3>
+                <p className="text-xs text-[#A1A1A1] mt-1">Верифицированы и активны</p>
                 <GroupedBarChart
                   data={usersChart as any}
                   seriesA={{ key: "phoneVerified", color: "#F8D62E", label: "Верифиц." }}
-                  seriesB={{ key: "active", color: "#303030", label: "Активные" }}
+                  seriesB={{ key: "active", color: "#1F1F1F", label: "Активные" }}
                   groupBy={groupBy}
                 />
               </div>
-              <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
-                <h3 className="text-sm font-medium text-[#303030] mb-1">Баллы дружбы</h3>
-                <p className="text-xs text-[#A1A1A1]">Начислено</p>
+              <div className={`${ADMIN_CARD} p-5`}>
+                <h3 className={ADMIN_SECTION_TITLE}>Баллы дружбы</h3>
+                <p className="text-xs text-[#A1A1A1] mt-1">Начислено</p>
                 <BarChart data={pointsChart as any} valueKey="awarded" color="#FA6868" groupBy={groupBy} />
               </div>
-              <div className="bg-white border border-[#E5E5E5] rounded-xl p-4">
-                <h3 className="text-sm font-medium text-[#303030] mb-1">Заказы «По делам»</h3>
-                <p className="text-xs text-[#A1A1A1]">Всего</p>
-                <BarChart data={ordersChart as any} valueKey="total" color="#303030" groupBy={groupBy} />
+              <div className={`${ADMIN_CARD} p-5`}>
+                <h3 className={ADMIN_SECTION_TITLE}>Заказы «По делам»</h3>
+                <p className="text-xs text-[#A1A1A1] mt-1">Всего</p>
+                <BarChart data={ordersChart as any} valueKey="total" color="#3BB560" groupBy={groupBy} />
               </div>
             </section>
           )}
 
-          {/* Managers */}
+          {/* ── Сегодня (parks breakdown) ── */}
+          {isAdmin && overall?.parksTodayBreakdown ? (
+            (() => {
+              const b = overall.parksTodayBreakdown as {
+                total: number;
+                draft: number;
+                pendingReview: number;
+                active: number;
+              };
+              return (
+                <section className={`${ADMIN_CARD} p-6 mb-8`}>
+                  <h3 className={ADMIN_SECTION_TITLE}>Сегодня · таксопарки</h3>
+                  <p className="text-xs text-[#A1A1A1] mt-1 mb-5">Заявки и статусы за день</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-[#FAFAFA] rounded-[14px] p-4">
+                      <p className="text-xs text-[#A1A1A1] mb-1">Всего за сегодня</p>
+                      <p className="text-2xl font-semibold text-[#1F1F1F]">{b.total}</p>
+                    </div>
+                    <div className="bg-[#FAFAFA] rounded-[14px] p-4">
+                      <p className="text-xs text-[#A1A1A1] mb-1">У менеджера</p>
+                      <p className="text-2xl font-semibold text-[#1F1F1F]">{b.draft}</p>
+                    </div>
+                    <div className="bg-[#FEF7DA] rounded-[14px] p-4">
+                      <p className="text-xs text-[#9A7C00] mb-1">На проверке СМ</p>
+                      <p className="text-2xl font-semibold text-[#1F1F1F]">{b.pendingReview}</p>
+                    </div>
+                    <div className="bg-[#E8F7EE] rounded-[14px] p-4">
+                      <p className="text-xs text-[#3BB560] mb-1">Одобрено</p>
+                      <p className="text-2xl font-semibold text-[#1F1F1F]">{b.active}</p>
+                    </div>
+                  </div>
+                </section>
+              );
+            })()
+          ) : null}
+
+          {/* ── Other overall sections ── */}
+          {isAdmin && overall && (
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
+              {/* Tickets / orders / etc. as nested objects */}
+              {Object.entries(overall).map(([key, value]) => {
+                if (
+                  ["parksTodayBreakdown", "usersCarBrands", "usersByCarClass", "users", "parks", "tickets", "orders", "points"].includes(
+                    key,
+                  ) &&
+                  Array.isArray(value)
+                ) {
+                  // proceed below
+                } else if (
+                  ["users", "parks", "tickets", "orders", "points"].includes(key)
+                ) {
+                  return null; // covered by topKpis
+                }
+                if (["parksTodayBreakdown", "usersCarBrands", "usersByCarClass"].includes(key)) {
+                  return null;
+                }
+                const label = OVERALL_LABELS[key] ?? key;
+
+                if (Array.isArray(value)) {
+                  return (
+                    <div key={key} className={`${ADMIN_CARD} p-6`}>
+                      <h3 className={ADMIN_SECTION_TITLE}>{label}</h3>
+                      {value.length === 0 ? (
+                        <p className="text-xs text-[#A1A1A1] mt-3">Нет данных</p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3 mt-4">
+                          {value.map((item: any, idx: number) => {
+                            const itemLabel = item.topic
+                              ? TICKET_TOPIC_LABELS[item.topic] ?? item.topic
+                              : item.driverClass
+                                ? DRIVER_CLASS_LABELS[item.driverClass] ?? item.driverClass
+                                : `Элемент ${idx + 1}`;
+                            const itemValue =
+                              item.total ?? item.avgRentPrice ?? item.avg ?? item.value ?? "—";
+                            return (
+                              <div key={idx} className="bg-[#FAFAFA] rounded-[12px] p-3">
+                                <p className="text-xs text-[#A1A1A1] mb-1 truncate">{itemLabel}</p>
+                                <p className="text-base font-semibold text-[#1F1F1F]">
+                                  {typeof itemValue === "number"
+                                    ? itemValue.toLocaleString("ru-RU")
+                                    : String(itemValue)}
+                                </p>
+                                {item.completed !== undefined && (
+                                  <p className="text-[10px] text-[#A1A1A1] mt-1">
+                                    Завершено: {item.completed}
+                                  </p>
+                                )}
+                                {item.vehicleCount !== undefined && (
+                                  <p className="text-[10px] text-[#A1A1A1] mt-1">
+                                    Авто: {item.vehicleCount}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (value && typeof value === "object") {
+                  const entries = Object.entries(value as Record<string, unknown>);
+                  return (
+                    <div key={key} className={`${ADMIN_CARD} p-6`}>
+                      <h3 className={ADMIN_SECTION_TITLE}>{label}</h3>
+                      <div className="grid grid-cols-2 gap-3 mt-4">
+                        {entries.map(([innerKey, innerValue]) => (
+                          <div key={innerKey} className="bg-[#FAFAFA] rounded-[12px] p-3">
+                            <p className="text-xs text-[#A1A1A1] mb-1">
+                              {OVERALL_LABELS[innerKey] ?? innerKey}
+                            </p>
+                            <p className="text-lg font-semibold text-[#1F1F1F]">
+                              {formatStatValue(innerValue)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return null;
+              })}
+            </section>
+          )}
+
+          {/* ── Brands ── */}
+          {isAdmin &&
+            Array.isArray(overall?.usersCarBrands) &&
+            (overall.usersCarBrands as any[]).length > 0 && (
+              <section className={`${ADMIN_CARD} p-6 mb-8`}>
+                <h3 className={ADMIN_SECTION_TITLE}>Марки авто пользователей</h3>
+                <p className="text-xs text-[#A1A1A1] mt-1 mb-4">Топ-10 по количеству</p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {(overall.usersCarBrands as any[]).slice(0, 10).map((b, idx) => (
+                    <div key={idx} className="bg-[#FAFAFA] rounded-[12px] p-3">
+                      <p className="text-xs text-[#A1A1A1] mb-1 truncate">{b.brandName}</p>
+                      <p className="text-base font-semibold text-[#1F1F1F]">
+                        {Number(b.count).toLocaleString("ru-RU")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+          {/* ── By car class ── */}
+          {isAdmin &&
+            Array.isArray(overall?.usersByCarClass) &&
+            (overall.usersByCarClass as any[]).length > 0 && (
+              <section className={`${ADMIN_CARD} p-6 mb-8`}>
+                <h3 className={ADMIN_SECTION_TITLE}>Пользователи по классу авто</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+                  {(overall.usersByCarClass as any[]).map((c, idx) => (
+                    <div key={idx} className="bg-[#FAFAFA] rounded-[12px] p-3">
+                      <p className="text-xs text-[#A1A1A1] mb-1">
+                        {DRIVER_CLASS_LABELS[c.carClass] ?? c.carClass ?? "—"}
+                      </p>
+                      <p className="text-xl font-semibold text-[#1F1F1F]">
+                        {Number(c.count).toLocaleString("ru-RU")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+          {/* ── Managers table ── */}
           <section>
-            <h2 className="text-sm font-medium text-[#303030] mb-4">Менеджеры</h2>
+            <h2 className={`${ADMIN_SECTION_TITLE} mb-4`}>Менеджеры</h2>
             {managers.length === 0 ? (
-              <div className="bg-white border border-[#E5E5E5] rounded-xl p-8 text-center text-sm text-[#A1A1A1]">
+              <div className={`${ADMIN_CARD} p-12 text-center text-sm text-[#A1A1A1]`}>
                 Менеджеров нет
               </div>
             ) : (
-              <div className="bg-white border border-[#E5E5E5] rounded-xl overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#E5E5E5]">
-                      <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Менеджер</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Статус</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Всего</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Завершено</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-[#A1A1A1] uppercase tracking-wider">Баллы</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {managers.map((m) => (
-                      <tr key={m.id} className="border-b border-[#E5E5E5] last:border-0">
-                        <td className="px-4 py-3 text-[#303030] font-medium">
-                          {[m.firstName, m.lastName].filter(Boolean).join(" ") || "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {m.workStatus === "WORKING" ? (
-                            <span className="text-xs text-green-600 font-medium">Работает</span>
-                          ) : (
-                            <span className="text-xs text-[#A1A1A1]">Отдыхает</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right text-[#303030]">{m.ticketsTotal ?? 0}</td>
-                        <td className="px-4 py-3 text-right text-[#303030]">{m.ticketsCompleted ?? 0}</td>
-                        <td className="px-4 py-3 text-right text-[#303030]">{m.pointsAwarded ?? 0}</td>
+              <div className={`${ADMIN_CARD} overflow-hidden`}>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        <th className={ADMIN_TABLE_HEADER}>Менеджер</th>
+                        <th className={ADMIN_TABLE_HEADER}>Статус</th>
+                        <th className={`${ADMIN_TABLE_HEADER} text-right`}>Всего</th>
+                        <th className={`${ADMIN_TABLE_HEADER} text-right`}>Завершено</th>
+                        <th className={`${ADMIN_TABLE_HEADER} text-right`}>Баллы</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {managers.map((m) => (
+                        <tr key={m.id} className={ADMIN_TABLE_ROW}>
+                          <td className={`${ADMIN_TABLE_CELL} font-medium`}>
+                            {[m.firstName, m.lastName].filter(Boolean).join(" ") || "—"}
+                          </td>
+                          <td className={ADMIN_TABLE_CELL}>
+                            {m.workStatus === "WORKING" ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-[#3BB560] font-medium">
+                                <span className="w-2 h-2 rounded-full bg-[#3BB560]" />
+                                Работает
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs text-[#A1A1A1]">
+                                <span className="w-2 h-2 rounded-full bg-[#CDCDCD]" />
+                                Отдыхает
+                              </span>
+                            )}
+                          </td>
+                          <td className={`${ADMIN_TABLE_CELL} text-right`}>{m.ticketsTotal ?? 0}</td>
+                          <td className={`${ADMIN_TABLE_CELL} text-right`}>
+                            {m.ticketsCompleted ?? 0}
+                          </td>
+                          <td className={`${ADMIN_TABLE_CELL} text-right font-medium`}>
+                            {m.pointsAwarded ?? 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </section>

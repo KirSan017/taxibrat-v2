@@ -78,10 +78,6 @@ interface ManagerSetting {
   workStatus: "WORKING" | "RESTING";
 }
 
-// Sections relevant for day-to-day managers: CHAT covers tickets & user base;
-// NO_9_PERCENT covers the "По делам" order queue. We expose a single global
-// toggle that flips all sections in lock-step — ТЗ only requires one
-// "В работе / Отдыхаю" switch for managers.
 const TOGGLE_SECTIONS: ManagerSection[] = [
   "CHAT",
   "TAXI_CHECK",
@@ -109,7 +105,6 @@ function WorkStatusToggle() {
 
   const isWorking = useMemo(() => {
     if (!settings || settings.length === 0) return false;
-    // "Working" if ANY tracked section reports WORKING — same user may service multiple queues.
     return settings.some(
       (s) => TOGGLE_SECTIONS.includes(s.section) && s.workStatus === "WORKING",
     );
@@ -120,7 +115,6 @@ function WorkStatusToggle() {
     if (!token) return;
     setBusy(true);
     try {
-      // Flip every relevant section. The backend auto-creates missing rows on first toggle.
       await Promise.all(
         TOGGLE_SECTIONS.map((section) =>
           api(`/managers/settings/${section}`, { method: "PATCH", token }),
@@ -128,7 +122,7 @@ function WorkStatusToggle() {
       );
       load();
     } catch {
-      // Swallow — ConfirmModal already closed; user can retry
+      // ignore
     } finally {
       setBusy(false);
     }
@@ -152,16 +146,16 @@ function WorkStatusToggle() {
         type="button"
         onClick={() => setConfirmOpen(true)}
         disabled={busy}
-        className={`hidden sm:inline-flex items-center gap-2 px-3 h-[34px] rounded-full text-xs font-medium border transition-colors ${
+        className={`hidden sm:inline-flex items-center gap-2 px-3.5 h-[36px] rounded-full text-xs font-medium border transition-colors ${
           isWorking
-            ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-            : "bg-gray-50 border-gray-200 text-[#A1A1A1] hover:bg-gray-100"
+            ? "bg-[#E8F7EE] border-[#3BB560]/30 text-[#3BB560] hover:bg-[#D8EFE0]"
+            : "bg-[#FAFAFA] border-[#EFEFEF] text-[#A1A1A1] hover:bg-[#F2F2F2]"
         }`}
         title={isWorking ? "В работе — нажмите, чтобы уйти на отдых" : "Отдыхаю — нажмите, чтобы вернуться"}
       >
         <span
           className={`w-2 h-2 rounded-full ${
-            isWorking ? "bg-green-500" : "bg-[#A1A1A1]"
+            isWorking ? "bg-[#3BB560]" : "bg-[#A1A1A1]"
           }`}
         />
         {isWorking ? "В работе" : "Отдыхаю"}
@@ -204,12 +198,12 @@ function AdminNotificationBell() {
   return (
     <Link
       href="/admin/archive"
-      className="relative p-2 hover:bg-gray-50 rounded-full transition-colors"
+      className="relative w-10 h-10 inline-flex items-center justify-center hover:bg-[#F5F5F5] rounded-full transition-colors"
       title="Уведомления"
     >
-      <BellIcon className="w-5 h-5 text-[#303030]" />
+      <BellIcon className="w-5 h-5 text-[#1F1F1F]" />
       {unread > 0 && (
-        <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#FA6868] text-white text-[10px] font-semibold flex items-center justify-center">
+        <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FA6868] text-white text-[10px] font-semibold flex items-center justify-center ring-2 ring-white">
           {unread > 99 ? "99+" : unread}
         </span>
       )}
@@ -259,157 +253,181 @@ export default function AdminLayout({
   const initials = getInitials(user.firstName, user.lastName);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAFAFA]">
-      {/* ══════ TOP HEADER ══════ */}
-      <header className="w-full border-b border-[#E5E5E5] bg-white sticky top-0 z-50">
-        <div className="max-w-[1600px] mx-auto px-4 md:px-6 h-[64px] flex items-center justify-between">
-          {/* Left: logo + admin badge */}
-          <div className="flex items-center gap-3">
-            <Logo href="/admin" size="sm" />
-            <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-[#F8D62E] text-[#303030]">
-              {ROLE_LABELS[role]}
+    <div className="min-h-screen flex bg-[#FAFAFA]">
+      {/* ══════ DESKTOP DARK SIDEBAR ══════ */}
+      <aside className="hidden lg:flex flex-col w-[260px] shrink-0 bg-[#1F1F1F] sticky top-0 h-screen">
+        {/* Logo */}
+        <div className="h-[72px] px-6 flex items-center border-b border-white/[0.06]">
+          <Link href="/admin" className="inline-flex items-center gap-[10px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/figma/logo-icon.png"
+              alt=""
+              width={36}
+              height={36}
+              className="shrink-0"
+            />
+            <span className="text-[18px] font-semibold leading-none tracking-[-0.01em] text-white">
+              Таксибрат
             </span>
-          </div>
+          </Link>
+        </div>
 
-          {/* Center: breadcrumbs (desktop) */}
-          <div className="hidden md:flex items-center gap-2 text-xs text-[#A1A1A1]">
-            <Link href="/admin" className="hover:text-[#303030] transition-colors">Админ-панель</Link>
-            <span>/</span>
-            <span className="text-[#303030]">{getBreadcrumb(pathname)}</span>
-          </div>
-
-          {/* Right: work-status toggle + notifications + avatar */}
+        {/* Admin info */}
+        <div className="px-5 py-5 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
-            <WorkStatusToggle />
-            <AdminNotificationBell />
-            <div className="w-8 h-8 bg-[#E5E5E5] rounded-full overflow-hidden flex items-center justify-center">
+            <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center overflow-hidden shrink-0">
               {user.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-xs font-medium text-[#A1A1A1]">{initials}</span>
+                <span className="text-sm font-medium text-white/80">{initials}</span>
               )}
             </div>
-
-            {/* Mobile hamburger */}
-            <button
-              className="lg:hidden p-2 -mr-2"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Закрыть меню" : "Открыть меню"}
-            >
-              {sidebarOpen ? (
-                <X className="w-6 h-6 text-[#303030]" />
-              ) : (
-                <Menu className="w-6 h-6 text-[#303030]" />
-              )}
-            </button>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-white truncate">{displayName}</p>
+              <p className="text-[11px] text-white/50 mt-0.5">{ROLE_LABELS[role]}</p>
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* ══════ BODY ══════ */}
-      <div className="flex-1 flex">
-        <div className="max-w-[1600px] mx-auto w-full flex">
-          {/* Sidebar — desktop */}
-          <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-[#E5E5E5] bg-white px-4 py-6">
-            {/* Admin info */}
-            <div className="mb-6 px-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#E5E5E5] rounded-full flex items-center justify-center overflow-hidden">
-                  {user.photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-sm font-medium text-[#A1A1A1]">{initials}</span>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#303030] truncate">{displayName}</p>
-                  <p className="text-xs text-[#A1A1A1]">{ROLE_LABELS[role]}</p>
-                </div>
-              </div>
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-0.5">
+          {filteredNav.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-colors ${
+                  isActive
+                    ? "bg-[#F8D62E] text-[#1F1F1F] font-medium shadow-[0_2px_8px_rgba(248,214,46,0.25)]"
+                    : "text-white/70 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <item.icon className="w-[18px] h-[18px] shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Back to site */}
+        <div className="px-5 py-4 border-t border-white/[0.06]">
+          <Link
+            href="/"
+            className="flex items-center gap-2 px-3 py-2 text-xs text-white/50 hover:text-white transition-colors"
+          >
+            <ArrowLeftIcon className="w-4 h-4" />
+            Вернуться на сайт
+          </Link>
+        </div>
+      </aside>
+
+      {/* ══════ Mobile sidebar overlay ══════ */}
+      {sidebarOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          <aside className="relative w-[280px] bg-[#1F1F1F] flex flex-col overflow-y-auto">
+            <div className="h-[72px] px-6 flex items-center justify-between border-b border-white/[0.06]">
+              <Link href="/admin" className="inline-flex items-center gap-[10px]" onClick={() => setSidebarOpen(false)}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/figma/logo-icon.png" alt="" width={32} height={32} />
+                <span className="text-[16px] font-semibold leading-none text-white">Таксибрат</span>
+              </Link>
+              <button onClick={() => setSidebarOpen(false)} className="text-white/70 p-1">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-
-            {/* Nav */}
-            <nav className="flex flex-col gap-0.5">
+            <div className="px-5 py-5 border-b border-white/[0.06]">
+              <p className="text-sm font-medium text-white">{displayName}</p>
+              <p className="text-[11px] text-white/50 mt-0.5">{ROLE_LABELS[role]}</p>
+            </div>
+            <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
               {filteredNav.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-colors ${
                       isActive
-                        ? "bg-[#F8D62E]/15 text-[#303030] font-medium"
-                        : "text-[#A1A1A1] hover:text-[#303030] hover:bg-gray-50"
+                        ? "bg-[#F8D62E] text-[#1F1F1F] font-medium"
+                        : "text-white/70 hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    <item.icon className="w-5 h-5" />
+                    <item.icon className="w-[18px] h-[18px] shrink-0" />
                     {item.label}
                   </Link>
                 );
               })}
             </nav>
-
-            {/* Back to site */}
-            <div className="mt-auto pt-6">
+            <div className="px-5 py-4 border-t border-white/[0.06]">
               <Link
                 href="/"
-                className="flex items-center gap-2 px-3 py-2 text-xs text-[#A1A1A1] hover:text-[#303030] transition-colors"
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-xs text-white/50 hover:text-white transition-colors"
               >
                 <ArrowLeftIcon className="w-4 h-4" />
                 Вернуться на сайт
               </Link>
             </div>
           </aside>
-
-          {/* Mobile sidebar overlay */}
-          {sidebarOpen && (
-            <div className="lg:hidden fixed inset-0 z-40 flex">
-              <div className="fixed inset-0 bg-black/20" onClick={() => setSidebarOpen(false)} />
-              <aside className="relative w-[280px] bg-white border-r border-[#E5E5E5] flex flex-col px-4 py-6 overflow-y-auto">
-                <div className="mb-6 px-3">
-                  <p className="text-sm font-medium text-[#303030]">{displayName}</p>
-                  <p className="text-xs text-[#A1A1A1]">{ROLE_LABELS[role]}</p>
-                </div>
-                <nav className="flex flex-col gap-0.5">
-                  {filteredNav.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                          isActive
-                            ? "bg-[#F8D62E]/15 text-[#303030] font-medium"
-                            : "text-[#A1A1A1] hover:text-[#303030] hover:bg-gray-50"
-                        }`}
-                      >
-                        <item.icon className="w-5 h-5" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-                <div className="mt-auto pt-6">
-                  <Link
-                    href="/"
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-[#A1A1A1] hover:text-[#303030] transition-colors"
-                  >
-                    <ArrowLeftIcon className="w-4 h-4" />
-                    Вернуться на сайт
-                  </Link>
-                </div>
-              </aside>
-            </div>
-          )}
-
-          {/* Main content */}
-          <main className="flex-1 min-w-0 px-4 md:px-8 py-6 md:py-8">
-            {children}
-          </main>
         </div>
+      )}
+
+      {/* ══════ MAIN COLUMN ══════ */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top header — white with shadow */}
+        <header className="sticky top-0 z-30 bg-white shadow-[0_1px_0_#EFEFEF] h-[72px] px-4 md:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
+            <button
+              className="lg:hidden p-2 -ml-2 text-[#1F1F1F]"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Открыть меню"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
+            {/* Mobile logo */}
+            <div className="lg:hidden">
+              <Logo href="/admin" size="sm" variant="light" />
+            </div>
+
+            {/* Desktop breadcrumbs */}
+            <div className="hidden lg:flex items-center gap-2 text-sm">
+              <Link href="/admin" className="text-[#A1A1A1] hover:text-[#1F1F1F] transition-colors">
+                Админ-панель
+              </Link>
+              <span className="text-[#CDCDCD]">/</span>
+              <span className="text-[#1F1F1F] font-medium">{getBreadcrumb(pathname)}</span>
+            </div>
+
+            <span className="hidden md:inline-flex items-center px-2.5 h-[24px] rounded-full text-[10px] font-semibold uppercase tracking-wider bg-[#F8D62E] text-[#1F1F1F]">
+              {ROLE_LABELS[role]}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3">
+            <WorkStatusToggle />
+            <AdminNotificationBell />
+            <div className="w-10 h-10 bg-[#F2F2F2] rounded-full overflow-hidden flex items-center justify-center shrink-0">
+              {user.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photoUrl} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-semibold text-[#A1A1A1]">{initials}</span>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Main content */}
+        <main className="flex-1 min-w-0 px-4 md:px-8 py-6 md:py-8">
+          <div className="max-w-[1400px] mx-auto w-full">{children}</div>
+        </main>
       </div>
     </div>
   );
@@ -419,7 +437,7 @@ export default function AdminLayout({
 
 function CheckIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 11l3 3L22 4" />
       <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
     </svg>
@@ -428,7 +446,7 @@ function CheckIcon({ className = "" }: { className?: string }) {
 
 function UsersIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
@@ -438,7 +456,7 @@ function UsersIcon({ className = "" }: { className?: string }) {
 
 function ChatIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
     </svg>
   );
@@ -446,7 +464,7 @@ function ChatIcon({ className = "" }: { className?: string }) {
 
 function OrdersIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="3" width="20" height="18" rx="2" />
       <path d="M8 7h8M8 12h8M8 17h4" />
     </svg>
@@ -455,7 +473,7 @@ function OrdersIcon({ className = "" }: { className?: string }) {
 
 function CarIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 17h14M5 17a2 2 0 01-2-2V9a2 2 0 012-2h1l2-4h8l2 4h1a2 2 0 012 2v6a2 2 0 01-2 2M5 17a2 2 0 100 4 2 2 0 000-4zM19 17a2 2 0 100 4 2 2 0 000-4z" />
     </svg>
   );
@@ -463,7 +481,7 @@ function CarIcon({ className = "" }: { className?: string }) {
 
 function ManagerIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -472,7 +490,7 @@ function ManagerIcon({ className = "" }: { className?: string }) {
 
 function StatsIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 20V10M12 20V4M6 20v-6" />
     </svg>
   );
@@ -480,7 +498,7 @@ function StatsIcon({ className = "" }: { className?: string }) {
 
 function AuditIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
       <polyline points="14,2 14,8 20,8" />
       <line x1="16" y1="13" x2="8" y2="13" />
@@ -492,7 +510,7 @@ function AuditIcon({ className = "" }: { className?: string }) {
 
 function NewsIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2z" />
       <line x1="7" y1="8" x2="13" y2="8" />
       <line x1="7" y1="12" x2="13" y2="12" />
@@ -503,7 +521,7 @@ function NewsIcon({ className = "" }: { className?: string }) {
 
 function ShieldIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
@@ -511,7 +529,7 @@ function ShieldIcon({ className = "" }: { className?: string }) {
 
 function ListIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <line x1="8" y1="6" x2="21" y2="6" />
       <line x1="8" y1="12" x2="21" y2="12" />
       <line x1="8" y1="18" x2="21" y2="18" />
@@ -524,7 +542,7 @@ function ListIcon({ className = "" }: { className?: string }) {
 
 function SettingsIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
     </svg>
@@ -533,7 +551,7 @@ function SettingsIcon({ className = "" }: { className?: string }) {
 
 function BellIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 01-3.46 0" />
     </svg>
@@ -542,7 +560,7 @@ function BellIcon({ className = "" }: { className?: string }) {
 
 function HandshakeIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M11 17a1 1 0 001.447.894l4.553-2.276V6l-5 3-5-3v9.618l4 2zM7 9v10M17 15.618V19M21 11l-4 2M3 11l4 2" />
     </svg>
   );
@@ -550,7 +568,7 @@ function HandshakeIcon({ className = "" }: { className?: string }) {
 
 function ArrowLeftIcon({ className = "" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <line x1="19" y1="12" x2="5" y2="12" />
       <polyline points="12,19 5,12 12,5" />
     </svg>
