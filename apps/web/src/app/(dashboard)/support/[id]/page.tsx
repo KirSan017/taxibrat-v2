@@ -216,7 +216,7 @@ export default function TicketChatPage() {
           </div>
         )}
 
-        {ticket.messages.map((msg) => {
+        {(Array.isArray(ticket.messages) ? ticket.messages : []).map((msg) => {
           const isUser = msg.senderId === user?.id;
           const timestamp = new Date(msg.createdAt).toLocaleString("ru-RU", {
             day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",

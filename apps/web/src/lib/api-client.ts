@@ -18,6 +18,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
   });
 
   if (res.status === 401 && typeof window !== "undefined") {

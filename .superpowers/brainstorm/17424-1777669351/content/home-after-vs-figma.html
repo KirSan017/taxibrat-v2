@@ -1,0 +1,44 @@
+<h2>Главная: after vs Figma</h2>
+<p class="subtitle">
+  Слева текущая локальная главная с <code>localhost:3001</code> и живым API, справа Figma node <code>48:1554</code>.
+  Сравнение показывает геометрию 1600px без браузерного scrollbar; числовые значения и содержимое карточек остаются динамическими.
+</p>
+
+<div class="split" style="align-items:flex-start;">
+  <div class="mockup">
+    <div class="mockup-header">Local after</div>
+    <div class="mockup-body" style="height:720px; overflow:auto; background:#fff;">
+      <img src="/files/local-home-after-final.png?v=comments-2" alt="Local homepage after" style="width:100%; display:block;">
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">Figma target</div>
+    <div class="mockup-body" style="height:720px; overflow:auto; background:#fff;">
+      <img src="/files/figma-home-scale1.png" alt="Figma homepage target" style="width:100%; display:block;">
+    </div>
+  </div>
+</div>
+
+<div class="options" data-multiselect>
+  <div class="option selected" data-choice="spacing" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Section geometry</h3>
+      <p>Hero ends at 746px; stats, features, CTA and footer now land on the Figma vertical grid within the dynamic-data limits.</p>
+    </div>
+  </div>
+  <div class="option selected" data-choice="header-hero" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>Header + hero</h3>
+      <p>Header sizing, logo color, auth pill, hero image, counter and speech bubbles are aligned to the supplied Figma coordinates.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="data" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Dynamic content caveat</h3>
+      <p>Figma uses static example data: 143 125 users, 148 parks and repeated card copy. Local API currently returns live values, so content differs by design.</p>
+    </div>
+  </div>
+</div>

@@ -376,7 +376,7 @@ export default function AdminTicketChatPage() {
           </div>
         )}
 
-        {ticket.messages.map((msg) => {
+        {(Array.isArray(ticket.messages) ? ticket.messages : []).map((msg) => {
           const isMe = msg.senderId === user?.id;
           const isFromCreator = msg.senderId === ticket.creatorId;
           return (

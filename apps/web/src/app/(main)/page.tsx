@@ -55,7 +55,7 @@ const DEFAULT_FEATURES = (): FeatureCard[] => [
     heading: (
       <>
         Получите заказ «По&nbsp;делам» в&nbsp;любом месте{" "}
-        <span className="text-[#F8D62E]">за 2&nbsp;мин, без 9%</span>
+        <span className="text-[#F8D62E]">за 2&nbsp;мин, без&nbsp;9%</span>
       </>
     ),
     textColor: "text-white",
@@ -156,7 +156,7 @@ const DEFAULT_FEATURES = (): FeatureCard[] => [
       color: "text-black",
     },
     badge: (
-      <span className="inline-flex items-center h-[37px] px-[11px] bg-[#F8D62E] text-[#303030] text-[14px] font-medium rounded-[20px] ml-[10px]">
+      <span className="absolute left-[112px] top-[21px] z-10 inline-flex h-[29px] w-[79px] rotate-[-14.41deg] items-center justify-center rounded-[20px] bg-[#F8D62E] px-[11px] pb-[6px] pt-[5px] text-[14px] font-medium leading-[18px] text-[#303030]">
         за 2&nbsp;мин
       </span>
     ),
@@ -244,15 +244,15 @@ export default function HomePage() {
               <p className="mt-[30px] text-[14px] leading-[22px] font-normal tracking-[-0.01em] text-white max-w-[416px]">
                 Мы ваш верный спутник помощи работы в&nbsp;такси, проходите проверки на&nbsp;баны, влияйте на&nbsp;рейтинг таксопарков. А&nbsp;так&nbsp;же зарабатывайте «баллы дружбы» и&nbsp;тратьте их на&nbsp;платные фишки нашего сервиса
               </p>
-              <div className="mt-[32px] md:mt-[40px] flex items-center gap-[10px]">
+              <div className="relative mt-[32px] h-[49px] w-[219px] md:mt-[40px]">
                 <button
                   type="button"
                   onClick={() => setAuthOpen(true)}
-                  className="inline-flex items-center justify-center h-[49px] px-[40px] rounded-[10px] bg-white text-black text-[14px] font-medium leading-[18px] hover:bg-white/90 transition-colors"
+                  className="inline-flex h-[49px] w-[219px] items-center justify-center rounded-[10px] bg-white px-[40px] text-[14px] font-medium leading-[18px] text-black transition-colors hover:bg-white/90"
                 >
                   Зарегистрироваться
                 </button>
-                <span className="inline-flex items-center h-[37px] px-[11px] bg-[#F8D62E] text-[#303030] text-[13px] font-medium rounded-[20px]">
+                <span className="absolute left-[129px] top-[28px] z-10 inline-flex h-[29px] w-[105px] rotate-[-14.41deg] items-center justify-center rounded-[20px] bg-[#F8D62E] px-[11px] pb-[6px] pt-[5px] text-[14px] font-medium leading-[18px] text-[#303030]">
                   всего 10&nbsp;сек
                 </span>
               </div>
@@ -261,7 +261,7 @@ export default function HomePage() {
             {/* Right — BIG illustration with counter overlay, extends outside container */}
             <div className="relative z-10 mt-[56px] w-full md:mt-0 md:absolute md:left-[741px] md:top-[54px] md:w-[859px]">
               {/* Counter overlay (Figma: 287x118 @ top-left corner) */}
-              <div className="absolute left-[-5px] top-[52px] z-20 hidden h-[118px] w-[287px] rounded-[20px] bg-[#F8D62E] px-[40px] pt-[18px] md:block">
+              <div className="absolute left-[-18px] top-[52px] z-20 hidden h-[118px] w-[287px] rounded-[20px] bg-[#F8D62E] px-[40px] pt-[18px] md:block">
                 <div className="text-[60px] font-medium leading-[60px] text-[#303030] tracking-tight">
                   {publicStats ? publicStats.users.toLocaleString("ru-RU") : "143 125"}
                 </div>
@@ -279,13 +279,13 @@ export default function HomePage() {
               />
             </div>
 
-            <div className="hidden md:block absolute left-[1318px] top-[117px] z-20 w-[222px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
+            <div className="hidden md:block absolute left-[1321px] top-[124px] z-20 w-[222px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
               «Таксибрат дал заказ и я получил промокод на 6 часов без комиссии, крутая фишка, спасибо!»
             </div>
-            <div className="hidden md:block absolute left-[1108px] top-[300px] z-20 w-[236px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
+            <div className="hidden md:block absolute left-[1109px] top-[235px] z-20 w-[202px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
               «Спасибо Таксибрату, что помог создать повышенной спрос»
             </div>
-            <div className="hidden md:block absolute left-[1182px] top-[510px] z-20 w-[230px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
+            <div className="hidden md:block absolute left-[1182px] top-[466px] z-20 w-[230px] rounded-[15px] bg-white px-[20px] py-[15px] text-[11px] leading-[16px] tracking-[-0.01em] text-[#303030]">
               Таксопарк придрался к маленькой точке на бампере и снял 10 000 руб. Спасибо таксибрату, что помог!
             </div>
           </div>
@@ -462,7 +462,7 @@ export default function HomePage() {
                   key={i}
                   className={`${f.bg} ${f.textColor} rounded-[20px] p-[30px] md:p-[50px] h-[442px] relative overflow-hidden`}
                 >
-                  <div className="relative z-10 max-w-[60%]">
+                  <div className={`relative z-10 ${i === 0 ? "max-w-[486px]" : "max-w-[60%]"}`}>
                     <h3 className="text-[22px] md:text-[34px] font-semibold leading-[1.12] tracking-[-0.01em]">
                       {f.heading}
                     </h3>
@@ -476,7 +476,7 @@ export default function HomePage() {
                     {f.promo && <div className="mt-[20px]">{f.promo}</div>}
                     {f.pills && f.pills}
                   </div>
-                  <div className="absolute bottom-[30px] md:bottom-[50px] left-[30px] md:left-[50px] flex items-center z-10">
+                  <div className="absolute bottom-[30px] left-[30px] z-10 flex h-[49px] min-w-[219px] items-center md:bottom-[50px] md:left-[50px]">
                     {f.button.href ? (
                       <Link href={f.button.href}>{btnContent}</Link>
                     ) : (
@@ -506,7 +506,8 @@ export default function HomePage() {
             <div>
               <h2 className="text-[24px] md:text-[34px] font-semibold leading-[1.25] text-[#303030] tracking-[-0.01em] max-w-[658px]">
                 Зарегистрируйтесь сейчас и&nbsp;получите{" "}
-                <span className="text-[#303030]">100&nbsp;баллов дружбы</span> на&nbsp;заказ «По&nbsp;делам, без&nbsp;9%» и&nbsp;проверку в&nbsp;базе таксопарков
+                <span className="text-[#303030]">100&nbsp;баллов дружбы</span> на&nbsp;заказ{" "}
+                <span className="text-white">«По&nbsp;делам, без&nbsp;9%» и&nbsp;проверку в&nbsp;базе таксопарков</span>
               </h2>
               <p className="mt-[20px] text-[13px] md:text-[14px] leading-[22px] text-[#303030] max-w-[529px]">
                 Со&nbsp;временем количество баллов для новых участников будет уменьшаться.

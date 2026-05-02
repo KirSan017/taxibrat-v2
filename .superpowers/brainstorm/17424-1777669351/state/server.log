@@ -2,3 +2,9 @@
 {"type":"screen-added","file":"C:\\Users\\Professional\\Projects\\taxibrat-v2\\.superpowers\\brainstorm\\17424-1777669351\\content\\figma-source-check.html"}
 {"source":"user-event","type":"click","text":"B\n    \n      Нужна живая Figma-ссылка\n      Если PNG устарел, пришлите URL файла или конкретного node. Тогда снимем актуальный контекст из Figma.","choice":"need-live-figma","id":null,"timestamp":1777669501430}
 {"type":"screen-added","file":"C:\\Users\\Professional\\Projects\\taxibrat-v2\\.superpowers\\brainstorm\\17424-1777669351\\content\\home-before-vs-figma.html"}
+{"type":"screen-added","file":"C:\\Users\\Professional\\Projects\\taxibrat-v2\\.superpowers\\brainstorm\\17424-1777669351\\content\\home-after-vs-figma.html"}
+{"source":"user-event","type":"click","text":"1\n    \n      Section geometry\n      Hero ends at 746px; stats, features, CTA and footer now land on the Figma vertical grid within the dynamic-data limits.","choice":"spacing","id":null,"timestamp":1777672178112}
+{"source":"user-event","type":"click","text":"2\n    \n      Header + hero\n      Header sizing, logo color, auth pill, hero image, counter and speech bubbles are aligned to the supplied Figma coordinates.","choice":"header-hero","id":null,"timestamp":1777672178728}
+{"source":"user-event","type":"click","text":"2\n    \n      Header + hero\n      Header sizing, logo color, auth pill, hero image, counter and speech bubbles are aligned to the supplied Figma coordinates.","choice":"header-hero","id":null,"timestamp":1777672182328}
+{"source":"user-event","type":"click","text":"2\n    \n      Header + hero\n      Header sizing, logo color, auth pill, hero image, counter and speech bubbles are aligned to the supplied Figma coordinates.","choice":"header-hero","id":null,"timestamp":1777672183197}
+{"type":"server-stopped","reason":"idle timeout"}
