@@ -9,15 +9,37 @@ interface Props {
   title?: string;
 }
 
+// navigator.mediaDevices доступен только в secure context (HTTPS / localhost).
+// На HTTP — undefined. В этом случае показываем нативный file input
+// с capture="environment", который на мобильных запускает родную камеру.
+function hasMediaDevices(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    !!navigator.mediaDevices &&
+    typeof navigator.mediaDevices.getUserMedia === "function"
+  );
+}
+
 export function CameraCapture({ open, onClose, onCapture, title }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState("");
+  const [supportsCamera, setSupportsCamera] = useState(true);
 
   useEffect(() => {
     if (!open) return;
     setError("");
+
+    if (!hasMediaDevices()) {
+      setSupportsCamera(false);
+      // Триггерим нативный file picker сразу при открытии модалки
+      const t = setTimeout(() => fileInputRef.current?.click(), 50);
+      return () => clearTimeout(t);
+    }
+
+    setSupportsCamera(true);
     let localStream: MediaStream | null = null;
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: "environment" } })
@@ -47,7 +69,42 @@ export function CameraCapture({ open, onClose, onCapture, title }: Props) {
     onClose();
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) {
+      onClose();
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+      if (dataUrl) {
+        onCapture(dataUrl);
+      }
+      onClose();
+    };
+    reader.onerror = () => {
+      setError("Не удалось прочитать файл");
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (!open) return null;
+
+  // Fallback: нативный picker (HTTP / нет API камеры)
+  if (!supportsCamera) {
+    return (
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
