@@ -45,7 +45,8 @@ export class TicketsAdminController {
   async getById(@Param("id") id: string) {
     const ticket = await this.ticketsService.getById(id);
     await this.ticketsService.markInProgress(id);
-    const messages = await this.messagesService.listByTicket(id, 1, 50);
+    const messagesResult = await this.messagesService.listByTicket(id, 1, 50);
+    const messages = [...messagesResult.data].reverse();
     return { ...ticket, messages };
   }
 

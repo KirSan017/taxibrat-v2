@@ -38,7 +38,10 @@ export class TicketsController {
   @Get(":id")
   async getById(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
     const ticket = await this.ticketsService.getById(id);
-    const messages = await this.messagesService.listByTicket(id, 1, 50);
+    const messagesResult = await this.messagesService.listByTicket(id, 1, 50);
+    // listByTicket возвращает {data, total, ...} с DESC порядком; UI чата
+    // ждёт массив от старых к новым.
+    const messages = [...messagesResult.data].reverse();
     return { ...ticket, messages };
   }
 
