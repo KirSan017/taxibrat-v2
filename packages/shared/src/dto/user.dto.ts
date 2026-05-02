@@ -13,11 +13,11 @@ export const updateProfileSchema = z.object({
   carModelId: z.string().uuid().optional(),
   carYear: z.coerce.number().int().min(1990).max(2099).optional(),
   carPlate: z.string().max(20).optional(),
-  licenseFrontUrl: z.string().max(500).optional(),
-  licenseBackUrl: z.string().max(500).optional(),
-  faceWithLicenseUrl: z.string().max(500).optional(),
-  stsFrontUrl: z.string().max(500).optional(),
-  stsBackUrl: z.string().max(500).optional(),
+  licenseFrontUrl: z.string().optional(),
+  licenseBackUrl: z.string().optional(),
+  faceWithLicenseUrl: z.string().optional(),
+  stsFrontUrl: z.string().optional(),
+  stsBackUrl: z.string().optional(),
 });
 
 export const DOCUMENT_TYPES = [

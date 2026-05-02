@@ -36,7 +36,7 @@ export const users = pgTable("users", {
   patronymic: varchar("patronymic", { length: 100 }),
   email: varchar("email", { length: 255 }).unique(),
   birthDate: date("birth_date"),
-  photoUrl: varchar("photo_url", { length: 500 }),
+  photoUrl: text("photo_url"),
   role: userRoleEnum("role").notNull().default("USER"),
   status: userStatusEnum("status").notNull().default("PHONE_VERIFIED"),
   friendshipPoints: integer("friendship_points").notNull().default(0),
@@ -55,12 +55,12 @@ export const users = pgTable("users", {
   carModelId: uuid("car_model_id").references(() => carModels.id),
   carYear: integer("car_year"),
   carPlate: varchar("car_plate", { length: 20 }),
-  // Driver documents (uploaded as base64, stored as URLs)
-  licenseFrontUrl: varchar("license_front_url", { length: 500 }),
-  licenseBackUrl: varchar("license_back_url", { length: 500 }),
-  faceWithLicenseUrl: varchar("face_with_license_url", { length: 500 }),
-  stsFrontUrl: varchar("sts_front_url", { length: 500 }),
-  stsBackUrl: varchar("sts_back_url", { length: 500 }),
+  // Driver documents — base64 dataURL inline (мегабайты), text без лимита
+  licenseFrontUrl: text("license_front_url"),
+  licenseBackUrl: text("license_back_url"),
+  faceWithLicenseUrl: text("face_with_license_url"),
+  stsFrontUrl: text("sts_front_url"),
+  stsBackUrl: text("sts_back_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
