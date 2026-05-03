@@ -280,8 +280,8 @@ export default function HomePage() {
               <Image
                 src="/figma/hero.png"
                 alt=""
-                width={2123}
-                height={1039}
+                width={1718}
+                height={1038}
                 priority
                 className="w-full h-auto relative z-10"
               />
@@ -515,8 +515,8 @@ export default function HomePage() {
                   <Image
                     src={f.image}
                     alt=""
-                    width={640}
-                    height={640}
+                    width={691}
+                    height={664}
                     className="absolute bottom-0 right-0 w-[180px] md:w-[340px] h-auto object-contain pointer-events-none select-none"
                   />
                 </div>
