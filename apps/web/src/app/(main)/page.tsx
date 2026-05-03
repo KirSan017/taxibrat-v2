@@ -246,7 +246,7 @@ export default function HomePage() {
                 Сервис для каждого таксиста
               </p>
               <h1 className="mt-[30px] text-[40px] md:text-[60px] leading-[1.08] md:leading-[60px] font-medium text-white tracking-[-0.02em]">
-                Выбери лучший таксопарк у&nbsp;себя на&nbsp;районе{" "}
+                Выбери лучший таксопарк у&nbsp;себя на районе{" "}
                 <span className="text-[#F8D62E]">за 2&nbsp;минуты</span>
               </h1>
               <p className="mt-[30px] text-[14px] leading-[22px] font-normal tracking-[-0.01em] text-white max-w-[416px]">
