@@ -11,6 +11,30 @@
   --color-placeholder: #B0B0B0;
 }
 
+/* Tailwind v4 убрал cursor: pointer с интерактивных элементов в preflight.
+   Возвращаем для всего, что юзер кликает мышкой. */
+button:not(:disabled),
+a[href],
+[role="button"]:not([aria-disabled="true"]),
+summary,
+label[for],
+select:not(:disabled),
+[type="submit"]:not(:disabled),
+[type="button"]:not(:disabled),
+[type="reset"]:not(:disabled),
+[type="checkbox"]:not(:disabled),
+[type="radio"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[type="submit"]:disabled,
+[type="button"]:disabled,
+[type="reset"]:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 /* Hide scrollbar for horizontal sliders */
 .scrollbar-hide {
   -ms-overflow-style: none;
