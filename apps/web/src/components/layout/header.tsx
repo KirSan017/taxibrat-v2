@@ -144,13 +144,13 @@ export function Header() {
               Таксопарки
             </Link>
             <Link href="/no9" className={navLinkClass}>
-              По делам без 9%
+              По&nbsp;делам, без&nbsp;9%
             </Link>
             <button
               onClick={handleMenuClick("taxi-connect")}
               className={navLinkClass}
             >
-              Подключение к такси
+              Подключение к&nbsp;такси
             </button>
             <Link href="/buyout" className={navLinkClass}>
               Выкуп
@@ -159,7 +159,7 @@ export function Header() {
               onClick={handleMenuClick("base-check")}
               className={navLinkClass}
             >
-              Проверка по базе
+              Проверка по&nbsp;базе таксопарков
             </button>
           </nav>
 
