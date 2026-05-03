@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -176,6 +176,14 @@ export default function HomePage() {
     enabled: false,
     date: "",
   });
+  const parksScrollerRef = useRef<HTMLDivElement>(null);
+
+  const scrollParks = (dir: "left" | "right") => {
+    const el = parksScrollerRef.current;
+    if (!el) return;
+    const card = 335 + 20; // card width + gap
+    el.scrollBy({ left: dir === "right" ? card : -card, behavior: "smooth" });
+  };
 
   // Redirect authorized users to /dashboard
   useEffect(() => {
@@ -320,22 +328,42 @@ export default function HomePage() {
                 Таксопарков проверено<br className="hidden md:block" /> в&nbsp;Москве и&nbsp;МО
               </p>
             </div>
-            <div className="flex items-center gap-[10px] md:gap-[20px]">
+            <div className="flex items-center gap-[20px]">
+              {/* CTA с встроенной стрелкой */}
               <Link
                 href="/parks"
-                className="inline-flex items-center justify-center h-[49px] px-[40px] rounded-[10px] bg-[#F8D62E] text-[#303030] text-[14px] font-medium hover:bg-[#F8D62E]/90 transition-colors"
+                className="inline-flex items-center h-[49px] pl-[40px] pr-[7px] gap-[12px] rounded-[10px] bg-[#F8D62E] text-[#303030] text-[14px] font-medium hover:bg-[#F8D62E]/90 transition-colors"
               >
-                Подобрать лучший
+                <span>Подобрать лучший</span>
+                <span className="inline-flex items-center justify-center w-[35px] h-[35px] rounded-[7px] bg-[#303030] text-white">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </span>
               </Link>
-              <button
-                type="button"
-                aria-label="Следующий"
-                className="hidden md:inline-flex items-center justify-center w-[35px] h-[35px] rounded-[7px] bg-[#303030] text-white hover:bg-[#303030]/90 transition-colors"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </button>
+              {/* Карусель: круглые серые стрелки */}
+              <div className="hidden md:flex items-center gap-[10px]">
+                <button
+                  type="button"
+                  aria-label="Предыдущий"
+                  onClick={() => scrollParks("left")}
+                  className="inline-flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[#EFEFEF] text-[#A1A1A1] hover:bg-[#E5E5E5] hover:text-[#303030] transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Следующий"
+                  onClick={() => scrollParks("right")}
+                  className="inline-flex items-center justify-center w-[40px] h-[40px] rounded-full bg-[#EFEFEF] text-[#A1A1A1] hover:bg-[#E5E5E5] hover:text-[#303030] transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -354,7 +382,7 @@ export default function HomePage() {
               Пока нет парков в каталоге
             </div>
           ) : (
-            <div className="flex gap-[20px] overflow-x-auto -mx-6 px-6 md:-mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide">
+            <div ref={parksScrollerRef} className="flex gap-[20px] overflow-x-auto -mx-6 px-6 md:-mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide scroll-smooth">
               {parks.map((park) => {
                 const rating = typeof park.rating === "string" ? parseFloat(park.rating) : park.rating;
                 const commission = typeof park.parkCommission === "string" ? parseFloat(park.parkCommission) : park.parkCommission;
@@ -506,8 +534,8 @@ export default function HomePage() {
             <div>
               <h2 className="text-[24px] md:text-[34px] font-semibold leading-[1.25] text-[#303030] tracking-[-0.01em] max-w-[658px]">
                 Зарегистрируйтесь сейчас и&nbsp;получите{" "}
-                <span className="text-[#303030]">100&nbsp;баллов дружбы</span> на&nbsp;заказ{" "}
-                <span className="text-white">«По&nbsp;делам, без&nbsp;9%» и&nbsp;проверку в&nbsp;базе таксопарков</span>
+                <span className="text-[#303030]">100&nbsp;баллов дружбы</span>{" "}
+                <span className="text-white">на&nbsp;заказ «По&nbsp;делам, без&nbsp;9%» и&nbsp;проверку в&nbsp;базе таксопарков</span>
               </h2>
               <p className="mt-[20px] text-[13px] md:text-[14px] leading-[22px] text-[#303030] max-w-[529px]">
                 Со&nbsp;временем количество баллов для новых участников будет уменьшаться.
