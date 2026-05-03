@@ -156,7 +156,7 @@ const DEFAULT_FEATURES = (): FeatureCard[] => [
       color: "text-black",
     },
     badge: (
-      <span className="absolute left-[112px] top-[21px] z-10 inline-flex h-[29px] w-[79px] rotate-[-14.41deg] items-center justify-center rounded-[20px] bg-[#F8D62E] px-[11px] pb-[6px] pt-[5px] text-[14px] font-medium leading-[18px] text-[#303030]">
+      <span className="absolute left-[112px] top-[21px] z-10 inline-flex h-[29px] w-[95px] rotate-[-14.41deg] items-center justify-center whitespace-nowrap rounded-[20px] bg-[#F8D62E] px-[11px] pb-[6px] pt-[5px] text-[14px] font-medium leading-[18px] text-[#303030]">
         за 2&nbsp;мин
       </span>
     ),
@@ -260,7 +260,7 @@ export default function HomePage() {
                 >
                   Зарегистрироваться
                 </button>
-                <span className="absolute left-[129px] top-[28px] z-10 inline-flex h-[29px] w-[105px] rotate-[-14.41deg] items-center justify-center rounded-[20px] bg-[#F8D62E] px-[11px] pb-[6px] pt-[5px] text-[14px] font-medium leading-[18px] text-[#303030]">
+                <span className="absolute left-[129px] top-[28px] z-10 inline-flex h-[29px] w-[120px] rotate-[-14.41deg] items-center justify-center whitespace-nowrap rounded-[20px] bg-[#F8D62E] px-[11px] pb-[6px] pt-[5px] text-[14px] font-medium leading-[18px] text-[#303030]">
                   всего 10&nbsp;сек
                 </span>
               </div>
